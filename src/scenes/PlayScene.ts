@@ -9,7 +9,7 @@ import { ShrimpMotion, type Mover } from '../core/movement/ShrimpMotion';
 import { seededRandom } from '../core/random';
 import { sandFlat } from '../data/areas/sandFlat';
 import type { AreaDef } from '../data/areas/types';
-import { BODY_LENGTH_PX, CAMERA, MOTION } from '../data/tuning';
+import { BODY_LENGTH_PX, CAMERA, FRAME, MOTION } from '../data/tuning';
 import { debugState } from '../debug';
 import { ShrimpRig } from '../entities/ShrimpRig';
 import type { HudScene } from './HudScene';
@@ -76,7 +76,6 @@ export class PlayScene extends Phaser.Scene {
   }
 
   override update(_time: number, deltaMs: number): void {
-    const dt = Math.min(deltaMs / 1000, 0.1);
     const actions = app.actions;
 
     if (actions.justPressed('pause')) {
@@ -84,15 +83,24 @@ export class PlayScene extends Phaser.Scene {
       return;
     }
 
+    // A slow frame is played as several short steps, so the shrimp covers the
+    // same ground whatever the frame rate.
+    const frame = Math.min(deltaMs / 1000, FRAME.longest);
     const axis = actions.axis();
-    const { darted } = this.motion.step(
-      dt,
-      { x: axis.x, y: axis.y, dart: actions.justPressed('tailFlip') },
-      this.mover,
-    );
-    this.rig.update(dt, this.motion);
-    this.follow(dt);
-    this.hud?.track(dt, axis.x !== 0 || axis.y !== 0, darted);
+    let dart = actions.justPressed('tailFlip');
+    let darted = false;
+    let remaining = frame;
+    while (remaining > 1e-6) {
+      const dt = Math.min(remaining, FRAME.step);
+      const result = this.motion.step(dt, { x: axis.x, y: axis.y, dart }, this.mover);
+      darted = darted || result.darted;
+      dart = false;
+      remaining -= dt;
+    }
+
+    this.rig.update(frame, this.motion);
+    this.follow(frame);
+    this.hud?.track(frame, axis.x !== 0 || axis.y !== 0, darted);
   }
 
   private openPause(): void {

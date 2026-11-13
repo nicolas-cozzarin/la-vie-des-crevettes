@@ -27,6 +27,11 @@ const FROM_ACTION: Partial<Record<Action, MenuKey>> = {
   interact: 'accept',
 };
 
+/** What a key always means in menus, whatever is bound. */
+export function fixedMenuKey(code: string): MenuKey | null {
+  return FIXED[code] ?? null;
+}
+
 export function menuKeyFor(code: string, bindings: Bindings): MenuKey | null {
   const fixed = FIXED[code];
   if (fixed) return fixed;

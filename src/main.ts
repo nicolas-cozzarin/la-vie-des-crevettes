@@ -20,6 +20,10 @@ const game = new Phaser.Game({
     width: GAME_WIDTH,
     height: GAME_HEIGHT,
   },
+  // Use the true time between frames. Phaser's smoothing caps it at one sixtieth of a
+  // second for a while after every start and focus change, which plays the game in
+  // slow motion on a slow machine. The play scene cuts long frames into short steps.
+  fps: { smoothStep: false },
   // The game reads the keyboard itself, by key position. See src/platform/KeyboardSource.ts.
   input: { keyboard: false },
   scene: [BootScene, TitleScene, PlayScene, HudScene, PauseScene, ControlsScene],

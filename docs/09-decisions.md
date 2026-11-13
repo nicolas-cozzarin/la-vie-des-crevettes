@@ -75,6 +75,11 @@ All proposed. Say so if any is wrong.
 | T16 | Fonts: Fraunces and Atkinson Hyperlegible | Open licence, legible, cover French |
 | T17 | One optional journal card with the number farmed each year | Information, not appeal. The author to keep or cut |
 | T18 | Releases in four stages, the first with two chapters | Something public early (D5) |
+| T19 | The view is enlarged 1.4 times, so the juvenile is about 155 px long at 1080p instead of 110 | At 110 px the antennae and posture, which carry the feelings (D17), were too small to read |
+| T20 | Movement and collision are worked out in `src/core/movement/`, not by Phaser's Arcade physics | Same circles and rectangles (T15), but covered by unit tests and free of the engine |
+| T21 | Darts count as "in a row" when less than 2.5 s apart | Needed to say when the shrimp tires |
+| T22 | The game uses the true time between frames and cuts long frames into short steps | Phaser's smoothing played the game in slow motion on slow machines |
+| T23 | The letter-keys preset is named by the letters on the player's own keyboard: WASD, or ZQSD on a French one | Bindings are by key position (T11), so the name should match what is printed |
 
 ## Still needed from the author
 

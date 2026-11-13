@@ -7,6 +7,10 @@ const BASE = `http://localhost:${PORT}/la-vie-des-crevettes/`;
 export default defineConfig({
   testDir: 'tests/e2e',
   fullyParallel: true,
+  // The game draws with WebGL. Without a graphics card, as on the CI machine, it draws
+  // slowly, so the tests get time and do not compete with each other there.
+  timeout: 60_000,
+  workers: process.env.CI ? 1 : undefined,
   forbidOnly: !!process.env.CI,
   reporter: process.env.CI ? 'github' : 'list',
   use: {

@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { ACTIONS } from '../../src/core/input/actions';
+import { PRESET_IDS } from '../../src/core/input/bindings';
 import en from '../../src/locales/en.json';
 import fr from '../../src/locales/fr.json';
 
@@ -19,6 +21,15 @@ describe('locale files', () => {
     const placeholders = (text: string) => [...text.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort();
     for (const key of Object.keys(en) as (keyof typeof en)[]) {
       expect(placeholders(fr[key]), key).toEqual(placeholders(en[key]));
+    }
+  });
+
+  it('name every action and every preset', () => {
+    for (const dictionary of Object.values(locales)) {
+      for (const action of ACTIONS) expect(dictionary, action).toHaveProperty([`action.${action}`]);
+      for (const preset of PRESET_IDS) {
+        expect(dictionary, preset).toHaveProperty([`controls.preset.${preset}`]);
+      }
     }
   });
 

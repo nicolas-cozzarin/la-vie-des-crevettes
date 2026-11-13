@@ -32,9 +32,10 @@ States: Drift (larva only), Walk, Swim, Dart, Hidden, Molting.
 | Swim speed | 2.5 BL/s |
 | Walk to swim | after 0.8 s of continuous movement |
 | Coast to rest | 0.6 s |
-| Dart distance | 3 BL in 0.25 s, then a short glide |
+| Dart distance | 3 BL in 0.25 s, then a glide of 0.6 BL in 0.35 s |
 | Dart cooldown | 0.8 s |
-| Darts before tiring | 3, then a 4 s recovery with shorter darts |
+| Darts before tiring | 3 in a row, then a 4 s recovery with darts half as long |
+| Darts in a row | Less than 2.5 s apart |
 
 Notes:
 - **Walk.** Slow and exact. Used near food, shelter and other shrimp. Legs show at the sides.

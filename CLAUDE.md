@@ -38,9 +38,9 @@ If code and docs disagree, stop and ask which is right. If a decision in `docs/0
 ## Code rules
 
 - `src/core/` never imports Phaser. Game rules go there, with unit tests.
-- Numbers go in `src/data/tuning.ts`. Content goes in `src/data/`.
+- Numbers go in `src/data/tuning.ts`. Content goes in `src/data/`. `src/core/` takes them as arguments and never imports `src/data/`.
 - No player-facing string in code. Use `t('key')` and add the key to both `fr.json` and `en.json`.
-- No key codes in game code. Use `ActionInput`.
+- No key codes in game code. Use `ActionInput`, reached as `app.actions`. Only `src/platform/` touches the browser's keyboard and storage.
 - Request images by name. If there is no file for a name, `TextureFactory` draws one.
 - No asset path starts with `/`. The game is served from a sub-path.
 - This is Phaser 4. Do not rely on Phaser 3 examples. Check the types in `node_modules/phaser` and the v4 docs.

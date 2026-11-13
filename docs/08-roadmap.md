@@ -16,6 +16,8 @@ Time figures are guesses for one person working with Claude Code. Treat them as 
 
 ## Release 0.1, step by step
 
+Progress on 2026-11-13: step 0 is merged and published. Steps 1 and 2 are built. The gate at the end of step 2 is for the author to judge by playing.
+
 Each step is one working session with Claude Code. Start a session with: "Read CLAUDE.md, then do step N of docs/08-roadmap.md." A step is finished when its checks pass and it is merged to `main`, which publishes it.
 
 ### Step 0. Project and pipeline
@@ -29,7 +31,7 @@ Checks: `npm run build` passes. The published address shows the scene. No consol
 Checks: unit tests for binding rules. In the browser, rebind Tail flip to another key, reload, and it is kept. Escape always opens pause.
 
 ### Step 2. The shrimp moves
-`ShrimpRig` drawn by code, seen from above. Walk, swim, dart, tiring. Camera follows. An empty sandy area with a few rocks.
+`ShrimpRig` drawn by code, seen from above. Walk, swim, dart, tiring. Camera follows. An empty sandy area with a few rocks (`src/data/areas/sandFlat.ts`, a test area that the mangrove replaces in step 3).
 
 Checks: turning is smooth. The dart travels tail first. The shadow separates when swimming.
 

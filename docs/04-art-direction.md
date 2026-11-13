@@ -144,7 +144,7 @@ Check the licence on each file's own page on the day of download, and add a row 
 ## Sizes and formats
 
 - Design size 1920 x 1080, scaled to fit the window with bars if needed.
-- The shrimp is about 110 px long on screen at 1080p.
+- The juvenile shrimp is 110 design px long and the view is enlarged 1.4 times, so it is about 155 px long on screen at 1080p (T19). The view then shows about 12 by 7 body lengths.
 - Painted files: WebP for grounds, PNG for parts that need clean transparency. No single image wider than 2048 px.
 
 ## Images for the first release

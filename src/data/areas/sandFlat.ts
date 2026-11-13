@@ -14,7 +14,7 @@ export const sandFlat: AreaDef = {
     { shape: 'circle', x: 1560, y: 860, r: 70, image: 'rock.b' },
     { shape: 'circle', x: 2320, y: 1120, r: 150, image: 'rock.c' },
     { shape: 'circle', x: 2520, y: 1290, r: 85, image: 'rock.a' },
-    { shape: 'circle', x: 1900, y: 1680, r: 95, image: 'rock.b' },
+    { shape: 'circle', x: 2080, y: 1770, r: 95, image: 'rock.b' },
     { shape: 'circle', x: 860, y: 1520, r: 170, image: 'rock.c' },
     { shape: 'circle', x: 1060, y: 1700, r: 60, image: 'rock.b' },
     { shape: 'circle', x: 2880, y: 620, r: 130, image: 'rock.a' },

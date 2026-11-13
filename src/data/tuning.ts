@@ -34,6 +34,13 @@ export const MOTION: MotionTuning = {
   liftTime: 0.22,
 };
 
+export const FRAME = {
+  /** The longest frame the game will play in full, in seconds. Anything longer is cut short. */
+  longest: 0.25,
+  /** Longer frames are played as steps of at most this many seconds. */
+  step: 1 / 30,
+};
+
 export const CAMERA = {
   /**
    * How much the view is enlarged. At 1.4 the juvenile is about 155 pixels long

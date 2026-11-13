@@ -12,7 +12,7 @@ import {
   type PresetId,
   type Slot,
 } from '../core/input/bindings';
-import type { MenuKey } from '../core/input/menuKeys';
+import { fixedMenuKey, type MenuKey } from '../core/input/menuKeys';
 import { t } from '../i18n';
 import { Button } from '../ui/Button';
 import { onMenuKey } from '../ui/menuKeys';
@@ -161,11 +161,12 @@ export class ControlsScene extends Phaser.Scene {
 
   /** The letters preset is named by the letters on the player's own keyboard. */
   private presetName(preset: PresetId): string {
+    const letters = PRESETS.wasd;
     return t(`controls.preset.${preset}`, {
-      up: app.keyName('KeyW'),
-      left: app.keyName('KeyA'),
-      down: app.keyName('KeyS'),
-      right: app.keyName('KeyD'),
+      up: app.keyName(letters.moveUp[0]),
+      left: app.keyName(letters.moveLeft[0]),
+      down: app.keyName(letters.moveDown[0]),
+      right: app.keyName(letters.moveRight[0]),
     });
   }
 
@@ -278,9 +279,10 @@ export class ControlsScene extends Phaser.Scene {
     this.stopWaiting = app.keyboard.captureNext((code) => {
       this.waiting = null;
       this.stopWaiting = null;
-      if (code === 'Escape') {
+      const meaning = fixedMenuKey(code);
+      if (meaning === 'back') {
         this.say('');
-      } else if (code === 'Backspace' || code === 'Delete') {
+      } else if (meaning === 'clear') {
         this.clear(action, slot);
       } else {
         this.assign(action, slot, code);

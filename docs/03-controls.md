@@ -28,13 +28,13 @@ The settings screen and all prompts show the letter printed on the player's own 
 
 ## Rebinding
 
-Location: Pause > Settings > Controls. Also reachable from the title screen.
+Location: Pause > Settings > Controls. Also reachable from the title screen. Until the Settings screen exists (roadmap step 11), Controls sits directly in the pause menu.
 
 The screen lists every action with its two slots.
 
 1. Select a slot with the arrow keys and press Enter, or click it.
 2. The slot shows "Press a key".
-3. The next key pressed is stored. Escape cancels. Backspace or Delete clears the slot.
+3. The next key pressed is stored. Escape cancels. Backspace or Delete clears the slot, so these two keys cannot be bound.
 4. If the key is already used by another action, the two swap, and a line says so: "E was Eat. Eat is now unbound in slot 1."
 5. Changes save at once.
 
@@ -43,7 +43,7 @@ Rules:
 - Escape always opens the pause menu, whatever else is bound, so nobody can lock themselves out.
 - Keys the browser owns cannot be bound: F1 to F12, the Windows or Command key, and any combination with Ctrl, Alt or Command.
 - "Reset to defaults" restores the table above after a confirmation.
-- Presets: "WASD", "Arrows", "One hand, left side", "One hand, right side".
+- Presets: "WASD" (movement on the letter keys only, shown as the letters on the player's own keyboard, so "ZQSD" on a French one), "Arrows" (movement on the arrows only), "Left hand" and "Right hand" (every action within reach of one hand).
 
 ## Hold or toggle
 

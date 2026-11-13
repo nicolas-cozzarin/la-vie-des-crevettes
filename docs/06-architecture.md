@@ -51,12 +51,14 @@ la-vie-des-crevettes/
 │     └─ fonts/
 ├─ src/
 │  ├─ main.ts                 game config and scene list
+│  ├─ app.ts                  settings, storage and keyboard, shared by every scene
 │  ├─ core/                   no Phaser imports
 │  │  ├─ feelings/            FeelingsModel, mood rules
 │  │  ├─ bonds/
 │  │  ├─ threat/              ThreatDirector state machine
 │  │  ├─ progress/            story steps, challenges, achievements, journal
 │  │  ├─ input/               ActionInput, bindings, presets
+│  │  ├─ movement/            ShrimpMotion, collision with circles and rectangles
 │  │  ├─ save/                save and settings, with versions
 │  │  ├─ i18n/
 │  │  └─ events.ts            the typed event bus
@@ -73,6 +75,7 @@ la-vie-des-crevettes/
 │  ├─ entities/               ShrimpRig, PlayerShrimp, NpcShrimp, Bird, HuntingFish, Net, FoodPatch, Cover
 │  ├─ systems/                AreaLoader, MoodPresenter, AudioDirector, ScentField, DayNight, Shoal, Narrator, Counter
 │  ├─ art/                    TextureFactory: code-drawn images
+│  ├─ platform/               the browser: keyboard events, storage, keyboard layout
 │  └─ ui/                     prompts, panels, rebind dialog
 ├─ tests/
 │  ├─ unit/
@@ -174,6 +177,7 @@ export interface SettingsV1 {
   reducedMotion: boolean;
   textScale: 1 | 1.25 | 1.5;
   nameFeelings: boolean;
+  keyLabels: Record<string, string>;     // letters seen for each key position, for labels
 }
 ```
 
@@ -205,7 +209,9 @@ export const mangrove: AreaDef = {
 
 ## Movement and collision
 
-Phaser's Arcade physics is enough for a top-down plane. The shrimp is a circle. Obstacles are static circles and rectangles. Cover, food, triggers and exits are overlap zones. Height off the bed is visual only: a shadow offset, with no effect on collision.
+Movement and collision are worked out in `src/core/movement/`, without the engine, so they are covered by unit tests (T20). `ShrimpMotion` turns the held direction and the tail flip key into a position, a heading and a height. The shrimp is a circle. Obstacles are still circles and rectangles, and the shrimp slides along them. Cover, food, triggers and exits are overlap zones. Height off the bed is visual only: a shadow offset, with no effect on collision.
+
+The game uses the true time between frames. A long frame is played as several short steps, so the shrimp covers the same ground whatever the frame rate (T22).
 
 ## Drawing
 

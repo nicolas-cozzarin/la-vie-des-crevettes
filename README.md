@@ -6,7 +6,7 @@ A calm browser game in which you live the life of a whiteleg shrimp: drifting to
 
 A personal project, made to help people see shrimp as animals that feel. The game never preaches. It lets you be one for a while.
 
-**Status:** step 0 of the [roadmap](docs/08-roadmap.md) is done. The project builds, is tested, has a workflow that publishes it to GitHub Pages, and shows a title screen. The game itself comes next.
+**Status:** steps 0 to 2 of the [roadmap](docs/08-roadmap.md) are built. You can move a code-drawn shrimp around a patch of sand: walk, swim, dart with a tail flip. Every key can be changed in Controls. Food, feelings, other shrimp and the story come next.
 
 ## The documents
 
@@ -50,7 +50,7 @@ npm run test:e2e   browser test, after a build
 npm run lint       lint and format check
 ```
 
-Every push to `main` publishes the game to GitHub Pages. This needs one setting, once: repository Settings, Pages, Source: GitHub Actions.
+Every push to `main` publishes the game to GitHub Pages at https://nicolas-cozzarin.github.io/la-vie-des-crevettes/.
 
 ## Continuing the build
 

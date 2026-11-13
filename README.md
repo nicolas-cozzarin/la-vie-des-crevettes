@@ -6,7 +6,7 @@ A calm browser game in which you live the life of a whiteleg shrimp: drifting to
 
 A personal project, made to help people see shrimp as animals that feel. The game never preaches. It lets you be one for a while.
 
-**Status:** design drafts, 2026-11-13. No code yet.
+**Status:** step 0 of the [roadmap](docs/08-roadmap.md) is done. The project builds, is tested, has a workflow that publishes it to GitHub Pages, and shows a title screen. The game itself comes next.
 
 ## The documents
 
@@ -37,10 +37,25 @@ A personal project, made to help people see shrimp as animals that feel. The gam
 - Optional challenges, achievements and a journal give you things to find.
 - French and English. Keyboard. Free, open source, no cookies.
 
-## Starting the build
+## Running it
+
+Needs Node 22 or newer.
+
+```
+npm install
+npm run dev        local server with live reload
+npm test           unit and content tests
+npm run build      type-check and build to dist/
+npm run test:e2e   browser test, after a build
+npm run lint       lint and format check
+```
+
+Every push to `main` publishes the game to GitHub Pages. This needs one setting, once: repository Settings, Pages, Source: GitHub Actions.
+
+## Continuing the build
 
 1. Read [09-decisions.md](docs/09-decisions.md) and settle what is open.
-2. Open this repository in Claude Code and say: "Read CLAUDE.md, then do step 0 of docs/08-roadmap.md."
+2. Open this repository in Claude Code and say: "Read CLAUDE.md, then do the next step of docs/08-roadmap.md."
 3. Continue one step per session. Each step ends with checks.
 
 ## Licence

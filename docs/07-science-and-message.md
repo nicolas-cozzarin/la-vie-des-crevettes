@@ -1,6 +1,8 @@
 # 07. Science and message
 
-Status: draft 0.3, 2026-11-13. Items marked **to check** are from memory and need their reference confirmed before release.
+Status: draft 0.4, 2026-11-14. Items marked **to check** are from memory and need their reference confirmed before release.
+
+The full script, with every narration line and its key, is in [13-script.md](13-script.md). Card ids and unlock rules are in [12-goals-and-journal.md](12-goals-and-journal.md). How each feeling is grounded is in [10-feelings-and-states.md](10-feelings-and-states.md).
 
 ## How the game carries its message
 
@@ -27,9 +29,16 @@ Status: draft 0.3, 2026-11-13. Items marked **to check** are from memory and nee
 | BARR2008 | Barr, Laming, Dick, Elwood (2008). Nociception or pain in a decapod crustacean? *Animal Behaviour* | doi.org/10.1016/j.anbehav.2007.07.004 | Reference confirmed. Study animal: the prawn *Palaemon elegans*. Read the paper before release |
 | RP2023 | Waldhorn, Autric (2023). *Shrimp: The animals most commonly used and killed for food production.* Rethink Priorities | doi.org/10.31219/osf.io/b8n3t | Checked: about 440 billion farmed shrimp killed a year (range 300 to 620 billion), about 230 billion alive on farms at any time |
 | FAO | FAO species fact sheet, *Penaeus vannamei* | fao.org/fishery/docs/CDrom/aquaculture/I1129m/file/en/en_whitelegshrimp.htm | Checked: range, life cycle, egg numbers, hatching time, age at maturity, colour |
-| UK2022 | Animal Welfare (Sentience) Act 2022, United Kingdom | legislation.gov.uk | To check: wording that includes decapod crustaceans |
-| FOSSAT2014 | Fossat and others (2014). Anxiety-like behavior in crayfish is controlled by serotonin. *Science* | | To check |
-| ELWOOD2009 | Elwood, Appel (2009). Pain experience in hermit crabs? *Animal Behaviour* | | To check |
+| UK2022 | Animal Welfare (Sentience) Act 2022, United Kingdom | legislation.gov.uk/ukpga/2022/22 | Checked 2026-11-14: section 5 defines "animal" as any vertebrate other than a human, any cephalopod mollusc and any decapod crustacean |
+| FOSSAT2014 | Fossat, Bacqué-Cazenave, De Deurwaerdère, Delbecque, Cattaert (2014). Anxiety-like behavior in crayfish is controlled by serotonin. *Science* 344, 1293 to 1297 | doi.org/10.1126/science.1248811 | To check: the page could not be opened on 2026-11-14. Authors, pages and link are from memory |
+| ELWOOD2009 | Elwood, Appel (2009). Pain experience in hermit crabs? *Animal Behaviour* 77(5), 1243 to 1246 | doi.org/10.1016/j.anbehav.2009.01.028 | Reference confirmed 2026-11-14. Study animal: the hermit crab *Pagurus bernhardus*. Crabs given small shocks inside their shell left it, and fewer left a shell of the kind they prefer. Read the paper before release |
+| ARNOTT1998 | Arnott, Neil, Ansell (1998). Tail-flip mechanism and size-dependent kinematics of escape swimming in the brown shrimp *Crangon crangon*. *Journal of Experimental Biology* 201(11), 1771 to 1784 | journals.biologists.com/jeb | Reference confirmed 2026-11-14. Study animal: the brown shrimp. Covers the tail flip itself, not a comparison with hunters |
+| MAGEE2013 | Magee, Elwood (2013). Shock avoidance by discrimination learning in the shore crab (*Carcinus maenas*) is consistent with a key criterion for pain. *Journal of Experimental Biology* 216, 353 to 358 | | To check: from memory. Proposed as the source for "learn to avoid a place" in card 3 |
+| CHEMO2020 | Chemosensory basis of feeding behavior in Pacific white shrimp, *Litopenaeus vannamei*. *The Biological Bulletin* (2020) | doi.org/10.1086/710337 | To check: found by title only, not read |
+| ACTIVITY | Daily activity pattern of the marine shrimp *Litopenaeus vannamei* (Boone 1931) juveniles under laboratory conditions | | To check: found by title only, not read |
+| SUBSTRATE | Shrimp behavior in different substrates in light and dark phases of the day. *Pesquisa Agropecuária Brasileira* | | To check: found by title only, not read |
+
+More from the FAO fact sheet, read on 2026-11-14: the larva passes through six nauplius stages, three protozoea stages and three mysis stages. The nauplii do not feed and live on their yolk. This supports the first seconds of Drift (T42). The sheet also lists what later stages eat, which is why rule 5 stands: the game is silent on diet beyond what it shows.
 
 ## What the game shows, and what it rests on
 
@@ -38,15 +47,15 @@ Status: draft 0.3, 2026-11-13. Items marked **to check** are from memory and nee
 | Larvae drift from open sea to the coast. The young grow up in estuaries, lagoons and mangroves. Adults live and spawn at sea | FAO | Established for whiteleg shrimp |
 | A female releases a cloud of eggs. Larvae hatch within a day | FAO: 100,000 to 250,000 eggs, hatching in about 16 hours | Established for whiteleg shrimp |
 | Body tint follows the ground | FAO: colour changes with the bottom, food and water clarity | Established for whiteleg shrimp |
-| Tail flip to escape, and tiring after several | Escape reflex of shrimp, crayfish and lobsters | Established. To check a reference |
-| Finding food and each other by scent with the antennae | Crustacean chemical sensing | Established. To check a reference |
+| Tail flip to escape, and tiring after several | Escape reflex of shrimp, crayfish and lobsters. ARNOTT1998 for the flip. Tiring: to check a reference | Established. Shown in the brown shrimp |
+| Finding food and each other by scent with the antennae | Crustacean chemical sensing. CHEMO2020 | Established. Reference to check |
 | Molting, then hiding while soft | Crustacean biology | Established. To check a reference |
 | Grooming the antennae | BARR2008 | Shown in a prawn |
 | Fear: freezing, hiding, avoiding a place where something bad happened | LSE2021, ELWOOD2009 | Shown in crabs and hermit crabs. Less studied in shrimp |
 | Staying wary for a while after a fright | FOSSAT2014 | Shown in crayfish. To check |
 | Preferring some foods | Common in feeding studies | To check a reference |
 | Living in groups | Whiteleg shrimp gather in groups | To check a reference |
-| Burrowing in sand by day, active at night | Common in the shrimp family. Strength in whiteleg shrimp | To check |
+| Burrowing in sand by day, active at night | Common in the shrimp family. Strength in whiteleg shrimp: ACTIVITY, SUBSTRATE | To check |
 | Three named companions with lasting bonds | None for this species | Design choice |
 | Fear easing beside a companion | None for shrimp | Design choice |
 | Eating only algae and plant matter | Real shrimp also eat small animals | Design choice, required (D7) |
@@ -62,11 +71,11 @@ Draft texts in both languages. Each unlocks from the event listed.
 - EN: A shrimp's antennae are covered in sensors that taste the water. It can follow a trail to food, or to another shrimp, in the dark.
 - FR: Les antennes d'une crevette sont couvertes de capteurs qui goûtent l'eau. Elle peut suivre une piste jusqu'à sa nourriture, ou jusqu'à une autre crevette, dans le noir.
 
-**2. The tail flip / Le coup de queue.** Unlocks: third tail flip. Source: to check.
+**2. The tail flip / Le coup de queue.** Unlocks: third tail flip. Source: ARNOTT1998 for the flip, in the brown shrimp. To check: "faster than most hunters can follow" and "tiring" each need a source, or the wording changes.
 - EN: One snap of the tail throws a shrimp backward faster than most hunters can follow. It is tiring, so it is kept for emergencies.
 - FR: D'un coup de queue, une crevette se projette en arrière plus vite que la plupart des chasseurs. C'est épuisant, alors elle le garde pour les urgences.
 
-**3. Fear / La peur.** Unlocks: the first time fear rises and settles again. Sources: LSE2021, ELWOOD2009.
+**3. Fear / La peur.** Unlocks: the first time fear rises and settles again. Sources: LSE2021, ELWOOD2009. To check: ELWOOD2009 supports the second half (giving up a shelter). The first half (avoiding a place) needs its own source. MAGEE2013 is proposed.
 - EN: Crabs and hermit crabs learn to avoid a place where something hurt them, and will give up a good shelter to stay away from it.
 - FR: Les crabes et les bernard-l'ermite apprennent à éviter un endroit où quelque chose leur a fait mal, quitte à abandonner un bon abri.
 
@@ -121,11 +130,11 @@ Short notes on places and creatures. All **to check** before release.
 Second person, present tense, from inside the body. French uses "tu". The player's shrimp is female, which fits both the French word and the spawning at the end.
 
 Rules:
-- Twelve words at most. One line at a time. At least 20 seconds between lines.
+- Twelve words at most. One line at a time. At least 20 seconds between lines. Lines have two weights (T33): a "must" line waits its turn, any other is dropped if a line showed in the last 20 seconds. Doc 13 lists them.
 - Senses and body first. No facts, no numbers, no opinions.
 - Never the word "shrimp" as a category. The narration does not know it is a shrimp.
 
-Samples:
+Samples. The whole script is in doc 13, and its wording wins over these lines:
 
 | Moment | English | Français |
 |--------|---------|----------|

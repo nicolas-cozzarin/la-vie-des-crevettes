@@ -1,6 +1,6 @@
 # 08. Roadmap
 
-Status: draft 0.2, 2026-11-13. The author wants the game playable as soon as possible (D5), so it ships in stages. The first public link carries two chapters and every core system. Later releases add chapters.
+Status: draft 0.3, 2026-11-14. The author wants the game playable as soon as possible (D5), so it ships in stages. The first public link carries two chapters and every core system. Later releases add chapters.
 
 Time figures are guesses for one person working with Claude Code. Treat them as rough.
 
@@ -16,7 +16,23 @@ Time figures are guesses for one person working with Claude Code. Treat them as 
 
 ## Release 0.1, step by step
 
-Progress on 2026-11-13: step 0 is merged and published. Steps 1 and 2 are built. The gate at the end of step 2 is for the author to judge by playing.
+Progress on 2026-11-14: steps 0 to 2 are merged and published. The author played them and passed the gate at the end of step 2. The design is written down in depth in docs 10 to 16. Step 3 is next.
+
+Before a step, read [15-implementation-guide.md](15-implementation-guide.md): it lists, for each step below, the documents to read, the files to add, what they expose, the tests to write and what usually goes wrong.
+
+| Step | Read |
+|------|------|
+| 3 The mangrove | 11, 14, 04 |
+| 4 Feelings | 10, 14 (expressions) |
+| 5 Food and scent | 10 (hunger, curiosity), 11 (foods, ribbons) |
+| 6 Other shrimp | 10 (other shrimp), 12 (companion page), 13 (companion lines) |
+| 7 The bird | 10 (threats) |
+| 8 A life with a shape | 12 (story steps), 13, 11 (Drift) |
+| 9 Journal, challenges, achievements | 12, 13 |
+| 10 Sound | 05, 10 (sound per mood) |
+| 11 Finish | 03, 13 (menus), 07 |
+
+Commit and push at the end of every part of a step, not only at the end of the step. A step's work was once lost when a session ended before a push (doc 16).
 
 Each step is one working session with Claude Code. Start a session with: "Read CLAUDE.md, then do step N of docs/08-roadmap.md." A step is finished when its checks pass and it is merged to `main`, which publishes it.
 

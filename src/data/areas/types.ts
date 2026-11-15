@@ -17,7 +17,11 @@ export interface Zone {
 /** An obstacle and the image drawn for it. */
 export type ObstacleDef = Obstacle & {
   image: string;
-  /** Radians. Round things may be turned so that no two look alike. */
+  /**
+   * Radians. Light is painted into the pictures, from the upper left, so a
+   * picture is turned by half a radian at most. For another direction, use
+   * another picture of the same thing.
+   */
   rotation?: number;
 };
 
@@ -42,6 +46,9 @@ export interface GroundPatchDef {
 /**
  * A strip of the area's edge. Its image repeats along the edge, with its
  * solid part toward the outside. The strip stops the shrimp to `depth`.
+ * A strip is cut square where it ends: an end the player can see needs a
+ * round obstacle over it, such as `mangrove.clump`. Strips are drawn under
+ * obstacles.
  */
 export interface WallDef {
   image: string;
@@ -155,7 +162,10 @@ export interface LightDef {
   dapple?: string;
   /** How strong the dapple is, from 0 to 1. */
   dappleStrength?: number;
-  /** An image stretched over the view and centred on the shrimp. */
+  /**
+   * An image centred on the shrimp and drawn at twice the size of the view,
+   * so that it still covers the screen when the shrimp is near its edge.
+   */
   murk?: string;
 }
 

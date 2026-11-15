@@ -1,6 +1,6 @@
 # 09. Decisions
 
-Status: 2026-11-14. One row per decision. Change a decision here first, then in the document it affects. The reasons behind the main decisions are in [16-history.md](16-history.md).
+Status: 2026-11-15. One row per decision. Change a decision here first, then in the document it affects. The reasons behind the main decisions are in [16-history.md](16-history.md).
 
 - **Decided**: the author chose it.
 - **Proposed**: Claude's default. Stands until the author says otherwise.
@@ -102,6 +102,10 @@ All proposed. Say so if any is wrong.
 | T40 | After the net has passed, a cloud of stirred silt hangs for 20 s. Nothing else is left behind, and every companion is found again | D4 and the hard rule that the net takes no one |
 | T41 | A page, `atelier.html`, shows every picture without starting the game. It is published beside the game and not linked from it | The author can look at the art on the live site. A painter can be checked without playing |
 | T42 | The first 10 s of Drift have no feeding, and the larva changes shape twice on the way | The youngest larvae live on their yolk (FAO). The art direction already asks for two looks |
+| T43 | A mangrove root is painted as a thick limb that comes down and ends in the mud, with fine roots at its end. There are six pictures of it, and the area data turns a picture by half a radian at most | As a round foot it read as a stone. Light is painted into each picture, so turning one far would put its light on the wrong side |
+| T44 | The mud bank runs along the whole top of the mangrove. A clump of roots, `mangrove.clump`, stands at each side of the creek mouth | An edge strip is cut square where it ends. The bank's ends are now outside the area, and the clumps cover the two ends that can be seen |
+| T45 | The murk is centred on the shrimp and drawn at twice the size of the view. It is clear to 3 BL and thick by 8.5 BL | At the size of the view it left a bare band whenever the shrimp was not at the centre of the screen |
+| T46 | In the mangrove data: the sunken branch is 12 BL long and its zone is 4700, 3000, 1200, 800. Nacre rests at the edge of her leaf. The landing tangle is at (1560, 1860) | Found while composing the scenes: the branch did not fit its zone, the leaf hid Nacre, and the tangle covered the first algae |
 
 ## Still needed from the author
 

@@ -1,6 +1,6 @@
 # 15. Implementation guide
 
-Status: draft 0.1, 2026-11-14. For whoever builds the remaining steps of [08-roadmap.md](08-roadmap.md). It says what exists, which patterns to keep, and for each step which files to add, what they expose, which tests to write and what usually goes wrong.
+Status: draft 0.2, 2026-11-15. For whoever builds the remaining steps of [08-roadmap.md](08-roadmap.md). It says what exists, which patterns to keep, and for each step which files to add, what they expose, which tests to write and what usually goes wrong.
 
 The design is settled in docs 01 to 14. This document adds no rules of play. If something here disagrees with those documents, they are right.
 
@@ -16,7 +16,7 @@ The design is settled in docs 01 to 14. This document adds no rules of play. If 
 
 ## What exists
 
-After steps 0 to 2 and the art and design work of 2026-11-14.
+After steps 0 to 2 and the art and design work of 2026-11-14 and 15.
 
 | Path | What it is |
 |------|------------|
@@ -32,14 +32,21 @@ After steps 0 to 2 and the art and design work of 2026-11-14.
 | `src/core/i18n/`, `src/i18n.ts`, `src/locales/` | `t('key', params)` |
 | `src/core/random.ts` | `seededRandom` |
 | `src/data/tuning.ts` | `MOTION`, `FRAME`, `CAMERA`, `SHADOW` |
-| `src/data/areas/` | `types.ts`, `sandFlat.ts` (a test area), and area data as it is added |
-| `src/art/` | Painters and `ensureTexture`. See doc 14 |
-| `src/atelier/`, `atelier.html` | The page that shows the art |
+| `src/core/world/kinds.ts` | `FOOD_KINDS`, the closed list of foods, and `AREA_IDS` |
+| `src/core/feelings/mood.ts` | `MOODS` and the `Mood` type. Step 4 adds `pickMood` to this file |
+| `src/data/areas/types.ts` | `AreaDef` in full: ground patches, edge strips, obstacles, blocks, cover, food, landmarks, creatures, other shrimp, currents, zones, triggers, exits, light |
+| `src/data/areas/mangrove.ts` | The whole of chapter 1 as data. Nothing loads it yet |
+| `src/data/areas/sandFlat.ts` | The test area the game runs in today |
+| `src/art/painters/` | Every painter, by family. `index.ts` lists them all as `PAINTERS` |
+| `src/art/TextureFactory.ts` | `ensureTexture(scene, name)` |
+| `src/art/fit.ts` | `imageFit(name)`: which part of a picture is solid, which pictures are tiles, cover or light |
+| `src/art/expressions.ts` | `RigExpression`, `RigLook`, `MOOD_EXPRESSIONS`. `ShrimpRig` does not take them yet |
+| `src/atelier/`, `atelier.html` | The page that shows the art. `scene.ts` draws an area from its data and is the model for the area loader. `stillShrimp.ts` draws a shrimp at rest from an expression |
 | `src/entities/ShrimpRig.ts` | The shrimp drawn from parts |
 | `src/scenes/` | Boot, Title, Play, Hud, Pause, Controls |
 | `src/platform/` | The only code that touches the browser's keyboard and storage |
 | `src/ui/` | Buttons, menu list, text styles |
-| `tests/unit/`, `tests/content/`, `tests/e2e/` | Vitest and Playwright |
+| `tests/unit/`, `tests/content/`, `tests/e2e/` | Vitest and Playwright. `tests/content/areas.test.ts` checks every area file: images have painters, things are inside the area and not inside each other, strip ends are closed |
 
 ## Patterns to keep
 
@@ -119,7 +126,9 @@ export type GameEvents = {
 
 Documents: 11 (the map and the things), 14 (images), 04.
 
-What is already there: every mangrove painter, `src/data/areas/mangrove.ts` with the full layout, and the area types in `src/data/areas/types.ts`.
+What is already there: every mangrove painter, `src/data/areas/mangrove.ts` with the full layout, the area types in `src/data/areas/types.ts`, `src/art/fit.ts`, and a picture of the result. Open `atelier.html?show=scenes` before writing a line: the game must look like those ten views. `atelier.html?view=x,y` shows any other place.
+
+`src/atelier/scene.ts` draws an area from its data on a plain canvas. `AreaLoader` does the same with Phaser objects. The sizing rules are the table "From data to picture" in doc 14. Read `scene.ts` beside it.
 
 Add:
 
@@ -136,12 +145,18 @@ Notes:
 - Hiding: while Hide is held and cover is within 1.5 BL, feed `ShrimpMotion` an input that walks it to the nearest point under the cover, then hold it there. Do not teleport.
 - Cover fades to 40% over 0.3 s while the player's centre is under it.
 - The ground is one `TileSprite` the size of the view, as now. Ground patches such as the sandy mud at the creek mouth are large images with soft edges laid over it at depth 1.
-- The murk is an image that follows the camera, not the world.
+- An edge strip is one `TileSprite` per `WallDef`, `to - from` long and `depth / solid` thick, scaled by `depth / (solid × image height)`, turned so that the top of the image is on the outside. Set its tile offset so that the pattern starts at the edge's own start, not at `from`. For collision, a strip is a rectangle `depth` thick: add it to the obstacles handed to `moveCircle`.
+- Draw order inside depth 10: food, ground landmarks, edge strips, obstacles. The root clumps at the creek mouth stand over the ends of the left strips.
+- `blocks` are solid shapes with no picture: the part of the sunken branch that lies on the mud. Add them to collision and draw nothing.
+- The murk is an image that follows the shrimp, not the world: centred on the shrimp, twice the size of the view, at depth 60. It must still cover the screen when the camera is held at the area's edge and the shrimp is off centre.
+- The dapple is a `TileSprite` the size of the view at depth 50 with the SCREEN blend and alpha `dappleStrength`. Slide its tile position slowly.
+- Roots are turned by the `rotation` in the data and no further. Their light is painted in.
+- The crabs, snails and small fish of the data file are drawn in this step as still images, by the rules in doc 14. They start to move in step 5.
 - Remove `sandFlat` from the game once the mangrove loads. Keep the file for the unit tests if they use it.
 
 Tests: `nearestCover` picks the nearest and respects the limit. The activity moves `free` to `hiding` only within range, and a tail flip leaves cover. Zones report enter once. Browser: the shrimp cannot pass through a root, and holding Hide near a tangle ends with `__lvdc.player().activity === 'hiding'`.
 
-Goes wrong: cover drawn below the shrimp. Depth is `DEPTH.cover`, above `bedAnimals`. Tile seams when the ground tile is scaled by a non-integer. Hundreds of scatter images each with its own tint: fine, but do not give each its own filter.
+Goes wrong: cover drawn below the shrimp. Depth is `DEPTH.cover`, above `bedAnimals`. An edge strip turned the wrong way round, with its dark mass toward the inside: check each of the four sides against the map scene. A bare band at the side of the screen near the area's edge: the murk was sized to the view. Tile seams when the ground tile is scaled by a non-integer. Hundreds of scatter images each with its own tint: fine, but do not give each its own filter.
 
 ## Step 4. Feelings
 
@@ -150,12 +165,12 @@ Document: 10, all of it. 14 for the expressions.
 | File | Job |
 |------|-----|
 | `src/core/feelings/FeelingsModel.ts` | The five values, stimuli, the per-step update, conditions |
-| `src/core/feelings/mood.ts` | `pickMood`, with enter and leave levels and the two timers |
-| `src/core/feelings/types.ts` | `Feelings`, `Mood`, `Condition`, `StimulusKind`, `FeelingsContext` |
+| `src/core/feelings/mood.ts` | Exists with `MOODS` and `Mood`. Add `pickMood`, with enter and leave levels and the two timers |
+| `src/core/feelings/types.ts` | `Feelings`, `Condition`, `StimulusKind`, `FeelingsContext`. `Mood` stays in `mood.ts` |
 | `src/core/gameEvents.ts` | The event list above |
-| `src/data/expressions.ts` | The table of doc 14: one `RigExpression` per mood, and the condition changes |
+| `src/art/expressions.ts` | Exists with the table of doc 14: one `RigExpression` per mood. Add the condition changes |
 | `src/systems/MoodPresenter.ts` | Edges, colour and view from the player's mood |
-| `src/entities/ShrimpRig.ts` | Takes an expression and a look. Eases every channel |
+| `src/entities/ShrimpRig.ts` | Takes an expression and a look. Eases every channel. `src/atelier/stillShrimp.ts` already draws each expression held still: the moving rig must pass through those same postures. Compare with `atelier.html?show=moods` |
 
 ```ts
 export interface FeelingsContext {

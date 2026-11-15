@@ -33,6 +33,8 @@ Everything since follows from these lines.
 | 2026-11-13 | Step 3 was begun: mangrove data, painters and a loader. The working session ended before any of it was pushed, and that work was lost |
 | 2026-11-14 | The author played the published build and found that it works well |
 | 2026-11-14 | The author asked for the design to be written down in far more depth, and for the art to be made before the remaining rules, so that later sessions can build from the documents and the pictures alone. Docs 10 to 16 and the first large set of painters come from that |
+| 2026-11-14 | Docs 10 to 16 were merged (pull request 4). Seventeen questions were put to the author, each with a default |
+| 2026-11-15 | The art for chapter 1: the atelier page, the shared painting tools, every mangrove picture, the fiddler crab, the snail, the small fish, the bird's parts, the effects, the mangrove's data file with the full area types, and ten composed scenes of the mangrove. The scenes showed what the sheets had not: root feet that read as stones, a murk that left a bare band, edge strips cut square at their ends, a leaf that hid Nacre, a snail under the grazing shrimp's mouth. Each was corrected (T43 to T46) |
 
 ## Why the main choices were made
 
@@ -92,6 +94,9 @@ All proposed, for the author to confirm. Listed in doc 09 as T24 onward.
 - **The engine's frame smoothing.** It hid behind "the game feels slow on this machine".
 - **Judging feel in a headless browser.** It runs at about 7 frames a second. Screenshots show the look. Only a person playing can judge the feel.
 - **Phaser 3 habits.** Phaser 4 changed effects, masks and tint. Its own guides are in `node_modules/phaser/skills/`.
+- **Judging a picture alone.** A root foot looked right on its sheet and read as a stone in the scene. Compose the scene early, from the real data, and look at that.
+- **Painted light and turning.** A picture with light painted in cannot be turned far. Paint several and turn each a little.
+- **A session cut short twice.** Once by its end and once by a usage limit. Both times the work that had been pushed was safe.
 - **A wrong credit.** The organisation mentioned in the first draft had to be removed from twelve files. The rule is now at the top of `CLAUDE.md`.
 
 ## What is still open

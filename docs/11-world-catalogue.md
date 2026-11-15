@@ -1,6 +1,6 @@
 # 11. World catalogue
 
-Status: draft 0.1, 2026-11-14. Every place, object, food and creature in the game: where it is, how big it is, what it looks like from above, what it does. Entries marked **new** are proposals that are not in docs 01 to 09 and wait for the author (see [09-decisions.md](09-decisions.md)). Everything else details what those documents already decided.
+Status: draft 0.2, 2026-11-15. Every place, object, food and creature in the game: where it is, how big it is, what it looks like from above, what it does. Entries marked **new** are proposals that are not in docs 01 to 09 and wait for the author (see [09-decisions.md](09-decisions.md)). Everything else details what those documents already decided.
 
 Read with [04-art-direction.md](04-art-direction.md) for the style, [14-art-production.md](14-art-production.md) for image names and sizes in pixels, and [10-feelings-and-states.md](10-feelings-and-states.md) for how creatures behave when afraid.
 
@@ -126,17 +126,17 @@ The creek mouth on the left is both the way in and the way out. Deeper to the ri
 ```
        0     500   1000  1500  2000  2500  3000  3500  4000  4500  5000  5500  6000
      0 +-----------------------------------------------------------------------+
-       |  mud bank, out of the water: crab burrows                   ##########|
+       |  mud bank, out of the water, along the whole top: crab burrows        |
    500 |####        . . . .   F  crab flat   . . . .        ##    G           #|
        |###    r        a          c  c  c         r    T     r   a   r   r   #|
   1000 |##        T          r                  T                r     T      #|
-       |#   B landing roots       +---------------+        r   H the hollow   #|
+       |@   B landing roots       +---------------+        r   H the hollow   #|
   1500 |      r    a    r         |  D            |    T        r    a    r   #|
        |> A                T      |  the clearing |                   r       #|
   2000 |> creek   S        a      |     (bird)    |   L  N                 r  #|
        |> mouth      r            |               |      E Nacre's      a     #|
   2500 |      r         T         +---------------+   j    leaf    j  r    T  #|
-       |#         ~ ~ ~        l    s    T      T          T       r          #|
+       |@         ~ ~ ~        l    s    T      T          T       r          #|
   3000 |##   ~ ~ ~ ~    L    C leaf bed    l         l                  X X X #|
        |###  I gutter ~       l   p   s     l   p            T     X X X X X  #|
   3500 |#####   ~ ~ ~    ####                 ####       ####    H sunken     #|
@@ -146,7 +146,7 @@ The creek mouth on the left is both the way in and the way out. Deeper to the ri
   #  wall of roots     r  root foot      T  root tangle (cover)   L  floating leaf (cover)
   a  algae film        l  fallen leaf    p  seed pod               s  snail
   c  fiddler crab      N  Nacre          j  young shrimp           S  the player arrives
-  >  way out           ~  gentle current X  sunken branch
+  >  way out           ~  gentle current X  sunken branch          @  root clump
 ```
 
 | Zone | Rectangle (x, y, w, h) | What is there | What happens |
@@ -158,7 +158,7 @@ The creek mouth on the left is both the way in and the way out. Deeper to the ri
 | E. Nacre's leaf | 3900, 1900, 1100, 900 | A large floating leaf, a tangle, two young shrimp | First meeting. Story step: greet a shrimp |
 | F. Crab flat | 1700, 0, 2000, 900 | The mud bank above the waterline and the shallows below it | Fiddler crabs wave on the bank. The player watches from the water |
 | G. Deep roots | 4500, 500, 1400, 2400 | Dense root feet, narrow passages, the richest algae, the darkest murk | The hollow at (5000, 1300): the molt shelter |
-| H. Sunken branch | 5000, 3000, 900, 800 | A fallen branch across the mud | The far corner. Challenge: find it |
+| H. Sunken branch | 4700, 3000, 1200, 800 | A fallen branch across the mud | The far corner. Challenge: find it |
 | I. Gutter | 300, 2700, 1400, 900 | A slightly deeper run with a gentle current and leaves drifting on the surface | The first feel of moving water |
 
 Beats, in order: arrive at A, walk and graze in B, sense, wander to C or D. Entering D after the Sense step starts the bird. Meet Nacre at E. The shell feels tight once the greeting is done and 60 s have passed. Shelter anywhere (the hollow is the natural place) and molt. Then the water at the creek mouth "tastes of salt" and the way out opens.
@@ -169,9 +169,11 @@ Beats, in order: arrive at A, walk and graze in B, sense, wander to C or D. Ente
 |----|------|------|-----------------|------|
 | `mangrove.mud` | Ground | Repeating tile | Warm brown mud `#5C4630`. Soft darker and lighter patches. Fine silt streaks, small pits, scraps of leaf | Still |
 | `mangrove.sandmud` | Ground, creek mouth | Repeating tile | Paler, greyer, grainier. Blends into the mud | Still |
-| `mangrove.root.a`, `.b`, `.c` | Obstacle | 0.7 to 1.5 BL across | The foot of a prop root where it enters the mud: a dark round shape `#3B2A1E`, lit on one side, with a skirt of green-brown algae and a ring of scoured mud. A band of the root's arch leads away from it and fades | Solid. The shrimp slides round it |
+| `mangrove.root.a` to `.f` | Obstacle | 1 to 1.7 BL across | A prop root where it enters the mud: a thick dark limb `#3B2A1E` that comes down from the tree and ends, rounded, in the mud. Fine roots spread from the end. A skirt of green-brown algae and a ring of scoured mud lie round it. The limb fades as it rises toward the tree, out of sight above the water. Six pictures, one for each way the limb can come down | Solid at the rounded end. The shrimp slides round it |
 | `mangrove.root.barnacled` | Obstacle | 1 to 1.5 BL | A root foot with clusters of small pale grey rings: barnacles | Solid. The barnacles are the discovery `creature.barnacles`, **new** |
-| `mangrove.wall` | Obstacle, area edge | Strips | Root feet packed together into a dark mass with no gaps | Solid. Marks the edge of the area |
+| `mangrove.wall` | Obstacle, area edge | Strips | A row of root limbs standing in the mud in front of a dark mass of roots with no gaps | Solid. The left, right and bottom edges |
+| `mangrove.bank` | Obstacle, area edge | A strip along the whole top | The mud bank, out of the water: paler and drier than the bed, with fine cracks. The waterline runs along its foot as a pale broken line | Solid. The fiddler crabs live on it |
+| `mangrove.clump` | Obstacle | 4 BL across | The roots of one tree: a dozen limbs come down all round and stand in a ring, with shade between them | Solid. One stands at each side of the creek mouth, at (120, 1240) and (130, 2770), and closes the end of the edge there |
 | `mangrove.tangle.a`, `.b` | Cover | 5 to 7 BL across | Arching roots crossing each other, seen from above as dark bands with gaps of mud between. Drawn above the shrimp | The shrimp can go under. Fades to 40% while the player is beneath |
 | `mangrove.hollow` | Cover | 8 BL across | A ring of thick roots roofed over, with one opening. Darker inside | The molt shelter. A place: discovery `place.hollow` |
 | `mangrove.leaf.floating.a`, `.b` | Cover | 3.5 to 4.5 BL long | A green leaf on the surface `#6E8B3D`: pointed oval, pale midrib, glossy. Its shadow lies on the mud below, offset | The shrimp can shelter in its shadow. In the gutter it drifts slowly |
@@ -179,10 +181,10 @@ Beats, in order: arrive at A, walk and graze in B, sense, wander to C or D. Ente
 | `food.algaeFilm` | Food | 1.5 to 2.5 BL across | An uneven green-brown film on a root skirt or on the mud, thicker in the middle, with tiny bubbles | 4 s to clear. Fades as it is grazed. Back in 90 s |
 | `mangrove.litter` | Scatter | 0.3 to 1 BL | Leaf scraps, twigs, bits of bark | Still |
 | `thing.seedPod` | Landmark, startle | Standing: 0.5 BL circle. Lying: 3 BL long | A mangrove seedling: a long green-brown pencil, thicker at one end. Standing ones are seen end on, with a long thin shadow | One drops from above with a plop and a ring, and stands in the mud |
-| `thing.sunkenBranch` | Landmark, obstacle and cover | 16 BL long | A grey-brown branch with stubs of side branches, lying across the mud, half sunk at one end, lifted at the other. Algae on top, dark beneath | Solid where it lies on the mud. Cover where it is lifted |
+| `thing.sunkenBranch` | Landmark, obstacle and cover | 12 BL long | A grey-brown branch with stubs of side branches, lying across the mud, half sunk at one end, lifted at the other. Algae on top, dark beneath | Solid where it lies on the mud. Cover where it is lifted |
 | `thing.breathingRoots` | Obstacle field, **new** | Each 0.25 BL. A field 8 by 6 BL | Dozens of dark pegs standing out of the mud, each with a tiny shadow | Solid. A slalom between zones D and G. Discovery |
 | `light.dapple` | Effect | Repeating tile | Warm patches `#F2D58A`, soft-edged, like light through leaves | Slides and breathes slowly |
-| `mangrove.murk` | Effect | Screen | Brown fog that thickens with distance from the shrimp | Follows the view |
+| `mangrove.murk` | Effect | Screen | Brown fog that thickens with distance from the shrimp: clear to 3 BL, thick by 8.5 BL | Centred on the shrimp and drawn at twice the size of the view, so it covers the screen when the shrimp is near its edge |
 
 ### Mangrove creatures
 
@@ -211,7 +213,7 @@ Beats, in order: arrive at A, walk and graze in B, sense, wander to C or D. Ente
 - Look: slim silver-olive spindles with a pale stripe, in mid-water, their shadows on the mud below.
 - Does: holds among the roots, all facing into the current. Bursts apart at a threat cue or a tail flip, and regroups.
 
-**Young shrimp** `shrimp.npc`. Two unnamed juveniles in zone E, and Nacre.
+**Young shrimp** `shrimp.npc`. Two unnamed juveniles in zone E, and Nacre. Nacre rests at (4590, 2250), at the edge of the floating leaf and not beneath it: a leaf on the surface is not see-through, and she must be seen.
 
 **Wading bird** `creature.bird`. Never seen whole.
 

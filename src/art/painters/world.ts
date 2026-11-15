@@ -1,29 +1,21 @@
 import { seededRandom } from '../../core/random';
-import { mix, rgba, speckle, tracePath, type Painter, type Point, type Rgb } from '../paint';
+import {
+  blob,
+  mix,
+  rgba,
+  speckle,
+  tracePath,
+  wrapped,
+  type Painter,
+  type Point,
+  type Rgb,
+} from '../paint';
 
 const SAND: Rgb = [227, 213, 173];
 const SAND_LIGHT: Rgb = [244, 234, 204];
 const SAND_DARK: Rgb = [196, 178, 134];
 const GRAIN_DARK: Rgb = [122, 102, 72];
 const ALGAE: Rgb = [110, 139, 61];
-
-/** Draw something at a point and again wherever it crosses the tile's edge, so the tile repeats cleanly. */
-function wrapped(
-  size: number,
-  x: number,
-  y: number,
-  reach: number,
-  draw: (x: number, y: number) => void,
-): void {
-  for (const offsetX of [-size, 0, size]) {
-    for (const offsetY of [-size, 0, size]) {
-      const px = x + offsetX;
-      const py = y + offsetY;
-      if (px < -reach || px > size + reach || py < -reach || py > size + reach) continue;
-      draw(px, py);
-    }
-  }
-}
 
 /** Sand seen through shallow water. Repeats in both directions. */
 const sand: Painter = {
@@ -90,23 +82,6 @@ const sand: Painter = {
     speckle(ctx, random, 900, whole, [1, 2.2], [84, 74, 62], [0.15, 0.35]);
   },
 };
-
-function blob(
-  random: () => number,
-  cx: number,
-  cy: number,
-  radius: number,
-  wobble: number,
-): Point[] {
-  const points: Point[] = [];
-  const count = 13;
-  for (let index = 0; index < count; index++) {
-    const angle = (index / count) * Math.PI * 2;
-    const r = radius * (1 - wobble + random() * wobble * 2);
-    points.push({ x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r });
-  }
-  return points;
-}
 
 /** How much of a rock image's half-width the rock itself fills. */
 export const ROCK_FILL = 0.84;

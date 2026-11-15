@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Atelier · La vie des crevettes</title>
+    <link rel="icon" href="data:," />
+    <style>
+      :root {
+        --paper: #f6f1e4;
+        --ink: #2a2a2a;
+        --ink-soft: #66625a;
+        --line: #d9d0ba;
+      }
+      html,
+      body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: system-ui, 'Segoe UI', Helvetica, Arial, sans-serif;
+      }
+      header {
+        padding: 20px 24px 8px;
+      }
+      h1 {
+        margin: 0 0 4px;
+        font:
+          600 26px Georgia,
+          'Times New Roman',
+          serif;
+      }
+      header p {
+        margin: 0;
+        color: var(--ink-soft);
+        max-width: 70ch;
+      }
+      nav {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 14px;
+        padding: 10px 24px;
+        background: var(--paper);
+        border-bottom: 1px solid var(--line);
+      }
+      nav a {
+        color: var(--ink);
+        text-decoration: none;
+        border-bottom: 1px solid var(--ink-soft);
+      }
+      nav a.here {
+        font-weight: 600;
+        border-bottom-width: 2px;
+      }
+      main {
+        padding: 8px 24px 60px;
+      }
+      h2 {
+        margin: 28px 0 4px;
+        font:
+          600 20px Georgia,
+          'Times New Roman',
+          serif;
+      }
+      .note {
+        margin: 0 0 12px;
+        color: var(--ink-soft);
+        max-width: 80ch;
+      }
+      .sheet {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        align-items: flex-end;
+      }
+      figure {
+        margin: 0;
+      }
+      figure canvas {
+        display: block;
+        border-radius: 4px;
+        max-width: 100%;
+        height: auto;
+      }
+      figcaption {
+        margin-top: 4px;
+        font-size: 13px;
+        color: var(--ink-soft);
+      }
+      figcaption b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .scene {
+        margin-bottom: 26px;
+      }
+      h3 {
+        margin: 18px 0 2px;
+        font:
+          600 17px Georgia,
+          'Times New Roman',
+          serif;
+      }
+      .scene canvas {
+        display: block;
+        max-width: 100%;
+        height: auto;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Atelier</h1>
+      <p>
+        Every picture in La vie des crevettes, painted by code. Sheets show each picture alone.
+        Scenes put them together as they will sit in the game. This page is not the game.
+      </p>
+    </header>
+    <nav id="nav"></nav>
+    <main id="main"></main>
+    <script type="module" src="./src/atelier/main.ts"></script>
+  </body>
+</html>

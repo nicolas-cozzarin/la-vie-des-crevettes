@@ -8,6 +8,10 @@ export default defineConfig({
     target: 'es2022',
     // Phaser alone is larger than Vite's default warning size.
     chunkSizeWarningLimit: 1800,
+    rolldownOptions: {
+      // Two pages: the game, and the atelier that shows the art (docs/14-art-production.md).
+      input: { main: 'index.html', atelier: 'atelier.html' },
+    },
   },
   test: {
     include: ['tests/unit/**/*.test.ts', 'tests/content/**/*.test.ts'],

@@ -6,7 +6,7 @@ A calm browser game in which you live the life of a whiteleg shrimp: drifting to
 
 A personal project, made to help people see shrimp as animals that feel. The game never preaches. It lets you be one for a while.
 
-**Status:** steps 0 to 2 of the [roadmap](docs/08-roadmap.md) are built. You can move a code-drawn shrimp around a patch of sand: walk, swim, dart with a tail flip. Every key can be changed in Controls. The rest of the game is written down in detail in documents 10 to 16, ready to build: food, feelings, other shrimp and the story come next. The pictures for the first chapter, the mangrove, are painted: open `atelier.html` beside the game to see them.
+**Status:** steps 0 to 2 of the [roadmap](docs/08-roadmap.md) are built. You can move a code-drawn shrimp around a patch of sand: walk, swim, dart with a tail flip. Every key can be changed in Controls. The rest of the game is written down in detail in documents 10 to 16, ready to build: food, feelings, other shrimp and the story come next. Documents 17 and 18 propose a much larger world and more to learn by playing. Document 19 says how to change anything without breaking the rest. The pictures for the first chapter, the mangrove, and part of the lagoon are painted: open `atelier.html` beside the game to see them.
 
 ## The documents
 
@@ -28,6 +28,9 @@ A personal project, made to help people see shrimp as animals that feel. The gam
 | 14 | [Art production](docs/14-art-production.md) | How pictures are painted by code, the shrimp's postures by mood, the list of every image |
 | 15 | [Implementation guide](docs/15-implementation-guide.md) | What exists, the patterns to keep, and the files and tests of each remaining step |
 | 16 | [History and reasons](docs/16-history.md) | How the project got here, and why each main choice was made |
+| 17 | [The long coast](docs/17-the-long-coast.md) | Proposed: a much larger world to explore after the story |
+| 18 | [Learning by playing](docs/18-learning-by-playing.md) | Proposed: how the player learns shrimp biology and behaviour through play, each fact with its source |
+| 19 | [Changing things safely](docs/19-changing-things-safely.md) | Where each thing lives, what else follows a change, and the checks that say what broke |
 | | [CLAUDE.md](CLAUDE.md) | Standing instructions for Claude Code |
 | | [CREDITS.md](CREDITS.md) | Template for crediting every asset |
 
@@ -55,6 +58,7 @@ npm test           unit and content tests
 npm run build      type-check and build to dist/
 npm run test:e2e   browser test, after a build
 npm run lint       lint and format check
+npm run check      lint, tests and build together
 ```
 
 Every push to `main` publishes the game to GitHub Pages at https://nicolas-cozzarin.github.io/la-vie-des-crevettes/.

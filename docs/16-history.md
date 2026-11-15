@@ -35,6 +35,7 @@ Everything since follows from these lines.
 | 2026-11-14 | The author asked for the design to be written down in far more depth, and for the art to be made before the remaining rules, so that later sessions can build from the documents and the pictures alone. Docs 10 to 16 and the first large set of painters come from that |
 | 2026-11-14 | Docs 10 to 16 were merged (pull request 4). Seventeen questions were put to the author, each with a default |
 | 2026-11-15 | The art for chapter 1: the atelier page, the shared painting tools, every mangrove picture, the fiddler crab, the snail, the small fish, the bird's parts, the effects, the mangrove's data file with the full area types, and ten composed scenes of the mangrove. The scenes showed what the sheets had not: root feet that read as stones, a murk that left a bare band, edge strips cut square at their ends, a leaf that hid Nacre, a snail under the grazing shrimp's mouth. Each was corrected (T43 to T46) |
+| 2026-11-15 | The art was merged (pull request 5), though one browser check still expected ten scenes after four Drift scenes were added. The author answered nine questions, asked for a world as large as possible to explore after the story, for as much shrimp biology, behaviour and suffering as possible to be learned through play, true to the science and fun, and for guardrails so that things can be changed later without breaking others. Docs 17 (the long coast), 18 (learning by playing) and 19 (changing things safely) were written. Thirty references were looked up and thirteen read. The lagoon's plants, rocks, edges and light were painted. Content tests now tie the art list, the documents, the script and the hard rules to the code. The licence is MIT |
 
 ## Why the main choices were made
 
@@ -98,6 +99,9 @@ All proposed, for the author to confirm. Listed in doc 09 as T24 onward.
 - **Painted light and turning.** A picture with light painted in cannot be turned far. Paint several and turn each a little.
 - **A session cut short twice.** Once by its end and once by a usage limit. Both times the work that had been pushed was safe.
 - **A wrong credit.** The organisation mentioned in the first draft had to be removed from twelve files. The rule is now at the top of `CLAUDE.md`.
+- **A failing check merged.** A pull request was merged with one red check, so `main` carried a wrong test until the next one. Doc 19 says how to make GitHub refuse such a merge.
+- **Facts from memory.** Two design ideas were the wrong way round until the papers were read: shallow water is poorest in oxygen at dawn, not at midday, and mangrove loss figures had been swapped. Read the source before writing the rule.
+- **A document that drifts from the code.** The art list in doc 14 still said "to paint" for pictures already built. A test now reads it.
 
 ## What is still open
 

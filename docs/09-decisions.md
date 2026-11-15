@@ -56,7 +56,7 @@ Status: 2026-11-15, with the author's answers of that day. One row per decision.
 | D37 | Size of the world | As large as possible, with as much to explore and find as possible, above all after the story. Proposed form: the long coast, a map of places that grows release by release. See doc 17 | Goal decided 2026-11-15. Form proposed | 17 |
 | D38 | Learning | The player learns as much as possible about shrimp biology, behaviour and suffering during the story, by playing. Each item rests on a source. Play still never preaches (D3). Proposed form: doc 18 | Goal decided 2026-11-15. Form proposed | 18 |
 | D39 | What people do to shrimp | How far the game goes on farms and fishing. Four levels are laid out in doc 18. Proposed: level 3, a pond seen from outside and never explained, with neutral facts in the journal | Open | 18 |
-| D40 | Guardrails | It must be easy to change things later without breaking others. Each kind of change has one place to make it and a test that says what broke. See doc 19 | Goal decided 2026-11-15 | 19 |
+| D40 | Guardrails | It must be easy to change things later without breaking others. Each kind of change has one place to make it and a test that says what broke. See doc 19. Built: content tests for the art list, the documents, the script and the hard rules, and `npm run check`. The coast's mirror setting comes with step 3 | Decided 2026-11-15 | 19 |
 
 ## Smaller choices made while drafting
 

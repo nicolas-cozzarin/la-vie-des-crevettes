@@ -433,7 +433,7 @@ Each accepted item moves into the documents that already hold its kind, and this
 
 | Goes to | What |
 |---------|------|
-| Doc 09 | One row per accepted item, T47 onward |
+| Doc 09 | One row per accepted item, numbered after the last T row |
 | Doc 07 | New sources, new cards, the "left out" list if level 2 or more |
 | Doc 10 | The rules above, the new conditions `asleep`, `rested`, `breathless`, `unsteady` |
 | Doc 11 | Ground kinds, thin water, the pond |

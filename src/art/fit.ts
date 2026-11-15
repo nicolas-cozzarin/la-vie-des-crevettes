@@ -56,6 +56,9 @@ const FIT: Readonly<Record<string, ImageFit>> = {
   'drift.shaft': { light: true },
 };
 
+/** Every image with a row above. The content tests check each names a painter. */
+export const FITTED_IMAGES: readonly string[] = Object.keys(FIT);
+
 export function imageFit(name: string): ImageFit {
   return FIT[name] ?? {};
 }

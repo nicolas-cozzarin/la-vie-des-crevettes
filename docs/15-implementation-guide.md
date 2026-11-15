@@ -153,8 +153,9 @@ Notes:
 - Roots are turned by the `rotation` in the data and no further. Their light is painted in.
 - The crabs, snails and small fish of the data file are drawn in this step as still images, by the rules in doc 14. They start to move in step 5.
 - Remove `sandFlat` from the game once the mangrove loads. Keep the file for the unit tests if they use it.
+- Build `WORLD.mirror` and `mirrorArea` as doc 19 says under "Turning the coast round", and pass every area through it in the loader and the atelier. The setting stays `false`. It lets the author turn the coast later without touching the data (T24).
 
-Tests: `nearestCover` picks the nearest and respects the limit. The activity moves `free` to `hiding` only within range, and a tail flip leaves cover. Zones report enter once. Browser: the shrimp cannot pass through a root, and holding Hide near a tangle ends with `__lvdc.player().activity === 'hiding'`.
+Tests: `nearestCover` picks the nearest and respects the limit. `areas.test.ts` runs on every area as written and mirrored. The activity moves `free` to `hiding` only within range, and a tail flip leaves cover. Zones report enter once. Browser: the shrimp cannot pass through a root, and holding Hide near a tangle ends with `__lvdc.player().activity === 'hiding'`.
 
 Goes wrong: cover drawn below the shrimp. Depth is `DEPTH.cover`, above `bedAnimals`. An edge strip turned the wrong way round, with its dark mass toward the inside: check each of the four sides against the map scene. A bare band at the side of the screen near the area's edge: the murk was sized to the view. Tile seams when the ground tile is scaled by a non-integer. Hundreds of scatter images each with its own tint: fine, but do not give each its own filter.
 

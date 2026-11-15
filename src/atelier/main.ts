@@ -6,6 +6,7 @@ import {
   MOOD_LIST,
   MOOD_NOTES,
   companionCanvases,
+  driftCanvases,
   lookAt,
   moodCanvas,
   sceneCanvas,
@@ -115,6 +116,18 @@ function scenes(): HTMLElement {
   return wrap;
 }
 
+function drift(): HTMLElement {
+  const wrap = element('div');
+  for (const view of driftCanvases()) {
+    const block = element('div', undefined, 'scene');
+    block.dataset.scene = `drift-${view.id}`;
+    block.append(element('h3', view.title), element('p', view.note, 'note'));
+    block.append(shown(view.canvas, 1280));
+    wrap.append(block);
+  }
+  return wrap;
+}
+
 function moods(): HTMLElement {
   const wrap = element('div', undefined, 'sheet');
   for (const mood of MOOD_LIST) {
@@ -137,6 +150,12 @@ const sections: Section[] = [
     title: 'Mangrove scenes',
     note: 'Each picture is one screen of the game, drawn from the mangrove data file. Nothing moves here.',
     build: scenes,
+  },
+  {
+    id: 'driftscenes',
+    title: 'Drift scenes',
+    note: 'Chapter 0. The larva is carried from the open sea to the mangrove, and changes shape twice on the way.',
+    build: drift,
   },
   {
     id: 'moods',

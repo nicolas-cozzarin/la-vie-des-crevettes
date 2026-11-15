@@ -17,7 +17,7 @@ ensureTexture(scene, 'mangrove.root.a')
 |------|-------|
 | `src/art/TextureFactory.ts` | `ensureTexture`, for the game |
 | `src/art/painters/index.ts` | `PAINTERS`: every painter by image name. `PAINTER_GROUPS`: the same, by family |
-| `src/art/painters/*.ts` | One file per family: `shrimp`, `world`, `mangrove`, `creatures`, `effects`. `icons` to come |
+| `src/art/painters/*.ts` | One file per family: `shrimp`, `world`, `drift`, `mangrove`, `creatures`, `effects`. `lagoon` and `icons` to come |
 | `src/art/paint.ts` | Shared helpers: colours, washes, `blob`, `speckle`, `patches`, `glow`, `softFill`, `band` for a root or a branch, `traceLeaf`, `wrapped` for tiles, `onLayer` for a part that must fade |
 | `src/art/fit.ts` | `imageFit(name)`: how the solid part of a picture sits inside the picture. See "From data to picture" |
 | `src/art/expressions.ts` | `RigExpression`, `RigLook`, and `MOOD_EXPRESSIONS`, the table below as code |
@@ -261,18 +261,19 @@ This table is the checklist for the art. Update it in the same commit as a paint
 | `fx.speck` | 16 | Built |
 | `fx.ripple` | 256 | Built |
 | `fx.rim` | made in the game from the target's own image | |
-| `scent.food`, `scent.danger`, `scent.unknown` | 512 by 64 | Built. Each has its own shape as well as its own colour: a smooth wave, a zigzag, a row of arcs |
+| `scent.food`, `scent.danger`, `scent.unknown` | 512 by 64 | Built. Each has its own shape as well as its own colour: a smooth wave, a zigzag, a line of loops |
 | `scent.dot` | 48 | Built |
 
 ### Drift
 
 | Name | Size | Status |
 |------|------|--------|
-| `larva.early`, `larva.mid`, `larva.late` | 200 by 120 | To paint |
-| `food.microalgae.a`, `.b`, `.c` | 64 | To paint |
+| `larva.early`, `larva.mid`, `larva.late` | 200 by 120 | Built. Each faces right. The body is about half the image long, so a larva is drawn twice as wide as its length |
+| `food.microalgae.a`, `.b`, `.c` | 64 | Built: a bead, a chain of beads, a disc |
 | `drift.copepod` | 96 | To paint. New |
 | `drift.bell` | 256 | To paint. New |
-| `drift.shaft` | 300 by 900 | To paint |
+| `drift.shaft` | 300 by 900 | Built. Laid on with the SCREEN blend |
+| `drift.rootShadow` | 640 by 200 | Built |
 
 ### Mangrove
 
@@ -370,10 +371,11 @@ A page that shows the art without starting the game. It is how the author looks 
 
 | Section | Address | Shows |
 |---------|---------|-------|
+| Drift scenes | `?show=driftscenes` | Four views of chapter 0, composed by hand because the Drift has no data file yet: the dark, the green, the shafts, the haze. Each shows the larva in the shape it has there |
 | Mangrove scenes | `?show=scenes` | Ten views drawn from `src/data/areas/mangrove.ts`, each the size of the game's screen: arriving, grazing, hidden under a tangle, the bird, meeting Nacre, the crabs, the leaf bed, the hollow, the sunken branch, and a map of the whole area with its zones |
 | The six moods | `?show=moods` | The shrimp held still in each posture of the table above |
 | Telling shrimp apart | `?show=companions` | The player, Brise, Nacre and Écume side by side |
-| Sheets | `?show=shrimp`, `world`, `mangrove`, `creatures`, `effects` | Every painter of a family on the ground colour of its area, with its name and size. Tiles are shown repeated. Cover is shown a second time at 40% |
+| Sheets | `?show=shrimp`, `world`, `drift`, `mangrove`, `creatures`, `effects` | Every painter of a family on the ground colour of its area, with its name and size. Tiles are shown repeated. Cover is shown a second time at 40% |
 | Any place | `?view=x,y` | One screen of the mangrove centred as near that point as the game's camera could be |
 
 The scenes are pictures of how an area should look. They are not the game: nothing moves. But `src/atelier/scene.ts` draws an area from its data by the rules of the next section, and the game's area loader must follow the same rules, so that the game looks like the scenes.

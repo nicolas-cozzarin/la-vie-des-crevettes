@@ -1,5 +1,6 @@
 import { MOOD_EXPRESSIONS, type RigLook } from '../art/expressions';
 import { MOODS, type Mood } from '../core/feelings/mood';
+import { seededRandom } from '../core/random';
 import { mangrove } from '../data/areas/mangrove';
 import { paintImage } from './images';
 import { renderScene, type SceneView } from './scene';
@@ -281,5 +282,175 @@ export function companionCanvases(): { canvas: HTMLCanvasElement; name: string; 
       look: companion.look,
     });
     return { canvas, name: companion.name, note: companion.note };
+  });
+}
+
+interface DriftView {
+  id: string;
+  title: string;
+  note: string;
+  /** Water colour at the left and at the right of the view. */
+  water: [string, string];
+  larva: 'larva.early' | 'larva.mid' | 'larva.late';
+  /** Length of the larva in design pixels. */
+  length: number;
+  motes: number;
+  others: number;
+  shafts: number;
+  shadows: number;
+}
+
+const DRIFT_VIEWS: DriftView[] = [
+  {
+    id: 'dark',
+    title: 'The dark',
+    note: 'The first ten seconds. Almost black water, a few specks, and the larva in its first shape. It cannot eat yet.',
+    water: ['#04121A', '#0B2A3A'],
+    larva: 'larva.early',
+    length: 44,
+    motes: 0,
+    others: 0,
+    shafts: 0,
+    shadows: 0,
+  },
+  {
+    id: 'green',
+    title: 'The green',
+    note: 'Clouds of floating algae, and other larvae. The second shape: a see-through comma.',
+    water: ['#0B2A3A', '#1E5A5C'],
+    larva: 'larva.mid',
+    length: 56,
+    motes: 5,
+    others: 4,
+    shafts: 0,
+    shadows: 0,
+  },
+  {
+    id: 'shafts',
+    title: 'The shafts',
+    note: 'Light comes down from above in slanted bars.',
+    water: ['#1E5A5C', '#3C8478'],
+    larva: 'larva.mid',
+    length: 56,
+    motes: 4,
+    others: 2,
+    shafts: 4,
+    shadows: 0,
+  },
+  {
+    id: 'haze',
+    title: 'The haze',
+    note: 'The water turns the colour of tea, and the shadows of roots cross overhead. The third shape: a shrimp in small.',
+    water: ['#4C7466', '#7A6440'],
+    larva: 'larva.late',
+    length: 70,
+    motes: 2,
+    others: 1,
+    shafts: 0,
+    shadows: 3,
+  },
+];
+
+/** Views of the Drift. There is no data file for it yet: these are composed by hand. */
+export function driftCanvases(): {
+  canvas: HTMLCanvasElement;
+  id: string;
+  title: string;
+  note: string;
+}[] {
+  return DRIFT_VIEWS.map((view, order) => {
+    const random = seededRandom(900 + order);
+    const canvas = document.createElement('canvas');
+    canvas.width = 1920;
+    canvas.height = 1080;
+    const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
+    const water = ctx.createLinearGradient(0, 0, canvas.width, 0);
+    water.addColorStop(0, view.water[0]);
+    water.addColorStop(1, view.water[1]);
+    ctx.fillStyle = water;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.scale(1.4, 1.4);
+    const w = VIEW_W;
+    const h = VIEW_H;
+    const centred = (name: string, x: number, y: number, width: number, turn = 0, alpha = 1) => {
+      const image = paintImage(name);
+      const height = (width * image.height) / image.width;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.translate(x, y);
+      ctx.rotate(turn);
+      ctx.drawImage(image, -width / 2, -height / 2, width, height);
+      ctx.restore();
+    };
+
+    // Shadows of roots far above.
+    for (let index = 0; index < view.shadows; index++) {
+      centred(
+        'drift.rootShadow',
+        w * (0.2 + 0.3 * index),
+        h * (0.3 + random() * 0.4),
+        620,
+        1.2 + random() * 0.5,
+      );
+    }
+    // Specks, in three sizes, show the water.
+    for (let index = 0; index < 150; index++) {
+      const size = [3, 5, 8][index % 3] as number;
+      centred('fx.speck', random() * w, random() * h, size, 0, 0.25 + random() * 0.4);
+    }
+    // Clouds of floating algae.
+    for (let cloud = 0; cloud < view.motes; cloud++) {
+      const cx = w * (0.15 + random() * 0.75);
+      const cy = h * (0.15 + random() * 0.7);
+      const count = 6 + Math.floor(random() * 7);
+      for (let index = 0; index < count; index++) {
+        const name = `food.microalgae.${'abc'[Math.floor(random() * 3)]}`;
+        const angle = random() * Math.PI * 2;
+        const distance = Math.sqrt(random()) * 110;
+        centred(
+          name,
+          cx + Math.cos(angle) * distance,
+          cy + Math.sin(angle) * distance * 0.7,
+          26 + random() * 30,
+          random() * Math.PI * 2,
+        );
+      }
+    }
+    // Other larvae, at the same stage.
+    for (let index = 0; index < view.others; index++) {
+      centred(
+        view.larva,
+        w * (0.1 + random() * 0.8),
+        h * (0.12 + random() * 0.76),
+        view.length * 2 * (0.85 + random() * 0.2),
+        (random() - 0.5) * 1.2,
+        0.85,
+      );
+    }
+    // The player's larva. The water carries it to the right.
+    centred(view.larva, w * 0.4, h * 0.52, view.length * 2, -0.12);
+    // Light from above.
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    for (let index = 0; index < view.shafts; index++) {
+      const image = paintImage('drift.shaft');
+      ctx.drawImage(
+        image,
+        w * (0.08 + 0.24 * index) + random() * 60,
+        -40,
+        240 + random() * 80,
+        h + 80,
+      );
+    }
+    ctx.restore();
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.drawImage(paintImage('fx.vignette'), 0, 0, canvas.width, canvas.height);
+    ctx.save();
+    ctx.globalAlpha = 0.07;
+    ctx.fillStyle = ctx.createPattern(paintImage('fx.grain'), 'repeat') as CanvasPattern;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.restore();
+    return { canvas, id: view.id, title: view.title, note: view.note };
   });
 }

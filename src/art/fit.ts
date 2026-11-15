@@ -46,6 +46,7 @@ const FIT: Readonly<Record<string, ImageFit>> = {
   'mangrove.leaf.floating.b': { cover: true },
   'thing.seedPod.standing': { fill: 0.5 },
   'light.dapple': { tile: 'both', light: true },
+  'drift.shaft': { light: true },
 };
 
 export function imageFit(name: string): ImageFit {

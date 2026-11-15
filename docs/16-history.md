@@ -101,4 +101,4 @@ All proposed, for the author to confirm. Listed in doc 09 as T24 onward.
 
 ## What is still open
 
-See the end of doc 09. The questions the design now turns on are about speech for companions, the form of the free life, the new creatures and objects proposed in doc 11, and the art information the author means to send.
+See the end of doc 09. The author answered nine questions on 2026-11-15. The question the design now turns on is D39: how far the game goes on what people do to shrimp.

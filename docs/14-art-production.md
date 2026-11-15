@@ -242,7 +242,7 @@ Simple rigs, each a few images moved by code. No drawn frames.
 
 ## The manifest
 
-Every image name the game will ask for. **Status**: built, or to paint. **New** marks things that wait for the author. Sizes are in pixels of the image.
+Every image name the game will ask for. **Status**: built, or to paint. **Added** marks things the author accepted on 2026-11-15 (D34). Sizes are in pixels of the image.
 
 This table is the checklist for the art. Update it in the same commit as a painter.
 

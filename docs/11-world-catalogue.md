@@ -1,6 +1,6 @@
 # 11. World catalogue
 
-Status: draft 0.2, 2026-11-15. Every place, object, food and creature in the game: where it is, how big it is, what it looks like from above, what it does. Entries marked **new** are proposals that are not in docs 01 to 09 and wait for the author (see [09-decisions.md](09-decisions.md)). Everything else details what those documents already decided.
+Status: draft 0.2, 2026-11-15. Every place, object, food and creature in the game: where it is, how big it is, what it looks like from above, what it does. Entries marked *added* were proposals that the author accepted on 2026-11-15 (D34 in [09-decisions.md](09-decisions.md)). Everything else details what docs 01 to 09 already decided. The places, creatures and things of the wider world that opens after the story are in [17-the-long-coast.md](17-the-long-coast.md).
 
 Read with [04-art-direction.md](04-art-direction.md) for the style, [14-art-production.md](14-art-production.md) for image names and sizes in pixels, and [10-feelings-and-states.md](10-feelings-and-states.md) for how creatures behave when afraid.
 
@@ -111,8 +111,8 @@ x:   0        1500              5000           7000        8600  9000
 | `larva.late` | The player, zones D and E | 70 px | A miniature shrimp: glassy, with short antennae and a tiny tail fan | Swims steadily |
 | `food.microalgae` | Food | 14 to 36 px | Glowing green: single beads, short chains of beads, small discs. `#9BE564` with a soft halo | Drifts in clouds of 6 to 12. Brightens when the larva is within 1.5 BL. Eaten on touch with a soft chime |
 | `drift.larva` | Creature | 40 to 70 px | Other larvae of the same kind, at the same stage as the player | Drift, pulse, sometimes bump gently. Touching one is the first meeting |
-| `drift.copepod` | Creature, **new** | 30 px | A clear teardrop with two long feelers held out sideways and one red-brown eye spot | Hangs still, then hops a short way. Cannot be eaten or harmed |
-| `drift.bell` | Creature, **new** | 120 to 200 px | A glassy bell seen from above: a pale ring with a faint cross inside | Opens and closes slowly as it drifts. Harmless here. The larva slides around it |
+| `drift.copepod` | Creature, *added* | 30 px | A clear teardrop with two long feelers held out sideways and one red-brown eye spot | Hangs still, then hops a short way. Cannot be eaten or harmed |
+| `drift.bell` | Creature, *added* | 120 to 200 px | A glassy bell seen from above: a pale ring with a faint cross inside | Opens and closes slowly as it drifts. Harmless here. The larva slides around it |
 | `drift.shaft` | Effect | 300 by 1800 | A slanted bar of paler water | Sways slowly |
 | `drift.haze` | Effect | Full height | Brown `#8A6B3F` rising from the right edge | Thickens as the larva travels |
 | `drift.rootShadow` | Effect | 200 to 600 px | Long dark soft bars | Slide across from right to left as the larva passes under them |
@@ -170,7 +170,7 @@ Beats, in order: arrive at A, walk and graze in B, sense, wander to C or D. Ente
 | `mangrove.mud` | Ground | Repeating tile | Warm brown mud `#5C4630`. Soft darker and lighter patches. Fine silt streaks, small pits, scraps of leaf | Still |
 | `mangrove.sandmud` | Ground, creek mouth | Repeating tile | Paler, greyer, grainier. Blends into the mud | Still |
 | `mangrove.root.a` to `.f` | Obstacle | 1 to 1.7 BL across | A prop root where it enters the mud: a thick dark limb `#3B2A1E` that comes down from the tree and ends, rounded, in the mud. Fine roots spread from the end. A skirt of green-brown algae and a ring of scoured mud lie round it. The limb fades as it rises toward the tree, out of sight above the water. Six pictures, one for each way the limb can come down | Solid at the rounded end. The shrimp slides round it |
-| `mangrove.root.barnacled` | Obstacle | 1 to 1.5 BL | A root foot with clusters of small pale grey rings: barnacles | Solid. The barnacles are the discovery `creature.barnacles`, **new** |
+| `mangrove.root.barnacled` | Obstacle | 1 to 1.5 BL | A root foot with clusters of small pale grey rings: barnacles | Solid. The barnacles are the discovery `creature.barnacles`, *added* |
 | `mangrove.wall` | Obstacle, area edge | Strips | A row of root limbs standing in the mud in front of a dark mass of roots with no gaps | Solid. The left, right and bottom edges |
 | `mangrove.bank` | Obstacle, area edge | A strip along the whole top | The mud bank, out of the water: paler and drier than the bed, with fine cracks. The waterline runs along its foot as a pale broken line | Solid. The fiddler crabs live on it |
 | `mangrove.clump` | Obstacle | 4 BL across | The roots of one tree: a dozen limbs come down all round and stand in a ring, with shade between them | Solid. One stands at each side of the creek mouth, at (120, 1240) and (130, 2770), and closes the end of the edge there |
@@ -182,7 +182,7 @@ Beats, in order: arrive at A, walk and graze in B, sense, wander to C or D. Ente
 | `mangrove.litter` | Scatter | 0.3 to 1 BL | Leaf scraps, twigs, bits of bark | Still |
 | `thing.seedPod` | Landmark, startle | Standing: 0.5 BL circle. Lying: 3 BL long | A mangrove seedling: a long green-brown pencil, thicker at one end. Standing ones are seen end on, with a long thin shadow | One drops from above with a plop and a ring, and stands in the mud |
 | `thing.sunkenBranch` | Landmark, obstacle and cover | 12 BL long | A grey-brown branch with stubs of side branches, lying across the mud, half sunk at one end, lifted at the other. Algae on top, dark beneath | Solid where it lies on the mud. Cover where it is lifted |
-| `thing.breathingRoots` | Obstacle field, **new** | Each 0.25 BL. A field 8 by 6 BL | Dozens of dark pegs standing out of the mud, each with a tiny shadow | Solid. A slalom between zones D and G. Discovery |
+| `thing.breathingRoots` | Obstacle field, *added* | Each 0.25 BL. A field 8 by 6 BL | Dozens of dark pegs standing out of the mud, each with a tiny shadow | Solid. A slalom between zones D and G. Discovery |
 | `light.dapple` | Effect | Repeating tile | Warm patches `#F2D58A`, soft-edged, like light through leaves | Slides and breathes slowly |
 | `mangrove.murk` | Effect | Screen | Brown fog that thickens with distance from the shrimp: clear to 3 BL, thick by 8.5 BL | Centred on the shrimp and drawn at twice the size of the view, so it covers the screen when the shrimp is near its edge |
 
@@ -195,19 +195,19 @@ Beats, in order: arrive at A, walk and graze in B, sense, wander to C or D. Ente
 - Toward the player: none. It is above the waterline. A threat cue sends every crab down its burrow at once. They come back out one by one after 8 s of calm.
 - Watching one wave for 5 s from within 3 BL completes a challenge.
 
-**Mud balls** `thing.crabPellets`, **new**. A scatter of tiny balls of mud around each burrow: what the crab leaves behind as it feeds. A discovery by going near.
+**Mud balls** `thing.crabPellets`, *added*. A scatter of tiny balls of mud around each burrow: what the crab leaves behind as it feeds. A discovery by going near.
 
 **Snail** `creature.snail`. 0.8 BL long.
 - Look: a long narrow cone of a shell, dark grey-brown with paler ridges winding round it, tip trailing behind. Two short feelers in front. A faint smooth trail behind it in the mud.
 - Where: zone C and the root skirts.
 - Does: crawls at 0.05 BL per second. Stops and pulls in its feelers if the player rushes past.
 
-**Hermit crab** `creature.hermitCrab`, **new**. 0.9 BL long.
+**Hermit crab** `creature.hermitCrab`, *added*. 0.9 BL long.
 - Look: the same kind of shell as the snail, but with jointed legs and two small claws showing in front, and moving faster.
 - Does: walks in short jerky runs. If the player swims or darts within 1.5 BL it vanishes into the shell, which rocks and lies still. After 4 s of calm, legs, then eyes, come back out. If the player walks up slowly it carries on.
 - Why it is proposed: one journal card already rests on a study of hermit crabs (ELWOOD2009). Meeting one in the mud gives that card something to point at, and it shows another animal being afraid.
 
-**Barnacles** `creature.barnacles`, **new**. Part of some root feet. Small pale rings that open and sweep the water with a tiny feathered hand when the player is still, and shut when anything moves fast nearby.
+**Barnacles** `creature.barnacles`, *added*. Part of some root feet. Small pale rings that open and sweep the water with a tiny feathered hand when the player is still, and shut when anything moves fast nearby.
 
 **Young fish** `creature.smallFish`. 0.7 BL each, in groups of 12 to 20.
 - Look: slim silver-olive spindles with a pale stripe, in mid-water, their shadows on the mud below.
@@ -274,8 +274,8 @@ Beats: arrive by day, burrow, rest until dusk. At dusk the shoal comes out: graz
 | `food.sandFilm` | Food | 2 to 3 BL across | A thin golden-brown sheen on the sand `#C9A24B`, uneven, with pin-sized bright bubbles | 4 s. Glows a little at dusk, when it is worth more |
 | `rock.a`, `.b`, `.c`, `rock.slab` | Obstacle | 1 to 3 BL | Already built | Solid |
 | `rock.overhang` | Cover | 4 BL | A flat rock with a dark gap along one side, its shadow thrown wide | Shelter |
-| `thing.sandVolcano` | Landmark, **new** | 0.6 BL | A small cone of sand with a hole at the top | Now and then a puff of sand comes out. Something lives below. It is never seen |
-| `thing.shedShell` | Landmark, **new** | 1 BL | The empty shell of a shrimp: the whole outline, glassy and pale, slightly crumpled, split behind the head | Rocks in the current and drifts a little |
+| `thing.sandVolcano` | Landmark, *added* | 0.6 BL | A small cone of sand with a hole at the top | Now and then a puff of sand comes out. Something lives below. It is never seen |
+| `thing.shedShell` | Landmark, *added* | 1 BL | The empty shell of a shrimp: the whole outline, glassy and pale, slightly crumpled, split behind the head | Rocks in the current and drifts a little |
 | `thing.glowingPlankton` | Effect, discovery | Points | Blue-white points `#7DF9FF` in the water at night, faint until disturbed | Brighten in the wake of anything that moves, for 1.5 s |
 | `thing.crackle` | Sound, discovery | | No image. A steady fine crackle in the lagoon's ambience | Discovered by staying 3 s in zone D, where it is loudest |
 | `light.caustics` | Effect | Tile | A net of bright curved lines | Drifts and warps. Strong by day, gone at night |
@@ -304,7 +304,7 @@ Beats: arrive by day, burrow, rest until dusk. At dusk the shoal comes out: graz
 - Does: see doc 10. Its tail beats slowly on patrol, fast in the pause before a charge.
 - Proposed species for the drawing: a snook (to check which kind lives on this coast).
 
-**Sea star** `creature.seaStar`, **new, optional**. 1.5 BL. A fat five-armed star, tan with a net of raised orange-brown knobs, on the sand in zone H. Moves too slowly to see. Still, for now, in the "maybe" pile.
+**Sea star** `creature.seaStar`, *added*. 1.5 BL. A fat five-armed star, tan with a net of raised orange-brown knobs, on the sand in zone H. Moves too slowly to see. 
 
 ## Chapter 3. Channel
 
@@ -341,7 +341,7 @@ x:  0      500        2500         4500        6500         8500       10500   1
 | `light.moon` | Effect | Tile | Pale blue-white bands `#C9D6E8`, long and soft | Slide across the bed |
 | `fx.streak` | Effect | | Specks drawn out into short lines | Shows how fast the water runs |
 | `shrimp.traveller` | Creature | 1 BL | Other shrimp, strangers, in small groups | Pass through, all heading left |
-| `channel.seaFan` | Decor, **new, optional** | 2 BL | A flat branching fan, rust-red, growing from the rock walls | Sways. Still in the "maybe" pile |
+| `channel.seaFan` | Decor, *added* | 2 BL | A flat branching fan, rust-red, growing from the rock walls | Sways.  |
 
 ## Chapter 4. The shadow
 
@@ -400,7 +400,7 @@ The bed is visible only along the right edge and fades into blue. Beyond it the 
 | `sea.ledge` | Cover | The last rock, with a shadowed underside | The molt shelter |
 | `shrimp.adult` | Creature | Other adults, strangers and companions | Gather, drift, part |
 | `thing.eggs` | Effect, discovery | A cloud of thousands of pale points | Rises from the player and spreads, like dust in light |
-| `thing.longSound` | Sound, discovery, **new, optional** | No image. A long low call, far away | Once, in the deep. Never explained |
+| `thing.longSound` | Sound, discovery, *added* | No image. A long low call, far away | Once, in the deep. Never explained |
 
 Spawning: the eggs rise. The view follows one point of light as it drifts. It becomes `larva.early`. The drift begins again, with the generation count one higher.
 
@@ -439,11 +439,11 @@ The Discoveries page of the journal holds these. An entry appears as an outline 
 | `thing.crackle` | The crackle | In zone D for 3 s | Lagoon | Draft in doc 07 |
 | `thing.eggs` | The next ones | Spawning | Open sea | Card 9 covers it |
 
-Twenty-eight entries from what is already decided. The **new** ones below would bring it to thirty-seven.
+Twenty-eight entries from the first design. The ones added below bring it to thirty-nine. The long coast adds many more (doc 17).
 
-## New things proposed
+## Things added on 2026-11-15
 
-None of these is in the game until the author says so. Each is a real thing on this kind of coast, to be checked, and none is eaten or harmed.
+The author accepted all of these (D34) and asked for as many more as possible. Each is a real thing on this kind of coast, to be checked, and none is eaten or harmed.
 
 | Id | Name | Where | Why it earns a place |
 |----|------|-------|----------------------|
@@ -456,9 +456,9 @@ None of these is in the game until the author says so. Each is a real thing on t
 | `thing.sandVolcano` | Sand mound | Lagoon | Something lives under the sand and is never seen |
 | `thing.shedShell` | A shed shell | Lagoon | The player has molted by then and knows what it is |
 | `thing.longSound` | A long sound | Open sea | The size of the sea, in one sound |
-| `creature.seaStar`, `channel.seaFan` | Sea star, sea fan | Lagoon, channel | Optional decoration. Lowest priority |
+| `creature.seaStar`, `channel.seaFan` | Sea star, sea fan | Lagoon, channel | Decoration, and two more things to find |
 
-Things considered and left out: rays and crabs that would in life eat shrimp, since they would have to be shown as harmless; anything man-made other than the hull and the net, since litter would bring a second message into a game that has one.
+Still left out of the story's five places: anything man-made other than the hull and the net, since litter would bring a second message into a game that has one. Rays and crabs that would in life eat shrimp were left out at first, since they would have to be shown as harmless. Doc 17 proposes them for the long coast as what they are: hunters, which never catch anyone.
 
 ## Sizes at a glance
 

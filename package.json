@@ -2,6 +2,7 @@
   "name": "la-vie-des-crevettes",
   "version": "0.0.1",
   "private": true,
+  "license": "MIT",
   "description": "A calm browser game about the life of a shrimp",
   "type": "module",
   "engines": {

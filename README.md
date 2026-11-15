@@ -68,4 +68,4 @@ Every push to `main` publishes the game to GitHub Pages at https://nicolas-cozza
 
 ## Licence
 
-Code: MIT, proposed and not yet confirmed (see decision D27a). Assets: original, CC0 or CC BY, each listed in `CREDITS.md`.
+Code: MIT, see [LICENSE](LICENSE). Assets: original, CC0 or CC BY, each listed in `CREDITS.md`.

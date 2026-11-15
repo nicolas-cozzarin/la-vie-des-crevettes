@@ -1,5 +1,5 @@
 import { imageFit } from '../art/fit';
-import { CRAB_CLAW_JOINT } from '../art/painters/creatures';
+import { BIRD_NECK_START, CRAB_CLAW_JOINT } from '../art/painters/creatures';
 import { seededRandom } from '../core/random';
 import type { AreaDef, CoverDef, CreatureDef, WallDef } from '../data/areas/types';
 import { paintImage } from './images';
@@ -243,7 +243,7 @@ export function renderScene(view: SceneView): HTMLCanvasElement {
     }
   }
 
-  // 4. Things on the bed: food, landmarks, obstacles.
+  // 4. Things that lie on the bed: food and landmarks.
   for (const food of area.food ?? []) {
     if (!inView(food.x, food.y, food.size)) continue;
     drawCentred(ctx, `food.${food.kind}`, food.x, food.y, food.size, food.rotation ?? 0);
@@ -268,6 +268,8 @@ export function renderScene(view: SceneView): HTMLCanvasElement {
       landmark.rotation ?? 0,
     );
   }
+  // 5. The edges, then the things that stand on the bed. A root clump may close the end of an edge strip.
+  for (const wall of area.walls ?? []) drawWall(ctx, area, wall);
   for (const obstacle of area.obstacles) {
     if (obstacle.shape !== 'circle' || !inView(obstacle.x, obstacle.y, obstacle.r * 3)) continue;
     const size = (obstacle.r * 2) / (imageFit(obstacle.image).fill ?? 1);
@@ -281,9 +283,6 @@ export function renderScene(view: SceneView): HTMLCanvasElement {
     );
     drawCentred(ctx, obstacle.image, obstacle.x, obstacle.y, size, obstacle.rotation ?? 0);
   }
-
-  // 5. The edges.
-  for (const wall of area.walls ?? []) drawWall(ctx, area, wall);
 
   // 6. Animals on the bed, then the shrimp.
   for (const creature of area.creatures ?? []) {
@@ -359,7 +358,7 @@ export function renderScene(view: SceneView): HTMLCanvasElement {
       0.9,
     );
     const neck = paintImage('bird.shadow.head');
-    const neckWidth = 3.8 * bl;
+    const neckWidth = 4.25 * bl;
     const neckHeight = (neckWidth * neck.height) / neck.width;
     const aim = view.bird.strikeAt
       ? Math.atan2(view.bird.strikeAt.y - y, view.bird.strikeAt.x - x)
@@ -368,18 +367,20 @@ export function renderScene(view: SceneView): HTMLCanvasElement {
     ctx.globalAlpha = 0.9;
     ctx.translate(x + cos * 2.2 * bl, y + sin * 2.2 * bl);
     ctx.rotate(aim);
-    ctx.drawImage(neck, 0, -neckHeight / 2, neckWidth, neckHeight);
+    const pin = neckWidth / neck.width;
+    ctx.drawImage(neck, -BIRD_NECK_START.x * pin, -BIRD_NECK_START.y * pin, neckWidth, neckHeight);
     ctx.restore();
     if (view.bird.strikeAt) {
       drawCentred(ctx, 'fx.ripple', view.bird.strikeAt.x, view.bird.strikeAt.y, 2 * bl, 0, 0.9);
     }
   }
 
-  // 11. Murk, centred on the shrimp and as wide as the game's view.
+  // 11. Murk: centred on the shrimp and twice the size of the game's view,
+  // so that it still covers the screen when the shrimp is not at its centre.
   if (view.murkAt && area.light?.murk) {
     const murk = paintImage(area.light.murk);
-    const w = 1920 / 1.4;
-    const h = 1080 / 1.4;
+    const w = (1920 / 1.4) * 2;
+    const h = (1080 / 1.4) * 2;
     ctx.drawImage(murk, view.murkAt.x - w / 2, view.murkAt.y - h / 2, w, h);
   }
 

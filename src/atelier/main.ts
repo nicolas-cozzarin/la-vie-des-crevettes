@@ -6,6 +6,7 @@ import {
   MOOD_LIST,
   MOOD_NOTES,
   companionCanvases,
+  lookAt,
   moodCanvas,
   sceneCanvas,
 } from './scenes';
@@ -14,7 +15,8 @@ import {
  * The atelier: a page that shows the art without starting the game.
  * It imports painters directly and never loads Phaser. See docs/14-art-production.md.
  *
- * Address: atelier.html. Add ?show=<id> to see one section alone.
+ * Address: atelier.html. Add ?show=<id> to see one section alone, or
+ * ?view=x,y to see one screen of the mangrove at that place.
  */
 const main = document.getElementById('main') as HTMLElement;
 const nav = document.getElementById('nav') as HTMLElement;
@@ -166,7 +168,18 @@ all.href = location.pathname;
 if (!only) all.className = 'here';
 nav.prepend(all);
 
+// ?view=x,y shows one screen of the mangrove at that place, and nothing else.
+const place = new URLSearchParams(location.search).get('view');
+if (place) {
+  const [x = 0, y = 0] = place.split(',').map(Number);
+  const block = element('div', undefined, 'scene');
+  block.dataset.scene = 'view';
+  block.append(element('h3', `The mangrove at ${x}, ${y}`), shown(lookAt(x, y), 1280));
+  main.append(block);
+}
+
 for (const section of sections) {
+  if (place) break;
   if (only && only !== section.id) continue;
   const heading = element('h2', section.title);
   heading.id = section.id;

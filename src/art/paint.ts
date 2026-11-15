@@ -371,12 +371,17 @@ export function band(
   ctx.globalAlpha *= alpha;
   traceRibbon(ctx, line, width);
   softFill(ctx, rgba(base, 1), dark, 6, 0.6);
-  traceRibbon(ctx, line, width, -side * 0.24, 0.42);
-  ctx.fillStyle = rgba(dark, 0.4);
-  ctx.fill();
-  traceRibbon(ctx, line, width, side * 0.22, 0.34);
-  ctx.fillStyle = rgba(light, 0.34);
-  ctx.fill();
+  // Shade and light go on in steps, so that the band looks round and not split in two.
+  for (const share of [0.5, 0.38, 0.26, 0.14]) {
+    traceRibbon(ctx, line, width, -side * (0.5 - share / 2), share);
+    ctx.fillStyle = rgba(dark, 0.14);
+    ctx.fill();
+  }
+  for (const share of [0.4, 0.28, 0.16, 0.07]) {
+    traceRibbon(ctx, line, width, side * 0.2, share);
+    ctx.fillStyle = rgba(light, 0.11);
+    ctx.fill();
+  }
   traceRibbon(ctx, line, width);
   ctx.strokeStyle = rgba(dark, 0.5);
   ctx.lineWidth = 1.5;
@@ -415,4 +420,25 @@ export function traceLeaf(
     ctx.lineTo(point.x, point.y);
   }
   ctx.closePath();
+}
+
+/**
+ * Paint on a separate sheet, then lay the sheet over the picture. For a part
+ * that must fade or be cut without eating what is already painted under it.
+ */
+export function onLayer(
+  ctx: CanvasRenderingContext2D,
+  draw: (sheet: CanvasRenderingContext2D) => void,
+): void {
+  const canvas = document.createElement('canvas');
+  canvas.width = ctx.canvas.width;
+  canvas.height = ctx.canvas.height;
+  const sheet = canvas.getContext('2d');
+  if (!sheet) return;
+  sheet.setTransform(ctx.getTransform());
+  draw(sheet);
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.drawImage(canvas, 0, 0);
+  ctx.restore();
 }

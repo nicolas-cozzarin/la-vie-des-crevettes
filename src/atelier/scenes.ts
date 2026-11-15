@@ -167,6 +167,25 @@ export function sceneCanvas(scene: NamedScene): HTMLCanvasElement {
   return renderScene(scene.view);
 }
 
+/**
+ * One screen of the mangrove centred as near (cx, cy) as the game's camera
+ * could be: the view never leaves the area. For looking anywhere, with
+ * atelier.html?view=x,y
+ */
+export function lookAt(cx: number, cy: number): HTMLCanvasElement {
+  const x = Math.min(Math.max(cx - VIEW_W / 2, 0), mangrove.size.w - VIEW_W);
+  const y = Math.min(Math.max(cy - VIEW_H / 2, 0), mangrove.size.h - VIEW_H);
+  return renderScene({
+    area: mangrove,
+    x,
+    y,
+    w: VIEW_W,
+    h: VIEW_H,
+    scale: 1.4,
+    murkAt: { x: cx, y: cy },
+  });
+}
+
 function mudCard(
   width: number,
   height: number,
@@ -186,13 +205,13 @@ function mudCard(
 
 /** One picture of the shrimp for each mood, twice the size it has in the game. */
 export function moodCanvas(mood: Mood): HTMLCanvasElement {
-  const zoom = 2.8;
+  const zoom = 2.2;
   const [canvas, ctx] = mudCard(640, 420, zoom);
   const w = 640 / zoom;
   const h = 420 / zoom;
-  const x = w * 0.5;
-  const y = h * 0.55;
-  const target = { x: w * 0.93, y: h * 0.22 };
+  const x = w * 0.4;
+  const y = h * 0.62;
+  const target = { x: w * 0.84, y: h * 0.24 };
   if (mood === 'curious') {
     const pod = paintImage('thing.seedPod.standing');
     ctx.drawImage(pod, target.x - 22, target.y - 22, 44, 44);
@@ -252,7 +271,7 @@ const COMPANIONS: Companion[] = [
 
 export function companionCanvases(): { canvas: HTMLCanvasElement; name: string; note: string }[] {
   return COMPANIONS.map((companion) => {
-    const zoom = 2.2;
+    const zoom = 1.7;
     const [canvas, ctx] = mudCard(480, 330, zoom);
     drawStillShrimp(ctx, {
       x: 480 / zoom / 2 - 6,

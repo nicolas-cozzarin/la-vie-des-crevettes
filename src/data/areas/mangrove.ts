@@ -23,54 +23,55 @@ export const mangrove: AreaDef = {
   ambience: 'amb.mangrove',
 
   walls: [
-    // Top: the mud bank where the crabs live, with roots closing in at both ends.
-    { image: 'mangrove.wall', side: 'top', from: 0, to: 400, depth: 230 },
-    { image: 'mangrove.bank', side: 'top', from: 400, to: 5000, depth: 380 },
-    { image: 'mangrove.wall', side: 'top', from: 5000, to: 6000, depth: 240 },
+    // Top: the mud bank where the crabs live, from one side to the other.
+    { image: 'mangrove.bank', side: 'top', from: 0, to: 6000, depth: 380 },
     { image: 'mangrove.wall', side: 'right', from: 0, to: 4000, depth: 200 },
     { image: 'mangrove.wall', side: 'bottom', from: 0, to: 6000, depth: 260 },
-    // Left: open between y 1300 and 2700, the creek mouth.
+    // Left: open between y 1300 and 2700, the creek mouth. A clump of roots closes each end.
     { image: 'mangrove.wall', side: 'left', from: 0, to: 1300, depth: 200 },
     { image: 'mangrove.wall', side: 'left', from: 2700, to: 4000, depth: 200 },
   ],
 
   obstacles: [
+    // The two sides of the creek mouth.
+    { shape: 'circle', x: 120, y: 1240, r: 230, image: 'mangrove.clump' },
+    { shape: 'circle', x: 130, y: 2770, r: 230, image: 'mangrove.clump', rotation: 0.4 },
     // Zone B, landing roots: a loose group, easy to walk between.
     { shape: 'circle', x: 1010, y: 1260, r: 70, image: 'mangrove.root.a' },
     { shape: 'circle', x: 1150, y: 1560, r: 95, image: 'mangrove.root.b', rotation: 0.4 },
     { shape: 'circle', x: 1650, y: 1500, r: 80, image: 'mangrove.root.c' },
-    { shape: 'circle', x: 1900, y: 1090, r: 60, image: 'mangrove.root.a', rotation: 2.1 },
-    { shape: 'circle', x: 1280, y: 2080, r: 85, image: 'mangrove.root.b', rotation: 3.3 },
-    { shape: 'circle', x: 900, y: 2480, r: 75, image: 'mangrove.root.c', rotation: 1.2 },
-    { shape: 'circle', x: 1750, y: 2250, r: 65, image: 'mangrove.root.a', rotation: -1.4 },
+    { shape: 'circle', x: 1900, y: 1090, r: 60, image: 'mangrove.root.d' },
+    { shape: 'circle', x: 1280, y: 2080, r: 85, image: 'mangrove.root.a', rotation: 0.42 },
+    { shape: 'circle', x: 900, y: 2480, r: 75, image: 'mangrove.root.a', rotation: -0.4 },
+    { shape: 'circle', x: 1750, y: 2250, r: 65, image: 'mangrove.root.c', rotation: 0.2 },
     // Zone I, the gutter.
-    { shape: 'circle', x: 520, y: 2880, r: 70, image: 'mangrove.root.a', rotation: 0.9 },
-    { shape: 'circle', x: 1380, y: 3420, r: 80, image: 'mangrove.root.b', rotation: -0.6 },
+    { shape: 'circle', x: 520, y: 2880, r: 70, image: 'mangrove.root.f', rotation: -0.05 },
+    { shape: 'circle', x: 1380, y: 3420, r: 80, image: 'mangrove.root.b', rotation: -0.45 },
     // Zone C, the leaf bed: few roots, so the leaves show.
-    { shape: 'circle', x: 2600, y: 3480, r: 70, image: 'mangrove.root.c', rotation: 2.6 },
-    { shape: 'circle', x: 3350, y: 3050, r: 60, image: 'mangrove.root.a', rotation: -2.2 },
+    { shape: 'circle', x: 2600, y: 3480, r: 70, image: 'mangrove.root.f', rotation: 0.05 },
+    { shape: 'circle', x: 3350, y: 3050, r: 60, image: 'mangrove.root.c', rotation: -0.45 },
     // Rim of the clearing, zone D. Nothing stands inside it.
     { shape: 'circle', x: 2760, y: 1230, r: 60, image: 'mangrove.root.a', rotation: 0.3 },
-    { shape: 'circle', x: 3980, y: 2440, r: 70, image: 'mangrove.root.c', rotation: 1.9 },
-    { shape: 'circle', x: 3900, y: 1180, r: 65, image: 'mangrove.root.b', rotation: -1.1 },
+    { shape: 'circle', x: 3980, y: 2440, r: 70, image: 'mangrove.root.a', rotation: 0.3 },
+    { shape: 'circle', x: 3900, y: 1180, r: 65, image: 'mangrove.root.d', rotation: 0.2 },
     // Zone F, the shallows under the crab flat.
-    { shape: 'circle', x: 1800, y: 760, r: 60, image: 'mangrove.root.a', rotation: -0.5 },
-    { shape: 'circle', x: 3550, y: 700, r: 70, image: 'mangrove.root.b', rotation: 2.9 },
-    { shape: 'circle', x: 2700, y: 620, r: 55, image: 'mangrove.root.c', rotation: 0.8 },
+    { shape: 'circle', x: 1800, y: 760, r: 60, image: 'mangrove.root.a', rotation: -0.45 },
+    { shape: 'circle', x: 3550, y: 700, r: 70, image: 'mangrove.root.a' },
+    { shape: 'circle', x: 2700, y: 620, r: 55, image: 'mangrove.root.e', rotation: 0.25 },
     // Zone E, near Nacre's leaf.
-    { shape: 'circle', x: 4050, y: 2000, r: 60, image: 'mangrove.root.a', rotation: 1.5 },
+    { shape: 'circle', x: 4050, y: 2000, r: 60, image: 'mangrove.root.f', rotation: 0.45 },
     // Zone G, deep roots: dense, with narrow passages.
     { shape: 'circle', x: 4620, y: 760, r: 85, image: 'mangrove.root.c', rotation: 0.2 },
-    { shape: 'circle', x: 5150, y: 640, r: 70, image: 'mangrove.root.a', rotation: 2.4 },
-    { shape: 'circle', x: 5500, y: 800, r: 90, image: 'mangrove.root.b', rotation: -0.9 },
-    { shape: 'circle', x: 5580, y: 1250, r: 75, image: 'mangrove.root.a', rotation: 1.1 },
-    { shape: 'circle', x: 5480, y: 1720, r: 85, image: 'mangrove.root.c', rotation: -2.8 },
-    { shape: 'circle', x: 5080, y: 1900, r: 80, image: 'mangrove.root.b', rotation: 0.7 },
-    { shape: 'circle', x: 4640, y: 1780, r: 65, image: 'mangrove.root.a', rotation: -1.7 },
-    { shape: 'circle', x: 5300, y: 2280, r: 90, image: 'mangrove.root.b', rotation: 2.2 },
+    { shape: 'circle', x: 5150, y: 640, r: 70, image: 'mangrove.root.d', rotation: 0.3 },
+    { shape: 'circle', x: 5500, y: 800, r: 90, image: 'mangrove.root.d', rotation: 0.4 },
+    { shape: 'circle', x: 5580, y: 1250, r: 75, image: 'mangrove.root.f', rotation: 0.15 },
+    { shape: 'circle', x: 5480, y: 1720, r: 85, image: 'mangrove.root.d', rotation: -0.22 },
+    { shape: 'circle', x: 5080, y: 1900, r: 80, image: 'mangrove.root.c', rotation: -0.45 },
+    { shape: 'circle', x: 4640, y: 1780, r: 65, image: 'mangrove.root.c', rotation: -0.1 },
+    { shape: 'circle', x: 5300, y: 2280, r: 90, image: 'mangrove.root.e', rotation: 0.37 },
     { shape: 'circle', x: 4900, y: 2700, r: 70, image: 'mangrove.root.c', rotation: -0.3 },
-    { shape: 'circle', x: 5600, y: 2620, r: 80, image: 'mangrove.root.a', rotation: 3.0 },
-    { shape: 'circle', x: 4480, y: 3250, r: 75, image: 'mangrove.root.b', rotation: 1.6 },
+    { shape: 'circle', x: 5600, y: 2620, r: 80, image: 'mangrove.root.b', rotation: -0.4 },
+    { shape: 'circle', x: 4480, y: 3250, r: 75, image: 'mangrove.root.e', rotation: -0.23 },
   ],
 
   // The part of the sunken branch that lies on the mud. The lifted end is cover.
@@ -308,7 +309,7 @@ export const mangrove: AreaDef = {
     { id: 'snail.1', kind: 'snail', x: 2550, y: 3080, heading: 0.4 },
     { id: 'snail.2', kind: 'snail', x: 1960, y: 3300, heading: 2.5 },
     { id: 'snail.3', kind: 'snail', x: 3230, y: 3100, heading: -1.2 },
-    { id: 'snail.4', kind: 'snail', x: 1240, y: 1690, heading: 3.6 },
+    { id: 'snail.4', kind: 'snail', x: 1385, y: 1608, heading: 3.3 },
     // Young fish holding among the roots, facing the current.
     { id: 'fish.landing', kind: 'smallFish', x: 1560, y: 1300, heading: Math.PI, count: 14 },
     { id: 'fish.deep', kind: 'smallFish', x: 5250, y: 1620, heading: Math.PI, count: 18 },

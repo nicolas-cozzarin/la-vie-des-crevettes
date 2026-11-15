@@ -6,6 +6,7 @@ import {
   hex,
   litWash,
   mix,
+  onLayer,
   patches,
   rgba,
   sampleCurve,
@@ -209,43 +210,6 @@ interface Foot {
   wobble: number;
 }
 
-/** Bark: pools of pigment, pale breathing pores, fine dots. Call with the shape clipped. */
-function bark(
-  ctx: CanvasRenderingContext2D,
-  random: () => number,
-  cx: number,
-  cy: number,
-  radius: number,
-): void {
-  const area = { x: cx - radius, y: cy - radius, w: radius * 2, h: radius * 2 };
-  patches(
-    ctx,
-    random,
-    12,
-    area,
-    [radius * 0.2, radius * 0.6],
-    [ROOT_LIGHT, ROOT_DARK],
-    [0.1, 0.24],
-  );
-  // Pores, as short pale dashes that follow the curve of the root.
-  for (let index = 0; index < 22; index++) {
-    const angle = random() * TAU;
-    const distance = radius * (0.25 + random() * 0.65);
-    const x = cx + Math.cos(angle) * distance;
-    const y = cy + Math.sin(angle) * distance;
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(angle + Math.PI / 2);
-    ctx.fillStyle = rgba([168, 140, 104], 0.2 + random() * 0.25);
-    ctx.beginPath();
-    ctx.ellipse(0, 0, 2.5 + random() * 3.5, 1 + random() * 0.8, 0, 0, TAU);
-    ctx.fill();
-    ctx.restore();
-  }
-  speckle(ctx, random, 120, area, [0.5, 1.4], ROOT_DARK, [0.15, 0.4]);
-  speckle(ctx, random, 60, area, [0.5, 1.2], [150, 124, 92], [0.1, 0.3]);
-}
-
 /** A skirt of algae on the mud around something: thick in places, missing in others. Drawn before the thing itself. */
 function algaeSkirt(
   ctx: CanvasRenderingContext2D,
@@ -283,10 +247,157 @@ function algaeSkirt(
   }
 }
 
+/** Fine roots that spread from a root's end into the mud. Drawn before the root. */
+function rootlets(
+  ctx: CanvasRenderingContext2D,
+  random: () => number,
+  x: number,
+  y: number,
+  radius: number,
+): void {
+  const count = 7;
+  ctx.save();
+  ctx.lineCap = 'round';
+  for (let index = 0; index < count; index++) {
+    const angle = (index / count) * TAU + random() * 0.7;
+    const bend = (random() - 0.5) * 1.1;
+    const reach = radius * (1.25 + random() * 0.55);
+    const fromX = x + Math.cos(angle) * radius * 0.7;
+    const fromY = y + Math.sin(angle) * radius * 0.7;
+    const midX = x + Math.cos(angle + bend * 0.4) * reach * 0.8;
+    const midY = y + Math.sin(angle + bend * 0.4) * reach * 0.8;
+    const toX = x + Math.cos(angle + bend) * reach;
+    const toY = y + Math.sin(angle + bend) * reach;
+    // Thick where it leaves the root, a thread at its end.
+    for (const [share, width, alpha] of [
+      [0.55, 5.5, 0.7],
+      [1, 2.4, 0.6],
+    ] as const) {
+      ctx.beginPath();
+      ctx.moveTo(fromX, fromY);
+      ctx.quadraticCurveTo(midX, midY, midX + (toX - midX) * share, midY + (toY - midY) * share);
+      ctx.strokeStyle = rgba(ROOT, alpha);
+      ctx.lineWidth = width * (0.7 + radius / 120);
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
 /**
- * The foot of a prop root where it enters the mud. The round foot is solid.
- * Around it lie a skirt of algae and a ring of scoured mud, and a band of the
- * root's arch leads away toward the tree and fades.
+ * One limb of a prop root, seen from above: a thick band that comes down from
+ * the tree and ends, rounded, where it enters the mud at (x, y). `radius` is
+ * the size of that rounded end.
+ */
+function limb(
+  ctx: CanvasRenderingContext2D,
+  random: () => number,
+  x: number,
+  y: number,
+  radius: number,
+  angle: number,
+  reach: number,
+  rounded: boolean,
+): void {
+  const side = (random() - 0.5) * 0.5;
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
+  const line = sampleCurve(
+    [
+      { x: x - cos * radius, y: y - sin * radius },
+      { x, y },
+      { x: x + Math.cos(angle + side) * reach * 0.5, y: y + Math.sin(angle + side) * reach * 0.5 },
+      { x: x + cos * reach, y: y + sin * reach },
+    ],
+    36,
+  );
+  // How far along the limb each sample is, so that the rounded end keeps its shape.
+  const along: number[] = [0];
+  for (let index = 1; index < line.length; index++) {
+    const from = line[index - 1] as Point;
+    const to = line[index] as Point;
+    along.push((along[index - 1] as number) + Math.hypot(to.x - from.x, to.y - from.y));
+  }
+  const last = line.length - 1;
+  const waist = radius * 1.5;
+  const lumps = random() * TAU;
+  const width = (t: number): number => {
+    const s = along[Math.round(t * last)] as number;
+    const full = radius * 2;
+    let w: number;
+    if (s < radius) w = rounded ? 2 * Math.sqrt(radius * radius - (radius - s) ** 2) : full;
+    else {
+      const ease = Math.min(1, (s - radius) / (radius * 1.3));
+      w = full + (waist - full) * (ease * ease * (3 - 2 * ease));
+    }
+    return Math.max(1, w * (1 + 0.035 * Math.sin(lumps + s / 17)));
+  };
+
+  band(ctx, line, width, ROOT, ROOT_LIGHT, ROOT_DARK);
+
+  // Bark: grain that runs along the limb, pores that run across it.
+  ctx.save();
+  traceRibbon(ctx, line, width);
+  ctx.clip();
+  const area = { x: x - reach * 1.2, y: y - reach * 1.2, w: reach * 2.4, h: reach * 2.4 };
+  patches(
+    ctx,
+    random,
+    14,
+    area,
+    [radius * 0.2, radius * 0.55],
+    [ROOT_LIGHT, ROOT_DARK],
+    [0.08, 0.2],
+  );
+  const offset = (index: number, across: number): Point => {
+    const point = line[index] as Point;
+    const before = line[Math.max(0, index - 1)] as Point;
+    const after = line[Math.min(last, index + 1)] as Point;
+    const length = Math.hypot(after.x - before.x, after.y - before.y) || 1;
+    const w = width(index / last) * across;
+    return {
+      x: point.x - ((after.y - before.y) / length) * w,
+      y: point.y + ((after.x - before.x) / length) * w,
+    };
+  };
+  ctx.lineCap = 'round';
+  for (let index = 0; index < 9; index++) {
+    const across = (random() - 0.5) * 0.78;
+    const from = 2 + Math.floor(random() * (last * 0.5));
+    const to = Math.min(last, from + 5 + Math.floor(random() * (last * 0.5)));
+    ctx.beginPath();
+    for (let step = from; step <= to; step++) {
+      const point = offset(step, across + 0.02 * Math.sin(step * 0.9 + index));
+      if (step === from) ctx.moveTo(point.x, point.y);
+      else ctx.lineTo(point.x, point.y);
+    }
+    ctx.strokeStyle = rgba(random() < 0.7 ? ROOT_DARK : ROOT_LIGHT, 0.16 + random() * 0.2);
+    ctx.lineWidth = 0.8 + random() * 1.4;
+    ctx.stroke();
+  }
+  for (let index = 0; index < 20; index++) {
+    const at = 2 + Math.floor(random() * (last - 3));
+    const point = offset(at, (random() - 0.5) * 0.74);
+    const before = line[at - 1] as Point;
+    const after = line[at + 1] as Point;
+    ctx.save();
+    ctx.translate(point.x, point.y);
+    ctx.rotate(Math.atan2(after.y - before.y, after.x - before.x) + Math.PI / 2);
+    ctx.fillStyle = rgba([172, 144, 108], 0.22 + random() * 0.26);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 2.2 + random() * 3, 0.9 + random() * 0.7, 0, 0, TAU);
+    ctx.fill();
+    ctx.restore();
+  }
+  speckle(ctx, random, 110, area, [0.5, 1.3], ROOT_DARK, [0.12, 0.34]);
+  ctx.restore();
+}
+
+/**
+ * A prop root where it enters the mud, seen from above. A thick limb comes
+ * down from the tree, out of sight above the water, and ends in the mud; that
+ * rounded end is solid. Fine roots spread from it. Around it lie a skirt of
+ * algae and a ring of scoured mud.
  */
 function root(seed: number, feet: readonly Foot[], arches: readonly number[]): Painter {
   return {
@@ -296,76 +407,159 @@ function root(seed: number, feet: readonly Foot[], arches: readonly number[]): P
       const random = seededRandom(seed);
       const centre = size / 2;
       const solid = centre * ROOT_FILL;
+      const reach = solid * 2.15;
 
-      // The arches first, on the bare image, so that their far ends can fade.
-      for (const angle of arches) {
-        const main = feet[0] as Foot;
-        const fromX = centre + main.x * solid;
-        const fromY = centre + main.y * solid;
-        const side = (random() - 0.5) * 0.5;
-        const line = sampleCurve(
-          [
-            { x: fromX, y: fromY },
-            {
-              x: fromX + Math.cos(angle + side) * solid * 1.1,
-              y: fromY + Math.sin(angle + side) * solid * 1.1,
-            },
-            {
-              x: fromX + Math.cos(angle) * solid * 2.15,
-              y: fromY + Math.sin(angle) * solid * 2.15,
-            },
-          ],
-          18,
-        );
-        const width = main.r * solid * 1.25;
-        band(ctx, line, (t) => width * (1 + 0.25 * t), ROOT, ROOT_LIGHT, ROOT_DARK);
-      }
-      // The arch rises out of the water and is lost to sight.
-      ctx.save();
-      ctx.globalCompositeOperation = 'destination-out';
-      const fade = ctx.createRadialGradient(
-        centre,
-        centre,
-        solid * 1.15,
-        centre,
-        centre,
-        solid * 2.12,
-      );
-      fade.addColorStop(0, 'rgba(0,0,0,0)');
-      fade.addColorStop(1, 'rgba(0,0,0,1)');
-      ctx.fillStyle = fade;
-      ctx.fillRect(0, 0, size, size);
-      ctx.restore();
-
-      // Behind the arches: the algae, and under that the scoured mud.
-      ctx.save();
-      ctx.globalCompositeOperation = 'destination-over';
-      algaeSkirt(ctx, random, centre + solid * 0.05, centre + solid * 0.08, solid * 1.42);
+      // Under everything: the scoured mud, the algae, the fine roots.
       glow(ctx, centre + solid * 0.14, centre + solid * 0.18, solid * 2.1, MUD_DARK, 0.55, 0.42);
-      ctx.restore();
+      algaeSkirt(ctx, random, centre + solid * 0.05, centre + solid * 0.08, solid * 1.42);
+      for (const foot of feet) {
+        rootlets(ctx, random, centre + foot.x * solid, centre + foot.y * solid, foot.r * solid);
+      }
 
-      // The feet themselves.
-      for (const foot of [...feet].reverse()) {
+      // The limbs, on their own sheet so that they can fade as they rise out of the water.
+      onLayer(ctx, (sheet) => {
+        [...feet].reverse().forEach((foot, order) => {
+          const first = order === feet.length - 1;
+          const x = centre + foot.x * solid;
+          const y = centre + foot.y * solid;
+          const radius = foot.r * solid;
+          // A smaller foot beside the first is a second limb of the same tree.
+          const angles = first ? arches : [(arches[0] ?? 0) + 0.42];
+          [...angles].reverse().forEach((angle, index) => {
+            const main = index === angles.length - 1;
+            const far = Math.hypot(x - centre, y - centre);
+            limb(sheet, random, x, y, radius, angle, reach + far, main);
+          });
+        });
+        sheet.save();
+        sheet.globalCompositeOperation = 'destination-out';
+        const fade = sheet.createRadialGradient(
+          centre,
+          centre,
+          solid * 1.12,
+          centre,
+          centre,
+          solid * 2.12,
+        );
+        fade.addColorStop(0, 'rgba(0,0,0,0)');
+        fade.addColorStop(1, 'rgba(0,0,0,1)');
+        sheet.fillStyle = fade;
+        sheet.fillRect(0, 0, size, size);
+        sheet.restore();
+      });
+
+      // Where each limb meets the mud: silt against its end, algae on the side away from the light.
+      for (const foot of feet) {
         const x = centre + foot.x * solid;
         const y = centre + foot.y * solid;
         const radius = foot.r * solid;
-        const shape = blob(random, x, y, radius * 0.98, foot.wobble, 15);
-        ctx.save();
-        tracePath(ctx, shape);
-        softFill(ctx, litWash(ctx, x, y, radius, ROOT_LIGHT, ROOT, ROOT_DARK), ROOT_DARK, 8, 0.75);
-        ctx.clip();
-        bark(ctx, random, x, y, radius);
-        // Algae creeps up the side away from the light.
-        glow(ctx, x + radius * 0.5, y + radius * 0.55, radius * 0.85, ALGAE, 0.4);
-        ctx.restore();
-        tracePath(ctx, shape);
-        ctx.strokeStyle = rgba(ROOT_DARK, 0.55);
-        ctx.lineWidth = 1.6;
-        ctx.stroke();
+        const angle = arches[0] ?? 0;
+        glow(
+          ctx,
+          x - Math.cos(angle) * radius * 1.05,
+          y - Math.sin(angle) * radius * 1.05,
+          radius * 0.62,
+          MUD,
+          0.75,
+          0.2,
+        );
+        glow(ctx, x + radius * 0.5, y + radius * 0.6, radius * 0.75, ALGAE, 0.3);
       }
     },
   };
 }
+
+/** How much of the clump image's half-width is solid. Keep in step with `fit.ts`. */
+const CLUMP_FILL = 0.62;
+
+/**
+ * The roots of one tree, seen from above. The limbs come down all round from
+ * the trunk, which is out of sight above the water, and stand in a ring. The
+ * dark heart between them is solid. It closes the end of an edge strip.
+ */
+const clump: Painter = {
+  width: 640,
+  height: 640,
+  paint(ctx, size) {
+    const random = seededRandom(239);
+    const centre = size / 2;
+    const solid = centre * CLUMP_FILL;
+
+    glow(ctx, centre + 10, centre + 14, solid * 1.55, MUD_DARK, 0.5, 0.5);
+
+    const feet: { x: number; y: number; r: number; angle: number; seed: number }[] = [];
+    const count = 12;
+    for (let index = 0; index < count; index++) {
+      const angle = (index / count) * TAU + (random() - 0.5) * 0.3;
+      const distance = solid * (0.8 + random() * 0.18);
+      feet.push({
+        x: centre + Math.cos(angle) * distance,
+        y: centre + Math.sin(angle) * distance,
+        r: 22 + random() * 15,
+        angle: angle + Math.PI + (random() - 0.5) * 0.5,
+        seed: Math.floor(random() * 100000),
+      });
+    }
+    for (const foot of feet) {
+      const local = seededRandom(foot.seed);
+      algaeSkirt(ctx, local, foot.x, foot.y + 4, foot.r * 1.6, 0.8);
+      rootlets(ctx, local, foot.x, foot.y, foot.r);
+    }
+
+    // The heart: shade under the tree, with roots half seen in it.
+    const heart = blob(random, centre, centre, solid * 0.8, 0.09, 20);
+    ctx.save();
+    tracePath(ctx, heart);
+    const fill = ctx.createRadialGradient(centre, centre, solid * 0.1, centre, centre, solid * 0.8);
+    fill.addColorStop(0, rgba(ROOT_DARK, 1));
+    fill.addColorStop(1, rgba(ROOT, 1));
+    softFill(ctx, fill, ROOT_DARK, 16, 0.85);
+    ctx.clip();
+    for (let index = 0; index < 12; index++) {
+      const angle = random() * TAU;
+      const x = centre + (random() - 0.5) * solid;
+      const y = centre + (random() - 0.5) * solid;
+      const length = 110 + random() * 150;
+      const line = sampleCurve(
+        [
+          { x: x - (Math.cos(angle) * length) / 2, y: y - (Math.sin(angle) * length) / 2 },
+          { x: x + Math.sin(angle) * 22, y: y - Math.cos(angle) * 22 },
+          { x: x + (Math.cos(angle) * length) / 2, y: y + (Math.sin(angle) * length) / 2 },
+        ],
+        14,
+      );
+      band(ctx, line, () => 20 + random() * 4, ROOT, ROOT_LIGHT, ROOT_DARK, 0.5);
+    }
+    glow(ctx, centre, centre, solid * 0.75, ROOT_DARK, 0.9, 0.25);
+    ctx.restore();
+
+    // The limbs, lost in the shade toward the trunk.
+    onLayer(ctx, (sheet) => {
+      for (const foot of feet) {
+        const reach = Math.hypot(foot.x - centre, foot.y - centre) * 0.92;
+        limb(sheet, seededRandom(foot.seed + 1), foot.x, foot.y, foot.r, foot.angle, reach, true);
+      }
+      sheet.save();
+      sheet.globalCompositeOperation = 'destination-out';
+      const lost = sheet.createRadialGradient(
+        centre,
+        centre,
+        solid * 0.12,
+        centre,
+        centre,
+        solid * 0.72,
+      );
+      lost.addColorStop(0, 'rgba(0,0,0,0.9)');
+      lost.addColorStop(1, 'rgba(0,0,0,0)');
+      sheet.fillStyle = lost;
+      sheet.fillRect(0, 0, size, size);
+      sheet.restore();
+    });
+    for (const foot of feet) {
+      glow(ctx, foot.x + foot.r * 0.4, foot.y + foot.r * 0.7, foot.r * 0.8, ALGAE, 0.3);
+    }
+  },
+};
 
 /**
  * The edge of the mangrove: root feet packed into a dark mass. The mass is at
@@ -435,49 +629,61 @@ const wall: Painter = {
     ctx.fillRect(0, 0, width, 220);
     ctx.restore();
 
-    // The front row of feet, each with its algae.
-    const feet: { x: number; y: number; r: number }[] = [];
-    for (let x = 20; x < width; x += 44 + random() * 38) {
-      feet.push({ x, y: edge(x) - 22 + random() * 44, r: 26 + random() * 30 });
+    // The front row: limbs that come out of the mass and end in the mud, each with its algae.
+    const feet: { x: number; y: number; r: number; angle: number; seed: number }[] = [];
+    for (let x = 20; x < width - 30; x += 50 + random() * 44) {
+      feet.push({
+        x,
+        y: edge(x) - 16 + random() * 50,
+        r: 20 + random() * 20,
+        angle: -Math.PI / 2 + (random() - 0.5) * 1.1,
+        seed: Math.floor(random() * 100000),
+      });
     }
     for (const foot of feet) {
       wrapped(
         width,
         foot.x,
         foot.y,
-        foot.r * 2,
-        (px, py) => algaeSkirt(ctx, random, px, py + 6, foot.r * 1.3, 0.8),
+        foot.r * 3,
+        (px, py) => {
+          const local = seededRandom(foot.seed);
+          algaeSkirt(ctx, local, px, py + 6, foot.r * 1.5, 0.8);
+          rootlets(ctx, local, px, py, foot.r);
+        },
         true,
       );
     }
+    onLayer(ctx, (sheet) => {
+      for (const foot of feet) {
+        const reach = 150 + (foot.seed % 90);
+        wrapped(
+          width,
+          foot.x,
+          foot.y,
+          reach + foot.r,
+          (px, py) =>
+            limb(sheet, seededRandom(foot.seed + 1), px, py, foot.r, foot.angle, reach, true),
+          true,
+        );
+      }
+      // They are lost in the shade of the mass.
+      sheet.save();
+      sheet.globalCompositeOperation = 'destination-out';
+      const lost = sheet.createLinearGradient(0, 40, 0, 215);
+      lost.addColorStop(0, 'rgba(0,0,0,0.8)');
+      lost.addColorStop(1, 'rgba(0,0,0,0)');
+      sheet.fillStyle = lost;
+      sheet.fillRect(0, 0, width, 215);
+      sheet.restore();
+    });
     for (const foot of feet) {
-      const seed = Math.floor(random() * 100000);
       wrapped(
         width,
         foot.x,
         foot.y,
         foot.r * 2,
-        (px, py) => {
-          const local = seededRandom(seed);
-          const shape = blob(local, px, py, foot.r, 0.08, 14);
-          ctx.save();
-          tracePath(ctx, shape);
-          softFill(
-            ctx,
-            litWash(ctx, px, py, foot.r, ROOT_LIGHT, ROOT, ROOT_DARK),
-            ROOT_DARK,
-            8,
-            0.75,
-          );
-          ctx.clip();
-          bark(ctx, local, px, py, foot.r);
-          glow(ctx, px + foot.r * 0.4, py + foot.r * 0.6, foot.r * 0.8, ALGAE, 0.35);
-          ctx.restore();
-          tracePath(ctx, shape);
-          ctx.strokeStyle = rgba(ROOT_DARK, 0.55);
-          ctx.lineWidth = 1.6;
-          ctx.stroke();
-        },
+        (px, py) => glow(ctx, px + foot.r * 0.4, py + foot.r * 0.7, foot.r * 0.8, ALGAE, 0.3),
         true,
       );
     }
@@ -1496,13 +1702,13 @@ const murk: Painter = {
   paint(ctx, width, height) {
     const cx = width / 2;
     const cy = height / 2;
-    // The view is about 12.5 BL wide, so one BL is about 41 pixels here.
-    const bl = width / 12.5;
+    // Drawn at twice the size of the view, which is about 12.5 BL wide: one BL is about 20 pixels here.
+    const bl = width / 25;
     const fog = mix(TEA, MUD_DARK, 0.45);
-    const fill = ctx.createRadialGradient(cx, cy, bl * 2.6, cx, cy, bl * 7.2);
+    const fill = ctx.createRadialGradient(cx, cy, bl * 3, cx, cy, bl * 8.5);
     fill.addColorStop(0, rgba(fog, 0));
-    fill.addColorStop(0.45, rgba(fog, 0.34));
-    fill.addColorStop(1, rgba(fog, 0.86));
+    fill.addColorStop(0.45, rgba(fog, 0.3));
+    fill.addColorStop(1, rgba(fog, 0.82));
     ctx.fillStyle = fill;
     ctx.fillRect(0, 0, width, height);
   },
@@ -1511,6 +1717,8 @@ const murk: Painter = {
 export const mangrovePainters: Record<string, Painter> = {
   'mangrove.mud': mud,
   'mangrove.sandmud': sandmud,
+  // Six roots, one for each way a limb can come down. Their light is painted in,
+  // so the area data turns them only a little and picks another one for another way.
   'mangrove.root.a': root(163, [{ x: 0, y: 0, r: 1, wobble: 0.06 }], [-0.7]),
   'mangrove.root.b': root(
     173,
@@ -1521,6 +1729,17 @@ export const mangrovePainters: Record<string, Painter> = {
     [2.7],
   ),
   'mangrove.root.c': root(181, [{ x: 0, y: 0, r: 1, wobble: 0.12 }], [-2.3, 0.5]),
+  'mangrove.root.d': root(167, [{ x: 0, y: 0, r: 1, wobble: 0.06 }], [1.4]),
+  'mangrove.root.e': root(
+    179,
+    [
+      { x: 0.1, y: 0.2, r: 0.76, wobble: 0.07 },
+      { x: -0.5, y: -0.3, r: 0.42, wobble: 0.08 },
+    ],
+    [-1.75],
+  ),
+  'mangrove.root.f': root(193, [{ x: 0, y: 0, r: 1, wobble: 0.1 }], [0.25]),
+  'mangrove.clump': clump,
   'mangrove.wall': wall,
   'mangrove.bank': bank,
   'mangrove.tangle.a': tangle(191, 6, 8),

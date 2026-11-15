@@ -425,15 +425,15 @@ const birdShadowBody: Painter = {
     const cy = height / 2;
     // Built from many soft rounds, so that no edge is ever sharp.
     const rounds: [number, number, number, number][] = [
-      [0, 0, 250, 0.34],
-      [-150, 16, 210, 0.3],
-      [130, -10, 200, 0.3],
-      [-290, 40, 150, 0.26],
-      [250, -30, 140, 0.26],
-      [-390, 70, 100, 0.2],
-      [330, -40, 100, 0.2],
-      [-40, 90, 190, 0.2],
-      [40, -90, 180, 0.18],
+      [0, 0, 250, 0.42],
+      [-150, 16, 210, 0.36],
+      [130, -10, 200, 0.36],
+      [-290, 40, 150, 0.3],
+      [250, -30, 140, 0.3],
+      [-390, 70, 100, 0.24],
+      [330, -40, 100, 0.24],
+      [-40, 90, 190, 0.24],
+      [40, -90, 180, 0.22],
     ];
     for (const [dx, dy, radius, alpha] of rounds) {
       ctx.save();
@@ -458,28 +458,32 @@ const birdShadowBody: Painter = {
   },
 };
 
-/** The shadow of the bird's neck and head. It moves on its own. The neck starts at the left. */
+/** Where the neck begins in the image `bird.shadow.head`: the point to pin to the body's shadow. */
+export const BIRD_NECK_START = { x: 66, y: 102 };
+
+/** The shadow of the bird's neck and head. It moves on its own, turning about `BIRD_NECK_START`. */
 const birdShadowHead: Painter = {
-  width: 420,
+  width: 470,
   height: 220,
   paint(ctx, width, height) {
     const mid = height / 2;
+    const start = BIRD_NECK_START.x;
     // The neck: a soft band that narrows.
     for (let index = 0; index < 12; index++) {
       const t = index / 11;
-      const x = 20 + t * 230;
+      const x = start + t * 230;
       const y = mid + 22 * Math.sin(t * Math.PI * 1.1) - 8;
-      glow(ctx, x, y, 62 - 24 * t, SHADE, 0.2);
+      glow(ctx, x, y, 62 - 24 * t, SHADE, 0.22);
     }
     // The head, and the beak as a long point.
     ctx.save();
-    ctx.translate(278, mid - 12);
+    ctx.translate(start + 258, mid - 12);
     ctx.scale(1.25, 0.8);
-    glow(ctx, 0, 0, 56, SHADE, 0.42, 0.25);
+    glow(ctx, 0, 0, 56, SHADE, 0.46, 0.25);
     ctx.restore();
     for (let index = 0; index < 9; index++) {
       const t = index / 8;
-      glow(ctx, 312 + t * 86, mid - 12 + t * 6, 26 - 19 * t, SHADE, 0.34);
+      glow(ctx, start + 292 + t * 86, mid - 12 + t * 6, 26 - 19 * t, SHADE, 0.38);
     }
     void width;
   },

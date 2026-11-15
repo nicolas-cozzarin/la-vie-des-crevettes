@@ -1,6 +1,16 @@
 # 02. Mechanics and actions
 
-Status: draft 0.2, 2026-11-13. Top-down view. All numbers are starting points for playtests and live in one file, `src/data/tuning.ts`.
+Status: draft 0.3, 2026-11-14. Top-down view. All numbers are starting points for playtests and live in one file, `src/data/tuning.ts`.
+
+This document is the overview. Three documents go deeper and are the ones to build from:
+
+| For | Read |
+|-----|------|
+| The exact rules for feelings, moods, predators, other shrimp and molting | [10-feelings-and-states.md](10-feelings-and-states.md) |
+| Every place, thing and creature, with positions and sizes | [11-world-catalogue.md](11-world-catalogue.md) |
+| Story steps, challenges, achievements, the journal and the on-screen lines | [12-goals-and-journal.md](12-goals-and-journal.md) |
+
+Where a deeper document changes something written here, the change is listed in [09-decisions.md](09-decisions.md) from T24 onward and marked below.
 
 Unit: **BL** means one body length of the player shrimp at its current life stage.
 
@@ -58,7 +68,7 @@ Hold Q. The shrimp stops, the view dims slightly and scent ribbons appear on the
 
 Shape and colour both carry the meaning, so the cue works without colour vision.
 
-Range is 8 BL as a juvenile and 14 BL as an adult. Mangrove water is murky and sight is short there, so sensing matters most in chapter 1.
+Range is 8 BL as a juvenile, 11 BL as a subadult and 14 BL as an adult. Mangrove water is murky and sight is short there, so sensing matters most in chapter 1.
 
 ## Food
 
@@ -70,12 +80,12 @@ Every food is algae or plant matter. This is enforced in code: the food type is 
 | Algae film | Roots, rocks | The staple |
 | Fallen mangrove leaf | Mangrove floor | Soft, slow to eat, very filling |
 | Seagrass fuzz | Seagrass blades | Algae growing on the leaves |
-| Golden sand film | Lagoon sand | Best at dusk |
+| Golden sand film | Lagoon sand, and one patch at the mangrove's creek mouth (T34) | Best at dusk |
 | Drifting seaweed | Channel, open sea | Eaten on the move |
 
-Eating: stand at a patch and hold E. About 4 s clears it. Hunger falls by 0.25 and comfort rises. The patch regrows in 90 s.
+Eating: stand at a patch and hold E. About 4 s clears it. Hunger falls by 0.25 and comfort rises. The patch regrows in 90 s. Each food has its own time and value: the table is in doc 10.
 
-Enjoyment: the first taste of each food brings a short wiggle, a warm note and a journal entry. Each shrimp, companions included, has one favourite food that always brings the wiggle.
+Enjoyment: the first taste of each food brings a short wiggle, a warm note and a journal entry. Each shrimp, companions included, has one favourite food that always brings the wiggle. The player's is chosen at random for each life (T35).
 
 Hunger never kills and never slows the shrimp. At high hunger the posture droops, food ribbons show without pressing Sense, and the narration gives a hint.
 
@@ -104,11 +114,13 @@ Five values from 0 to 1, updated every frame, for the player and for every other
 **Mood** is the feeling that currently leads, picked in this order:
 
 1. Afraid, if fear is above 0.5.
-2. Hungry, if hunger is above 0.7.
-3. Content, while eating and for 5 s after.
+2. Content, while eating and for 5 s after (T26: above Hungry, so the first bite feels good at once).
+3. Hungry, if hunger is above 0.7.
 4. Curious, if curiosity is above 0.6.
 5. Social, if company is above 0.6.
 6. Calm.
+
+Each threshold has a lower one for leaving the mood, so that it does not flicker. After any fright the shrimp is wary for a while (T27). Both are in doc 10.
 
 ### Making each mood clear
 
@@ -170,6 +182,8 @@ Stages:
 | Hunting fish | 2, 3, free life | A dark shape circling. It turns to face the player, pauses, then charges in a straight line | Dart sideways as it charges, then reach cover or burrow |
 | Net | 4 | A hull shadow and engine throb, then a wide grid of shadow sweeping along the bed | Dart out past its edge, or press into a rock crevice until it passes |
 
+During Presence a hidden number, notice, rises with the player's movement. Hiding, keeping still or getting far away each end the visit without a chase (T28). While a predator is present, fear cannot fall below 0.5 (T30). Every distance and timing is in doc 10.
+
 Rules:
 - The player should escape about four times out of five without having played before.
 - **Cornered.** If a strike or charge lands: blur, an automatic dart, and the player wakes in the nearest shelter with fear at 0.9. Nothing is lost.
@@ -225,6 +239,8 @@ Needed to move the life forward. Shown one at a time as a line of narration, nev
 | 4 The shadow | Get out from under the net. Find the shoal again. |
 | 5 Open sea | Molt. Swim down into the blue. Spawn. |
 
+Spawning has no button (T31). Doc 12 gives each step an id and its exact condition.
+
 ## Challenges
 
 Optional. Listed in the journal by chapter. When one advances, a small line shows at the edge of the screen for 4 s ("Three tastes 2/3") and fades. The player can pin one challenge so its ribbon shows when sensing.
@@ -252,6 +268,8 @@ Optional. Listed in the journal by chapter. When one advances, a small line show
 | 4 | Wait it out in a crevice | Escape |
 | 5 | Find the deepest point | Reach |
 | 5 | Rest touching a Close companion | Meet |
+
+Two more are proposed in doc 12 (D36): walk up to a hermit crab without making it hide, and find a shed shell. Doc 12 gives every challenge an id, a counter and a target.
 
 ## Achievements
 
@@ -281,13 +299,15 @@ Across the whole game. Kept on a page of their own.
 | Full carnet | Every discovery found |
 | All of it | Every challenge done |
 
+Three more are proposed in doc 12 (D36): Clean antennae, Stone still and Gentle. Doc 12 gives every achievement an id and describes its stamp.
+
 ## Journal unlocks
 
 | Entry | Unlocks when |
 |-------|--------------|
 | A food | First taste |
 | A place | First entry to the area |
-| A creature | First seen within 6 BL for 2 s |
+| A creature | First within 2.5 BL for 2 s (T29) |
 | A companion page | Bond reaches Familiar. More text at each stage |
 | A "What shrimp feel" card | The event listed for that card in [07-science-and-message.md](07-science-and-message.md) |
 
@@ -298,7 +318,7 @@ A new entry shows as one short line at the edge of the screen and a low bell. Th
 After the first spawning the player continues as the next generation.
 
 - Every area is open from the start. Passages at area edges lead to the next one.
-- No story steps. Molts happen with time and feeding.
+- No story steps. Molts happen with time and feeding: one after every 12 meals (T37).
 - Predators, day and night, the shoal and the net all continue.
 - Bonds, journal, challenges and achievements carry over. Companions of the new generation keep the same names and markings.
 - Reaching the open sea and spawning starts another generation.

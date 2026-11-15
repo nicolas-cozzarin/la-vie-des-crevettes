@@ -21,6 +21,15 @@ It is not affiliated with any organisation. Do not add an organisation's name, l
 | Facts, journal texts, narration, wording | `docs/07-science-and-message.md` |
 | What to build next | `docs/08-roadmap.md` |
 | What is decided | `docs/09-decisions.md` |
+| Exact rules for feelings, moods, predators, other shrimp, molting | `docs/10-feelings-and-states.md` |
+| Every place, thing and creature, with positions and sizes | `docs/11-world-catalogue.md` |
+| Story steps, challenges, achievements, journal and HUD layout | `docs/12-goals-and-journal.md` |
+| Every line of text, with its key | `docs/13-script.md` |
+| How pictures are painted, rig postures, the list of images | `docs/14-art-production.md` |
+| How to build each step: files, patterns, tests, pitfalls | `docs/15-implementation-guide.md` |
+| Why things are the way they are | `docs/16-history.md` |
+
+For a roadmap step, read doc 15 first. It names the other documents the step needs. Docs 10 to 13 are the detail and docs 01 to 07 the overview. Where the detail changes the overview, doc 09 lists the change (T24 onward).
 
 If code and docs disagree, stop and ask which is right. If a decision in `docs/09-decisions.md` must change, change it there first.
 
@@ -43,7 +52,9 @@ If code and docs disagree, stop and ask which is right. If a decision in `docs/0
 - No key codes in game code. Use `ActionInput`, reached as `app.actions`. Only `src/platform/` touches the browser's keyboard and storage.
 - Request images by name. If there is no file for a name, `TextureFactory` draws one.
 - No asset path starts with `/`. The game is served from a sub-path.
-- This is Phaser 4. Do not rely on Phaser 3 examples. Check the types in `node_modules/phaser` and the v4 docs.
+- This is Phaser 4. Do not rely on Phaser 3 examples. Check the types in `node_modules/phaser`, the guides in `node_modules/phaser/skills/` and the notes in doc 15.
+- A picture is a painter in `src/art/painters/`, registered in `TextureFactory`. When you add or change one, look at it on the atelier page (`atelier.html`) and update the manifest in doc 14.
+- Text comes from doc 13. Copy the line and its key. Do not write new player-facing text without asking.
 - TypeScript strict. No `any` without a comment saying why.
 - Keep engine-facing code thin. Put decisions in `core`, drawing in `entities` and `systems`.
 
@@ -65,11 +76,13 @@ npm run lint       lint and format check
 - New rules have unit tests. New text exists in both languages. New assets are credited.
 - Played in the browser, not only compiled.
 - Work is on a branch. Merging to `main` publishes the game.
+- Commit and push at the end of every part of a step. Work that is not pushed is lost when the session ends.
+- `docs/16-history.md` has a new line for the session: the date, what was done, what was learned.
 
 ## Ask before
 
 - Adding a dependency.
-- Adding any creature, food or behaviour not in the docs.
+- Adding any creature, food or behaviour not in the docs, or building anything marked **new** in docs 11 and 12 before doc 09 says it is decided.
 - Writing or changing journal facts.
 - Changing default keys, the save format, or anything under "Rules that never bend".
 

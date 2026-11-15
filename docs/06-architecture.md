@@ -1,6 +1,8 @@
 # 06. Tech architecture and deployment
 
-Status: draft 0.2, 2026-11-13. Stack confirmed by the author (D30). Built by the author with Claude Code (D29). Static site on GitHub Pages.
+Status: draft 0.3, 2026-11-14. Stack confirmed by the author (D30). Built by the author with Claude Code (D29). Static site on GitHub Pages.
+
+For what exists today, the patterns to keep, and the files and tests of each remaining step, read [15-implementation-guide.md](15-implementation-guide.md).
 
 ## Stack
 
@@ -36,6 +38,7 @@ Why Phaser: scenes, keyboard input, audio, asset loading, cameras, tweens and pa
 ```
 la-vie-des-crevettes/
 ├─ index.html
+├─ atelier.html               a page that shows every picture, without the game (T41)
 ├─ package.json
 ├─ vite.config.ts
 ├─ tsconfig.json
@@ -74,7 +77,8 @@ la-vie-des-crevettes/
 │  ├─ scenes/                 Boot, Preload, Title, Play, Hud, Pause, Settings, Journal, About
 │  ├─ entities/               ShrimpRig, PlayerShrimp, NpcShrimp, Bird, HuntingFish, Net, FoodPatch, Cover
 │  ├─ systems/                AreaLoader, MoodPresenter, AudioDirector, ScentField, DayNight, Shoal, Narrator, Counter
-│  ├─ art/                    TextureFactory: code-drawn images
+│  ├─ art/                    TextureFactory and the painters: code-drawn images (doc 14)
+│  ├─ atelier/                the code of atelier.html. No Phaser
 │  ├─ platform/               the browser: keyboard events, storage, keyboard layout
 │  └─ ui/                     prompts, panels, rebind dialog
 ├─ tests/
@@ -115,6 +119,8 @@ Boot -> Preload -> Title -> Play (with Hud on top)
 | `Counter` | Sends anonymous counts. See below |
 
 ## Events
+
+The list below is the first sketch. The full type, with the events added since, is in doc 15.
 
 ```ts
 type GameEvents = {
@@ -186,6 +192,8 @@ Saves and settings are stored in the browser under `lvdc.save.v1` and `lvdc.sett
 ## Areas as data
 
 Each area is one data file. The first version places things by hand-written coordinates and seeded scatter inside zones. A map editor can be adopted later if hand placement becomes slow.
+
+The example below is a sketch of the idea. The real type is `AreaDef` in `src/data/areas/types.ts`, and the real positions are in [11-world-catalogue.md](11-world-catalogue.md): the sea is to the left, so the mangrove's way out is its left edge (T24).
 
 ```ts
 export const mangrove: AreaDef = {

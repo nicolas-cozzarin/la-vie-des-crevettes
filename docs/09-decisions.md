@@ -1,6 +1,6 @@
 # 09. Decisions
 
-Status: 2026-11-13. One row per decision. Change a decision here first, then in the document it affects.
+Status: 2026-11-14. One row per decision. Change a decision here first, then in the document it affects. The reasons behind the main decisions are in [16-history.md](16-history.md).
 
 - **Decided**: the author chose it.
 - **Proposed**: Claude's default. Stands until the author says otherwise.
@@ -50,6 +50,9 @@ Status: 2026-11-13. One row per decision. Change a decision here first, then in 
 | D32 | Counting players | Yes | Decided | 06 |
 | D32a | How | GoatCounter: no cookies, no personal data | Proposed | 06 |
 | D33 | Title | La vie des crevettes. In English, The Life of Shrimp | Decided | 01 |
+| D34 | New creatures and things | Hermit crab, barnacles, mud balls, breathing roots, a glass hopper and a drifting bell in Drift, sand mound, shed shell, a long call at sea. Optional: sea star, sea fan. Listed in doc 11. None is eaten or harmed | Open | 11 |
+| D35 | Man-made things | None besides the hull and the net | Proposed | 11 |
+| D36 | New goals | Two challenges (walk up to a hermit crab, find a shed shell) and three achievements (Clean antennae, Stone still, Gentle) | Open | 12 |
 
 ## Smaller choices made while drafting
 
@@ -80,11 +83,49 @@ All proposed. Say so if any is wrong.
 | T21 | Darts count as "in a row" when less than 2.5 s apart | Needed to say when the shrimp tires |
 | T22 | The game uses the true time between frames and cuts long frames into short steps | Phaser's smoothing played the game in slow motion on slow machines |
 | T23 | The letter-keys preset is named by the letters on the player's own keyboard: WASD, or ZQSD on a French one | Bindings are by key position (T11), so the name should match what is printed |
+| T24 | The five places lie along one coast, sea to the left and land to the right. The larva drifts in from left to right and the grown shrimp travels back from right to left | True to the coast where whiteleg shrimp live. The return retraces the drift. One map serves the free life |
+| T25 | The shrimp grows 12% at each molt (110, 124, 140, 158 px) and the view eases out (1.4, 1.3, 1.2, 1.1), so it stays about the same size on screen. Each area is drawn at the scale of the shrimp that lives there | Doc 04 asks for growth to show as the world getting smaller |
+| T26 | The mood "content" ranks above "hungry" | A hungry shrimp must show pleasure from its first bite |
+| T27 | A "wary" state follows every fright: 20 s, 40 s after being cornered, 10 s after a harmless startle | Calm does not return at once in a real animal (doc 07). It also gives the "Still wary" card its moment |
+| T28 | During a predator's visit a hidden number, notice, rises with the player's movement. Hiding, keeping still or getting far away each end the visit without a chase | Three honest ways through, all of them things shrimp do. Doc 02 already said "cover or stillness ends it here" |
+| T29 | A creature is discovered within 2.5 BL for 2 s, not within 6 BL | At 6 BL it is at the edge of the view and the player has not looked at it |
+| T30 | While a predator is present, fear cannot fall below 0.5, even in hiding | Relief should come when it leaves, not before |
+| T31 | Spawning has no button. The player arrives among the others and is still | It should happen to the shrimp, not be a task |
+| T32 | A bond is shown in the journal as four small stamps and lines of text, never as a bar | Rule 7 is about feelings, but a bar here would read as one |
+| T33 | Narration lines have two weights. "Must" lines wait their turn. Others are dropped if a line showed in the last 20 s | Keeps narration sparse (D19) without losing the story |
+| T34 | The third taste in the mangrove is a patch of golden film on the sandy mud of the creek mouth | Doc 02 asks for three mangrove foods and lists two. Or the challenge becomes "Both tastes" |
+| T35 | The player's shrimp has a favourite food, chosen at random for each life | Individuals differ. The next generation is not the same shrimp |
+| T36 | A tail flip within 1.5 BL of a stranger startles it | The player learns that they can frighten someone too |
+| T37 | In the free life a molt comes after 12 meals | Doc 02 says "with time and feeding" and gives no number |
+| T38 | The bird is drawn as a snowy egret (black legs, yellow feet) and the fish as a snook. Both to check for this coast | A real animal to draw from |
+| T39 | The place "The shadow" has a journal entry with a drawing and a name, and no text | D4: nothing is explained |
+| T40 | After the net has passed, a cloud of stirred silt hangs for 20 s. Nothing else is left behind, and every companion is found again | D4 and the hard rule that the net takes no one |
+| T41 | A page, `atelier.html`, shows every picture without starting the game. It is published beside the game and not linked from it | The author can look at the art on the live site. A painter can be checked without playing |
+| T42 | The first 10 s of Drift have no feeding, and the larva changes shape twice on the way | The youngest larvae live on their yolk (FAO). The art direction already asks for two looks |
 
 ## Still needed from the author
 
-1. D13a: should companions speak in text?
-2. D11a: continue as the next generation, or stay the same shrimp?
-3. D24: the art information.
+Each has a default that stands until the author says otherwise.
+
+From 2026-11-13:
+
+1. D13a: should companions speak in text? Default: no.
+2. D11a: continue as the next generation, or stay the same shrimp? Default: the next generation.
+3. D24: the art information the author meant to send.
 4. D27a: confirm the MIT licence for code, and the name to put on it.
-5. T17: keep or cut the "How many" card.
+5. T17: keep or cut the "How many" card. Default: keep, as an optional card.
+
+From 2026-11-14:
+
+6. T24: is the coast the right way round, with the sea on the left and the life's journey running from right to left?
+7. D34: which of the new creatures and things come in? Default: all except the sea star and the sea fan. The long call at sea is the least sure.
+8. D35: nothing man-made besides the hull and the net? Default: nothing.
+9. D36: the two new challenges and three new achievements? Default: yes, if the hermit crab and the shed shell come in.
+10. D14: pistol shrimp sharing a burrow with a goby is best known from other seas. It is to be checked for this coast. Keep it whatever the answer, or replace it if it does not occur here? Default: keep.
+11. T34: a third taste at the creek mouth, or rename the challenge "Both tastes"? Default: the third taste.
+12. T27: is 40 s of wariness after being cornered too long for a calm game?
+13. T35, T36: a favourite food chosen for each life, and strangers that the player's tail flip can startle? Default: yes to both.
+14. T38: the snowy egret and the snook as the animals to draw from?
+15. T40: after the net, a cloud of silt and nothing more?
+16. Who reads the French aloud before release (doc 07)?
+17. Doc 13: the narration names each companion once ("You will call her Nacre."). Is that the right way to give names?

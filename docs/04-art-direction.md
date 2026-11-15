@@ -1,6 +1,13 @@
 # 04. Art direction
 
-Status: draft 0.2, 2026-11-13. Top-down view (D16). Style and face confirmed by the author (D22, D23). First version uses a code-drawn shrimp and open-licence assets (D24). The author will send more art information.
+Status: draft 0.3, 2026-11-14. Top-down view (D16). Style and face confirmed by the author (D22, D23). First version uses a code-drawn shrimp and open-licence assets (D24). The author will send more art information.
+
+This document says what the game should look like. Two documents go deeper:
+
+| For | Read |
+|-----|------|
+| What each place, thing and creature looks like, with sizes | [11-world-catalogue.md](11-world-catalogue.md) |
+| How a picture is painted, named and checked, the rig's postures by mood, and the list of every image with its status | [14-art-production.md](14-art-production.md) |
 
 ## The look
 
@@ -39,7 +46,7 @@ Colour:
 
 **Alive, not cooked.** The pink, curled shrimp is a cooked one. This shrimp is never pink or orange, and never curled into a C except for a moment during a tail flip.
 
-No human features. No eyebrows, mouth shapes, eyelids or enlarged eyes. Emotion is carried by posture, antennae, tail fan and movement (D23). The table of mood postures is in [02-mechanics.md](02-mechanics.md).
+No human features. No eyebrows, mouth shapes, eyelids or enlarged eyes. Emotion is carried by posture, antennae, tail fan and movement (D23). The table of mood postures is in [02-mechanics.md](02-mechanics.md), and the numbers behind each posture are in doc 14.
 
 ### Life stages
 
@@ -50,7 +57,7 @@ No human features. No eyebrows, mouth shapes, eyelids or enlarged eyes. Emotion 
 | Sub-adult | 2 to 4 | Longer antennae, fuller tail fan |
 | Adult | 5 | Largest, steady, antennae trailing far behind when it swims |
 
-Growth is shown by the world getting smaller around the shrimp. A fallen leaf is a roof in chapter 1 and a snack-sized scrap in chapter 5.
+Growth is shown by the world getting smaller around the shrimp. A fallen leaf is a roof in chapter 1 and a snack-sized scrap in chapter 5. The shrimp grows 12% at each molt and the view eases out, so it stays about the same size on screen (T25). The table of sizes is in doc 10, and each area's scale is in doc 11.
 
 ### Rig
 
@@ -148,6 +155,8 @@ Check the licence on each file's own page on the day of download, and add a row 
 - Painted files: WebP for grounds, PNG for parts that need clean transparency. No single image wider than 2048 px.
 
 ## Images for the first release
+
+The full list, with sizes and what is built, is the manifest in doc 14. In short:
 
 - Shrimp parts: carapace, six segments, tail fan, eyes, antennae, antennules, legs, swimmerets, soft shadow. Larva body.
 - Mangrove: mud ground, three roots, two root tangles (cover), fallen leaves, floating leaves (cover), algae film patch, seed pod, sunken branch.

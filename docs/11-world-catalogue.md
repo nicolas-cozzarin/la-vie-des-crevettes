@@ -341,7 +341,7 @@ x:  0      500        2500         4500        6500         8500       10500   1
 | `light.moon` | Effect | Tile | Pale blue-white bands `#C9D6E8`, long and soft | Slide across the bed |
 | `fx.streak` | Effect | | Specks drawn out into short lines | Shows how fast the water runs |
 | `shrimp.traveller` | Creature | 1 BL | Other shrimp, strangers, in small groups | Pass through, all heading left |
-| `channel.seaFan` | Decor, *added* | 2 BL | A flat branching fan, rust-red, growing from the rock walls | Sways.  |
+| `channel.seaFan` | Decor, *added* | 2 BL | A flat branching fan, rust-red, growing from the rock walls | Sways |
 
 ## Chapter 4. The shadow
 

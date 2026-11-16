@@ -3,13 +3,14 @@ import { app } from '../app';
 import { MOOD_EXPRESSIONS, STAGE_LOOKS, withActivity, withConditions } from '../art/expressions';
 import { COLORS, DEPTH, GAME_HEIGHT, GAME_WIDTH } from '../config';
 import { Activity } from '../core/activity/Activity';
+import { Bonds } from '../core/bonds/Bonds';
 import { EventBus } from '../core/events';
 import { FoodPatch } from '../core/food/FoodPatch';
 import { FeelingsModel, type FeelingsChange } from '../core/feelings/FeelingsModel';
 import { MOODS, type Mood } from '../core/feelings/mood';
 import type { FeelingsContext } from '../core/feelings/types';
 import type { GameEvents } from '../core/gameEvents';
-import { approach } from '../core/movement/angles';
+import { approach, rotateToward } from '../core/movement/angles';
 import { moveCircle, type Bounds } from '../core/movement/collision';
 import { seededRandom } from '../core/random';
 import { RibbonMemory, ribbons, type Ribbon } from '../core/scent/ribbons';
@@ -28,11 +29,13 @@ import {
 import type { AreaDef } from '../data/areas/types';
 import { FOODS } from '../data/foods';
 import {
+  BOND,
   CAMERA,
   CURIOSITY,
   FEELINGS,
   FRAME,
   GRAZE,
+  GREET,
   HIDE,
   HUNGER,
   MOOD,
@@ -46,6 +49,7 @@ import { debugRequested } from '../platform/address';
 import { loadArea, type CoverHandle, type LoadedArea } from '../systems/AreaLoader';
 import { MoodPresenter } from '../systems/MoodPresenter';
 import { ScentField } from '../systems/ScentField';
+import { Shoal } from '../systems/Shoal';
 import { WaterLight } from '../systems/WaterLight';
 import type { HudScene } from './HudScene';
 
@@ -134,6 +138,12 @@ export class PlayScene extends Phaser.Scene {
   private prompts = new Map<string, number>();
   private promptNow: string | null = null;
 
+  /** The other shrimp, and the player's bonds with them. Bonds last as long as the scene until saving (step 9). */
+  private bonds!: Bonds;
+  private shoal!: Shoal;
+  /** How much brighter the other shrimp are drawn while the player is social (doc 10, "Screen"). */
+  private lift = 0;
+
   private hud: HudScene | null = null;
 
   constructor() {
@@ -162,7 +172,7 @@ export class PlayScene extends Phaser.Scene {
     const stage = STAGE_IN[this.areaId];
     this.rig = new ShrimpRig(this, this.bodyLengthPx, DEPTH.bedAnimals, STAGE_LOOKS[stage]);
     this.rig.update(0, this.motion);
-    this.activity = new Activity<CoverHandle, FoodPatch>(HIDE, this.bodyLengthPx, GRAZE);
+    this.activity = new Activity<CoverHandle, FoodPatch>(HIDE, this.bodyLengthPx, GRAZE, GREET);
     this.zones = new ZoneTracker(this.loaded.zones);
     this.light = new WaterLight(this, area.light);
 
@@ -207,6 +217,23 @@ export class PlayScene extends Phaser.Scene {
     this.prompts = new Map();
     this.promptNow = null;
 
+    // Other shrimp. From chapter 2 they keep together as a shoal.
+    this.bonds = new Bonds(BOND);
+    this.shoal = new Shoal(this, {
+      area,
+      stage,
+      bodyLengthPx: this.bodyLengthPx,
+      obstacles,
+      bounds,
+      covers: this.loaded.covers,
+      foods: this.patches,
+      bonds: this.bonds,
+      bus: this.bus,
+      depth: DEPTH.bedAnimals,
+      together: stage === 'subAdult' || stage === 'adult',
+    });
+    this.lift = 0;
+
     const camera = this.cameras.main;
     camera.setBackgroundColor(COLORS.deepTeal);
     this.presenter = new MoodPresenter(camera, {
@@ -235,6 +262,7 @@ export class PlayScene extends Phaser.Scene {
       zones: [...this.zones.current],
     });
     debugState.scent = () => this.scent.snapshot;
+    debugState.shrimp = () => this.shoal.snapshot;
     debugState.feelings = () => ({
       values: { ...this.feelings.values },
       mood: this.feelings.mood,
@@ -257,7 +285,9 @@ export class PlayScene extends Phaser.Scene {
       debugState.player = null;
       debugState.feelings = null;
       debugState.scent = null;
+      debugState.shrimp = null;
       this.scent.destroy();
+      this.shoal.destroy();
       this.rig.destroy();
       this.hud = null;
       this.scene.stop('Hud');
@@ -292,13 +322,32 @@ export class PlayScene extends Phaser.Scene {
         this.patches,
       );
       const { axis } = result;
+      // Greeting turns the head to the other shrimp; the body stays where it is.
+      if (result.face !== undefined) {
+        this.motion.heading = rotateToward(this.motion.heading, result.face, MOTION.turnRate * dt);
+      }
+      if (result.greeted) this.shoal.playerGreeted(this.clock, result.greeted);
+      if (result.called) this.shoal.playerCalled(this.clock);
       eating = this.stepMeal(dt, before, result.eating);
       for (const patch of this.patches) patch.step(dt);
+      for (let alarm = this.shoal.takeAlarms().length; alarm > 0; alarm--) {
+        this.feelings.stimulus('alarm');
+      }
       this.stepFeelings(dt, axis.x !== 0 || axis.y !== 0 || dart);
+      this.shoal.step(dt, this.clock, {
+        x: this.motion.x,
+        y: this.motion.y,
+        heading: this.motion.heading,
+        mode: this.motion.mode,
+        activity: this.activity.name,
+        under: this.activity.tucked ? this.activity.cover : null,
+        eating,
+      });
       const moved = this.motion.step(dt, { x: axis.x, y: axis.y, dart }, this.mover);
       if (moved.darted) {
         this.feelings.stimulus('tailFlip');
         this.bus.emit('tailflip', { who: PLAYER });
+        this.shoal.playerFlipped(this.clock, this.motion.x, this.motion.y);
       }
       darted = darted || moved.darted;
       dart = false;
@@ -310,6 +359,9 @@ export class PlayScene extends Phaser.Scene {
     for (const [patch, image] of this.foodImages) image.setAlpha(0.15 + 0.85 * patch.amount);
     this.wiggleLeft = Math.max(0, this.wiggleLeft - frame);
     this.rig.update(frame, this.motion, this.feel(eating));
+    const lift = this.feelings.mood === 'social' ? 0.07 : 0;
+    this.lift += (lift - this.lift) * approach(frame, MOOD.screen);
+    this.shoal.draw(frame, this.cameras.main.worldView, this.lift);
     this.showScent(frame);
     this.showPrompt(own);
     this.presenter.update(frame, {
@@ -339,6 +391,8 @@ export class PlayScene extends Phaser.Scene {
       hunger: this.feelings.values.hunger,
       fear: this.feelings.values.fear,
       tasted: (kind: FoodKind) => this.discovery.known.has(`food.${kind}`),
+      greet: actions.isDown('greet'),
+      others: this.shoal.greetable,
     };
   }
 
@@ -390,7 +444,7 @@ export class PlayScene extends Phaser.Scene {
       const found = ribbons(
         x,
         y,
-        { foods: this.patches, shrimp: [], dangers: [], unknown },
+        { foods: this.patches, shrimp: this.shoal.sources, dangers: [], unknown },
         range,
         SENSE,
       );
@@ -409,15 +463,28 @@ export class PlayScene extends Phaser.Scene {
     this.scent.update(dt, x, y, shown);
   }
 
-  /** "Hold E to graze" when a graze could start, the first three times (doc 03). */
+  /**
+   * "Hold E to graze" when a graze could start, "F to greet" when another
+   * shrimp is close enough, the first three times each (doc 03).
+   */
   private showPrompt(own: { x: number; y: number }): void {
     let key: string | null = null;
+    let action: 'interact' | 'greet' = 'interact';
     if (this.activity.name === 'free' && own.x === 0 && own.y === 0) {
       const input = this.activityInput(0, own, false);
       const food = this.activity.grazeable(input, this.patches);
       if (food) {
         const full = this.feelings.values.hunger < GRAZE.full;
         key = full ? 'prompt.taste' : 'prompt.graze';
+      } else if (this.activity.greetable(this.motion.x, this.motion.y, this.shoal.greetable)) {
+        key = 'prompt.greet';
+        action = 'greet';
+      } else if (
+        this.shoal.anyCompanion &&
+        !this.shoal.companionNear(this.motion.x, this.motion.y)
+      ) {
+        key = 'prompt.call';
+        action = 'greet';
       }
     }
     if (key !== this.promptNow) {
@@ -427,7 +494,7 @@ export class PlayScene extends Phaser.Scene {
         else this.prompts.set(key, times + 1);
       }
       this.promptNow = key;
-      this.hud?.prompt(key === null ? null : t(key, { key: app.actionKey('interact') }));
+      this.hud?.prompt(key === null ? null : t(key, { key: app.actionKey(action) }));
     }
   }
 
@@ -444,9 +511,9 @@ export class PlayScene extends Phaser.Scene {
       nearCover: this.activity.canHide(x, y, this.loaded.covers),
       moving,
       tired: this.motion.tired,
-      // Other shrimp, threats, currents and the day come in later steps.
-      neighbours: [],
-      companionWithin2: false,
+      // Threats, currents and the day come in later steps.
+      neighbours: this.shoal.neighbours(x, y),
+      companionWithin2: this.shoal.companionNear(x, y),
       restingAgainstClose: false,
       curiosityPull: this.pull.value,
       threat: null,
@@ -460,6 +527,9 @@ export class PlayScene extends Phaser.Scene {
     if (change.mood) {
       this.bus.emit('mood:changed', { who: PLAYER, ...change.mood });
       this.presenter.moodChanged(change.mood.to);
+      if (change.mood.to === 'afraid') {
+        this.shoal.playerAfraid(this.clock, this.motion.x, this.motion.y);
+      }
     }
     for (const { condition, on } of change.conditions) {
       this.bus.emit('condition:changed', { who: PLAYER, condition, on });
@@ -486,17 +556,36 @@ export class PlayScene extends Phaser.Scene {
     const mood = feelings.mood;
     const has = feelings.has.bind(feelings);
     let target: { x: number; y: number } | null = null;
-    if (mood === 'curious') target = this.pull.target;
+    // Greeting: antennae reach toward the other shrimp, as a social shrimp's do.
+    const greeting = this.activity.name === 'greeting';
+    if (greeting) target = this.shoal.where(this.activity.with ?? '');
+    else if (mood === 'curious') target = this.pull.target;
+    else if (mood === 'social') target = this.nearestShrimp();
     else if (has('veryHungry')) target = this.nearestFood();
     const sensing = this.activity.name === 'sensing';
+    const shown = greeting ? 'social' : mood;
     return {
-      expression: withActivity(withConditions(MOOD_EXPRESSIONS[mood], has), sensing),
+      expression: withActivity(withConditions(MOOD_EXPRESSIONS[shown], has), sensing),
       afraid: mood === 'afraid',
       target,
       startled: has('startled'),
       grazing: eating,
       wiggle: this.wiggleLeft > 0 ? 1 - this.wiggleLeft / GRAZE.wiggle : null,
     };
+  }
+
+  /** The nearest other shrimp within the company radius, for a social shrimp's antennae. */
+  private nearestShrimp(): { x: number; y: number } | null {
+    let best: { x: number; y: number } | null = null;
+    let bestDistance = 4 * this.bodyLengthPx;
+    for (const other of this.shoal.greetable) {
+      const distance = Math.hypot(other.x - this.motion.x, other.y - this.motion.y);
+      if (distance < bestDistance) {
+        best = other;
+        bestDistance = distance;
+      }
+    }
+    return best;
   }
 
   /** The nearest food within the Sense range, for a very hungry shrimp to lean toward. */

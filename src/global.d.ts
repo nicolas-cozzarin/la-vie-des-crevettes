@@ -2,6 +2,7 @@ import type { Bindings } from './core/input/bindings';
 import type { Lang } from './core/i18n';
 import type { FeelingsSnapshot, PlayerSnapshot } from './debug';
 import type { ScentSnapshot } from './systems/ScentField';
+import type { ShrimpSnapshot } from './systems/Shoal';
 
 /** Read-only view of the running game, used by the browser test. */
 export interface DebugHook {
@@ -15,6 +16,8 @@ export interface DebugHook {
   feelings(): FeelingsSnapshot | null;
   /** The scent ribbons drawn now, or null outside play. */
   scent(): ScentSnapshot[] | null;
+  /** The other shrimp: where they are, what they do, and the bond with each. */
+  shrimp(): ShrimpSnapshot[] | null;
 }
 
 declare global {

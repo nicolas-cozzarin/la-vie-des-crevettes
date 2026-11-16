@@ -314,6 +314,8 @@ export const NPC = {
   stranger: { keep: 1.2, backOff: 3.5, rushed: 2 },
   /** BL. A tail flip this close startles a Stranger. */
   startleReach: 1.5,
+  /** BL between two shrimp's middles, below which they are pushed apart. */
+  apart: 0.7,
   /** Hunger when an area opens: a random value between these. */
   hunger: { min: 0.2, max: 0.55 },
   /** A walk is a run of steps, then a pause. Seconds; the pause grows as activity falls. */

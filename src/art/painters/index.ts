@@ -1,4 +1,5 @@
 import type { Painter } from '../paint';
+import { channelPainters } from './channel';
 import { creaturePainters } from './creatures';
 import { driftPainters } from './drift';
 import { effectPainters } from './effects';
@@ -17,6 +18,7 @@ export const PAINTERS: Readonly<Record<string, Painter>> = {
   ...lagoonPainters,
   ...creaturePainters,
   ...lagoonAnimalPainters,
+  ...channelPainters,
   ...effectPainters,
 };
 
@@ -41,5 +43,6 @@ export const PAINTER_GROUPS: PainterGroup[] = [
     ground: '#E3D5AD',
     names: Object.keys(lagoonAnimalPainters),
   },
+  { id: 'channel', title: 'Channel', ground: '#33434A', names: Object.keys(channelPainters) },
   { id: 'effects', title: 'Effects', ground: '#3F4E52', names: Object.keys(effectPainters) },
 ];

@@ -21,6 +21,7 @@ import {
   type Point,
   type Rgb,
 } from '../paint';
+import { paintBarnacle } from './creatures';
 
 /**
  * The mangrove, seen from above through tea-coloured water.
@@ -1714,6 +1715,83 @@ const murk: Painter = {
   },
 };
 
+/**
+ * A root foot like `mangrove.root.a`, coming down the other way, with
+ * clusters of barnacles on the limb just above the mud.
+ */
+function barnacledRoot(): Painter {
+  const base = root(171, [{ x: 0, y: 0, r: 1, wobble: 0.08 }], [-1.1]);
+  return {
+    width: base.width,
+    height: base.height,
+    paint(ctx, size, height) {
+      base.paint(ctx, size, height);
+      const random = seededRandom(172);
+      const centre = size / 2;
+      const solid = centre * ROOT_FILL;
+      const angle = -1.1;
+      const spots: { x: number; y: number; r: number; fade: number }[] = [];
+      for (let cluster = 0; cluster < 6; cluster++) {
+        const along = solid * (0.15 + cluster * 0.24 + random() * 0.1);
+        const across = (random() - 0.5) * solid * 0.9;
+        for (let index = 0; index < 6 + Math.floor(random() * 6); index++) {
+          const a = along + (random() - 0.5) * solid * 0.3;
+          const b = across + (random() - 0.5) * solid * 0.35;
+          spots.push({
+            x: centre + Math.cos(angle) * a - Math.sin(angle) * b,
+            y: centre + Math.sin(angle) * a + Math.cos(angle) * b,
+            r: 2.6 + random() * 3.2,
+            fade: Math.max(0, Math.min(1, 1 - (a - solid * 1.05) / (solid * 0.9))),
+          });
+        }
+      }
+      // Lower ones first, so those higher up the limb lie over them.
+      spots.sort((p, q) => q.fade - p.fade);
+      for (const spot of spots) {
+        ctx.save();
+        ctx.globalAlpha = spot.fade * 0.82;
+        paintBarnacle(ctx, random, spot.x, spot.y, spot.r);
+        ctx.restore();
+      }
+    },
+  };
+}
+
+/**
+ * One breathing root: a peg that stands up out of the mud, seen from above
+ * as its round tip, with a low collar of mud and algae where it comes out.
+ */
+const breathingRoot: Painter = {
+  width: 64,
+  height: 64,
+  paint(ctx, size) {
+    const random = seededRandom(611);
+    const c = size / 2;
+    glow(ctx, c + 2, c + 3, 24, MUD_DARK, 0.5, 0.3);
+    glow(ctx, c + 4, c + 5, 15, ALGAE, 0.25);
+    ctx.save();
+    tracePath(ctx, blob(random, c, c, 12.5, 0.1, 10));
+    softFill(ctx, litWash(ctx, c, c, 12.5, ROOT_LIGHT, ROOT, ROOT_DARK), ROOT_DARK, 4, 0.6);
+    ctx.clip();
+    // The tip is a little paler, and the bark has small pale pores.
+    glow(ctx, c - 3, c - 3, 7, ROOT_LIGHT, 0.35);
+    speckle(
+      ctx,
+      random,
+      26,
+      { x: c - 13, y: c - 13, w: 26, h: 26 },
+      [0.5, 1.2],
+      ROOT_LIGHT,
+      [0.2, 0.5],
+    );
+    ctx.restore();
+    tracePath(ctx, blob(seededRandom(611), c, c, 12.5, 0.1, 10));
+    ctx.strokeStyle = rgba(ROOT_DARK, 0.5);
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+  },
+};
+
 export const mangrovePainters: Record<string, Painter> = {
   'mangrove.mud': mud,
   'mangrove.sandmud': sandmud,
@@ -1739,6 +1817,7 @@ export const mangrovePainters: Record<string, Painter> = {
     [-1.75],
   ),
   'mangrove.root.f': root(193, [{ x: 0, y: 0, r: 1, wobble: 0.1 }], [0.25]),
+  'mangrove.root.barnacled': barnacledRoot(),
   'mangrove.clump': clump,
   'mangrove.wall': wall,
   'mangrove.bank': bank,
@@ -1755,6 +1834,7 @@ export const mangrovePainters: Record<string, Painter> = {
   'thing.seedPod.standing': seedPodStanding,
   'thing.seedPod.lying': seedPodLying,
   'thing.sunkenBranch': sunkenBranch,
+  'thing.breathingRoot': breathingRoot,
   'light.dapple': dapple,
   'mangrove.murk': murk,
 };

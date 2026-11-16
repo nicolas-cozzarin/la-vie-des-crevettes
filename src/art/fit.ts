@@ -36,6 +36,8 @@ const FIT: Readonly<Record<string, ImageFit>> = {
   'mangrove.root.d': { fill: 0.46 },
   'mangrove.root.e': { fill: 0.46 },
   'mangrove.root.f': { fill: 0.46 },
+  'mangrove.root.barnacled': { fill: 0.46 },
+  'thing.breathingRoot': { fill: 0.4 },
   'mangrove.clump': { fill: 0.62 },
   'mangrove.wall': { tile: 'x', solid: 0.56 },
   'mangrove.bank': { tile: 'x', solid: 0.6 },

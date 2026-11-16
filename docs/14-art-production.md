@@ -17,7 +17,7 @@ ensureTexture(scene, 'mangrove.root.a')
 |------|-------|
 | `src/art/TextureFactory.ts` | `ensureTexture`, for the game |
 | `src/art/painters/index.ts` | `PAINTERS`: every painter by image name. `PAINTER_GROUPS`: the same, by family |
-| `src/art/painters/*.ts` | One file per family: `shrimp`, `world`, `drift`, `mangrove`, `lagoon`, `creatures` (the mangrove's animals), `lagoonAnimals`, `effects`. `icons` to come |
+| `src/art/painters/*.ts` | One file per family: `shrimp`, `world`, `drift`, `mangrove`, `lagoon`, `creatures` (the mangrove's animals), `lagoonAnimals`, `channel`, `effects`. `icons` to come |
 | `src/art/paint.ts` | Shared helpers: colours, washes, `blob`, `speckle`, `patches`, `glow`, `softFill`, `band` for a root or a branch, `traceLeaf`, `wrapped` for tiles, `onLayer` for a part that must fade |
 | `src/art/fit.ts` | `imageFit(name)`: how the solid part of a picture sits inside the picture. See "From data to picture" |
 | `src/art/expressions.ts` | `RigExpression`, `RigLook`, and `MOOD_EXPRESSIONS`, the table below as code |
@@ -231,7 +231,7 @@ Simple rigs, each a few images moved by code. No drawn frames.
 |--------|-------|-------|
 | Fiddler crab | `crab.body` with legs and small claw, `crab.claw`, `crab.burrow` beside it | The claw swings out and back at its joint, `CRAB_CLAW_JOINT` in `painters/creatures.ts`. The body shuffles sideways |
 | Snail | `snail.shell`, two feeler lines | The feelers shorten when alarmed |
-| Hermit crab | `snail.shell`, `hermit.legs` | The legs slide in under the shell |
+| Hermit crab | `snail.shell`, `hermit.legs` | The legs slide in under the shell. `HERMIT_LEGS_JOINT` on the legs sits on `HERMIT_SHELL_MOUTH` on the shell, in `painters/creatures.ts` |
 | Barnacle | `barnacle`, a feathered line | The line sweeps out and in |
 | Small fish | `fish.small` | Whole image, with a slight side-to-side turn |
 | Hunting fish | `fish.hunter.body`, `fish.hunter.tail` | The tail swings at its joint, slow or fast. The tail's joint `HUNTER_TAIL_OWN_JOINT` is pinned at `HUNTER_TAIL_JOINT` on the body, in `painters/lagoonAnimals.ts` |
@@ -270,8 +270,8 @@ This table is the checklist for the art. Update it in the same commit as a paint
 |------|------|--------|
 | `larva.early`, `larva.mid`, `larva.late` | 200 by 120 | Built. Each faces right. The body is about half the image long, so a larva is drawn twice as wide as its length |
 | `food.microalgae.a`, `.b`, `.c` | 64 | Built: a bead, a chain of beads, a disc |
-| `drift.copepod` | 96 | To paint. Added |
-| `drift.bell` | 256 | To paint. Added |
+| `drift.copepod` | 96 | Built. Added. Faces right, feelers out sideways |
+| `drift.bell` | 256 | Built. Added. The bell is 184 across, the threads reach the edge |
 | `drift.shaft` | 300 by 900 | Built. Laid on with the SCREEN blend |
 | `drift.rootShadow` | 640 by 200 | Built |
 
@@ -282,7 +282,7 @@ This table is the checklist for the art. Update it in the same commit as a paint
 | `mangrove.mud` | 1024, tile | Built |
 | `mangrove.sandmud` | 1024, tile | Built |
 | `mangrove.root.a` to `.f` | 320 | Built. Six limbs, each coming down a different way |
-| `mangrove.root.barnacled` | 320 | To paint. Added |
+| `mangrove.root.barnacled` | 320 | Built. Added. A seventh root, its limb coming down from the upper right, with barnacles above the mud |
 | `mangrove.clump` | 640 | Built |
 | `mangrove.wall` | 1024 by 420, repeats sideways | Built |
 | `mangrove.bank` | 1024 by 420, repeats sideways | Built |
@@ -295,16 +295,16 @@ This table is the checklist for the art. Update it in the same commit as a paint
 | `thing.seedPod.standing` | 96 | Built |
 | `thing.seedPod.lying` | 420 by 96 | Built |
 | `thing.sunkenBranch` | 1800 by 520 | Built. The left end is sunk, the right end is lifted |
-| `thing.breathingRoot` | 64 | To paint. Added |
+| `thing.breathingRoot` | 64 | Built. Added. One peg. A field is many of them, each a small round obstacle |
 | `light.dapple` | 1024, tile | Built |
 | `mangrove.murk` | 512 by 288 | Built. Drawn at twice the size of the view |
 | `crab.body` | 220 by 190 | Built |
 | `crab.claw` | 170 by 90 | Built. Joint at (16, 45) |
 | `crab.burrow` | 128 | Built |
-| `thing.crabPellets` | 160 | To paint. Added |
+| `thing.crabPellets` | 160 | Built. Added. The centre is left clear for the burrow |
 | `snail.shell` | 160 by 90 | Built |
-| `hermit.legs` | 130 by 110 | To paint. Added |
-| `barnacle` | 48 | To paint. Added |
+| `hermit.legs` | 130 by 110 | Built. Added. Laid over the front of `snail.shell` |
+| `barnacle` | 48 | Built. Added. `paintBarnacle` in `painters/creatures.ts` draws one at any size |
 | `fish.small` | 110 by 44 | Built |
 | `bird.shadow.body` | 1024 by 720 | Built |
 | `bird.shadow.head` | 470 by 220 | Built |
@@ -326,7 +326,8 @@ This table is the checklist for the art. Update it in the same commit as a paint
 | `burrow.mouth` | 140 | Built |
 | `light.caustics` | 1024, tile | Built |
 | `fx.glow` | 32 | Built |
-| `thing.sandVolcano` | 110 | To paint. Added |
+| `thing.sandVolcano` | 110 | Built. Added |
+| `seaStar` | 260 | Built. Added. The cushion sea star of zone H. It has no front |
 | `turtle.shell` | 860 by 720 | Built. Head end to the right. Five middle plates, four side plates on each side, a rim of small ones, pale streaks fanning across each |
 | `turtle.head` | 220 by 180 | Built. The neck comes from the left edge |
 | `turtle.flipper.front` | 480 by 210 | Built. Joint at the left, tip curving back |
@@ -351,6 +352,7 @@ This table is the checklist for the art. Update it in the same commit as a paint
 | `shadow.grid` | 512, tile | To paint |
 | `fx.silt` | 256 | To paint |
 | `sea.ledge` | 760 by 420 | To paint |
+| `channel.seaFan` | 360 by 300 | Built. Added. Its foot, where it holds the rock, is at the left middle. It sways about that point |
 | `fx.egg` | 16 | To paint |
 
 ### Interface and icons
@@ -378,7 +380,7 @@ A page that shows the art without starting the game. It is how the author looks 
 | Mangrove scenes | `?show=scenes` | Ten views drawn from `src/data/areas/mangrove.ts`, each the size of the game's screen: arriving, grazing, hidden under a tangle, the bird, meeting Nacre, the crabs, the leaf bed, the hollow, the sunken branch, and a map of the whole area with its zones |
 | The six moods | `?show=moods` | The shrimp held still in each posture of the table above |
 | Telling shrimp apart | `?show=companions` | The player, Brise, Nacre and Écume side by side |
-| Sheets | `?show=shrimp`, `world`, `drift`, `mangrove`, `lagoon`, `creatures`, `lagoonAnimals`, `effects` | Every painter of a family on the ground colour of its area, with its name and size. Tiles are shown repeated. Cover is shown a second time at 40% |
+| Sheets | `?show=shrimp`, `world`, `drift`, `mangrove`, `lagoon`, `creatures`, `lagoonAnimals`, `channel`, `effects` | Every painter of a family on the ground colour of its area, with its name and size. Tiles are shown repeated. Cover is shown a second time at 40% |
 | Any place | `?view=x,y` | One screen of the mangrove centred as near that point as the game's camera could be |
 
 The scenes are pictures of how an area should look. They are not the game: nothing moves. But `src/atelier/scene.ts` draws an area from its data by the rules of the next section, and the game's area loader must follow the same rules, so that the game looks like the scenes.

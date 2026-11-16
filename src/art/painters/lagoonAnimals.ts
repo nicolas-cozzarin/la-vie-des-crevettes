@@ -1123,6 +1123,107 @@ const pistolClaw: Painter = {
 export const PISTOL_CLAW_JOINT = { x: 84, y: 40 };
 export const PISTOL_CLAW_OWN_JOINT = { x: 6, y: 22 };
 
+// ------------------------------------------------------------------ the sea star
+
+const STAR: Rgb = [200, 156, 100];
+const STAR_LIGHT: Rgb = [232, 202, 148];
+const STAR_DARK: Rgb = [138, 94, 56];
+const KNOB: Rgb = [180, 96, 48];
+
+/**
+ * A cushion sea star from above: fat, with five short broad arms, tan, with a
+ * net of raised orange-brown knobs. It has no front.
+ */
+const seaStar: Painter = {
+  width: 260,
+  height: 260,
+  paint(ctx, width, height) {
+    const random = seededRandom(851);
+    const cx = width / 2;
+    const cy = height / 2;
+    const outer = 112;
+    const inner = 58;
+    const turn = -Math.PI / 2 + 0.2;
+    const radiusAt = (angle: number): number =>
+      inner + (outer - inner) * Math.pow(0.5 + 0.5 * Math.cos(5 * (angle - turn)), 1.6);
+    const outline: Point[] = [];
+    for (let index = 0; index < 200; index++) {
+      const angle = (index / 200) * TAU;
+      const r = radiusAt(angle) * (0.98 + random() * 0.04);
+      outline.push({ x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r });
+    }
+    glow(ctx, cx + 8, cy + 10, outer * 1.05, STAR_DARK, 0.25, 0.5);
+    ctx.save();
+    tracePolygon(ctx, outline);
+    softFill(ctx, litWash(ctx, cx, cy, outer, STAR_LIGHT, STAR, STAR_DARK), STAR_DARK, 6, 0.55);
+    ctx.clip();
+    patches(
+      ctx,
+      random,
+      14,
+      { x: cx - outer, y: cy - outer, w: outer * 2, h: outer * 2 },
+      [12, 30],
+      [STAR_DARK, STAR_LIGHT],
+      [0.08, 0.2],
+    );
+    // The knobs: a ridge down each arm, and a loose net between them.
+    const knobs: Point[] = [];
+    for (let arm = 0; arm < 5; arm++) {
+      const angle = turn + (arm / 5) * TAU;
+      for (let step = 1; step <= 6; step++) {
+        const r = (step / 6.4) * outer;
+        knobs.push({ x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r });
+      }
+    }
+    knobs.push({ x: cx, y: cy });
+    for (let index = 0; index < 34; index++) {
+      const angle = random() * TAU;
+      const r = Math.sqrt(random()) * radiusAt(angle) * 0.85;
+      knobs.push({ x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r });
+    }
+    ctx.strokeStyle = rgba(KNOB, 0.3);
+    ctx.lineWidth = 5;
+    ctx.lineCap = 'round';
+    for (const knob of knobs) {
+      const near = knobs
+        .filter((other) => other !== knob)
+        .map((other) => ({ other, d: Math.hypot(other.x - knob.x, other.y - knob.y) }))
+        .sort((a, b) => a.d - b.d)
+        .slice(0, 3);
+      for (const { other, d } of near) {
+        if (d > 38) continue;
+        ctx.beginPath();
+        ctx.moveTo(knob.x, knob.y);
+        ctx.lineTo(other.x, other.y);
+        ctx.stroke();
+      }
+    }
+    for (const knob of knobs) {
+      const r = 3.5 + random() * 3;
+      glow(ctx, knob.x + 1.5, knob.y + 2, r * 1.5, STAR_DARK, 0.2);
+      ctx.beginPath();
+      ctx.arc(knob.x, knob.y, r, 0, TAU);
+      ctx.fillStyle = litWash(ctx, knob.x, knob.y, r, [222, 150, 92], KNOB, [120, 60, 30]);
+      ctx.fill();
+    }
+    speckle(
+      ctx,
+      random,
+      260,
+      { x: cx - outer, y: cy - outer, w: outer * 2, h: outer * 2 },
+      [0.4, 1.1],
+      STAR_DARK,
+      [0.15, 0.35],
+    );
+    ctx.restore();
+    tracePolygon(ctx, outline);
+    ctx.strokeStyle = rgba(STAR_DARK, 0.5);
+    ctx.lineWidth = 1.6;
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+  },
+};
+
 export const lagoonAnimalPainters: Record<string, Painter> = {
   'turtle.shell': turtleShell,
   'turtle.head': turtleHead,
@@ -1133,4 +1234,5 @@ export const lagoonAnimalPainters: Record<string, Painter> = {
   goby,
   'pistol.body': pistolBody,
   'pistol.claw': pistolClaw,
+  seaStar,
 };

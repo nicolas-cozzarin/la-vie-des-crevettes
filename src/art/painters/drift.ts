@@ -442,6 +442,165 @@ const rootShadow: Painter = {
   },
 };
 
+/**
+ * A copepod, the glass hopper: a clear teardrop facing right, its two long
+ * feelers held out sideways, one red-brown eye spot at the front.
+ */
+const copepod: Painter = {
+  width: 96,
+  height: 96,
+  paint(ctx, width, height) {
+    const mid = height / 2;
+    // The feelers: long, slightly swept back, with fine hairs near the tips.
+    for (const side of [-1, 1]) {
+      const line = sampleCurve(
+        [
+          { x: 60, y: mid + side * 4 },
+          { x: 58, y: mid + side * 22 },
+          { x: 52, y: mid + side * 38 },
+          { x: 44, y: mid + side * 45 },
+        ],
+        16,
+      );
+      ctx.save();
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = rgba(GLASS, 0.75);
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      line.forEach((point, index) => {
+        if (index === 0) ctx.moveTo(point.x, point.y);
+        else ctx.lineTo(point.x, point.y);
+      });
+      ctx.stroke();
+      ctx.strokeStyle = rgba(GLASS, 0.45);
+      ctx.lineWidth = 0.7;
+      for (const share of [0.55, 0.7, 0.85, 1]) {
+        const point = line[Math.round(share * (line.length - 1))] as Point;
+        ctx.beginPath();
+        ctx.moveTo(point.x, point.y);
+        ctx.lineTo(point.x - 5, point.y + side * 1.5);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+    // The tail: a thin stalk ending in two short forks with bristles.
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = rgba(GLASS, 0.7);
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(40, mid);
+    ctx.lineTo(24, mid);
+    ctx.stroke();
+    ctx.lineWidth = 1;
+    for (const side of [-1, 1]) {
+      ctx.beginPath();
+      ctx.moveTo(24, mid);
+      ctx.lineTo(17, mid + side * 4);
+      ctx.lineTo(9, mid + side * 6);
+      ctx.stroke();
+    }
+    ctx.restore();
+    // The body: a teardrop, round at the front.
+    const body: Point[] = [];
+    for (let index = 0; index < 24; index++) {
+      const angle = (index / 24) * TAU;
+      const x = Math.cos(angle);
+      const r = x > 0 ? 1 : 1 - 0.45 * x * x;
+      body.push({ x: 52 + x * 14, y: mid + Math.sin(angle) * 9.5 * r });
+    }
+    tracePath(ctx, body);
+    glass(ctx, 0.5);
+    // The gut, faint, and the eye spot.
+    glow(ctx, 50, mid, 6, GUT, 0.35);
+    ctx.fillStyle = rgba([150, 64, 42], 0.95);
+    ctx.beginPath();
+    ctx.arc(63, mid, 2.2, 0, TAU);
+    ctx.fill();
+    void width;
+  },
+};
+
+/**
+ * A small drifting jelly, seen from above: a glassy bell with a pale rim, a
+ * faint cross of canals inside, and a fringe of fine threads around it.
+ */
+const bell: Painter = {
+  width: 256,
+  height: 256,
+  paint(ctx, width, height) {
+    const random = seededRandom(271);
+    const cx = width / 2;
+    const cy = height / 2;
+    const radius = 92;
+    // The fringe: fine threads hanging from the rim, seen from above.
+    ctx.save();
+    ctx.lineCap = 'round';
+    for (let index = 0; index < 32; index++) {
+      const angle = (index / 32) * TAU + (random() - 0.5) * 0.05;
+      const length = 10 + random() * 22;
+      const curl = (random() - 0.5) * 0.5;
+      const x = cx + Math.cos(angle) * radius;
+      const y = cy + Math.sin(angle) * radius;
+      ctx.strokeStyle = rgba(GLASS, 0.25 + random() * 0.2);
+      ctx.lineWidth = 0.9;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.quadraticCurveTo(
+        x + Math.cos(angle + curl) * length * 0.6,
+        y + Math.sin(angle + curl) * length * 0.6,
+        x + Math.cos(angle + curl * 2) * length,
+        y + Math.sin(angle + curl * 2) * length,
+      );
+      ctx.stroke();
+    }
+    ctx.restore();
+    // The bell: clear in the middle, brighter toward the rim.
+    const rim = ctx.createRadialGradient(cx - 14, cy - 18, radius * 0.1, cx, cy, radius);
+    rim.addColorStop(0, rgba(GLASS, 0.06));
+    rim.addColorStop(0.7, rgba(GLASS, 0.14));
+    rim.addColorStop(0.93, rgba(GLASS, 0.34));
+    rim.addColorStop(1, rgba(GLASS_EDGE, 0.5));
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, TAU);
+    ctx.fillStyle = rim;
+    ctx.fill();
+    // The ring canal just inside the rim, and the four canals of the cross.
+    ctx.strokeStyle = rgba(GLASS, 0.4);
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius - 6, 0, TAU);
+    ctx.stroke();
+    for (let index = 0; index < 4; index++) {
+      const angle = (index / 4) * TAU + 0.3;
+      ctx.strokeStyle = rgba(GLASS, 0.32);
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(angle) * 14, cy + Math.sin(angle) * 14);
+      ctx.lineTo(cx + Math.cos(angle) * (radius - 6), cy + Math.sin(angle) * (radius - 6));
+      ctx.stroke();
+      // A pale swelling partway along each canal.
+      glow(ctx, cx + Math.cos(angle) * 48, cy + Math.sin(angle) * 48, 12, PALE_GREEN, 0.22);
+    }
+    // The small mouth at the centre, a pale four-lobed knot.
+    for (let index = 0; index < 4; index++) {
+      const angle = (index / 4) * TAU + 0.3 + Math.PI / 4;
+      glow(ctx, cx + Math.cos(angle) * 5, cy + Math.sin(angle) * 5, 9, GLASS, 0.35);
+    }
+    // Light catches the upper left of the rim.
+    ctx.strokeStyle = rgba(GLASS, 0.5);
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius - 2, Math.PI * 1.05, Math.PI * 1.55);
+    ctx.stroke();
+    ctx.strokeStyle = rgba(LINE, 0.4);
+    ctx.lineWidth = 1.1;
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, TAU);
+    ctx.stroke();
+  },
+};
+
 export const driftPainters: Record<string, Painter> = {
   'larva.early': larvaEarly,
   'larva.mid': larvaMid,
@@ -451,4 +610,6 @@ export const driftPainters: Record<string, Painter> = {
   'food.microalgae.c': mote('disc'),
   'drift.shaft': shaft,
   'drift.rootShadow': rootShadow,
+  'drift.copepod': copepod,
+  'drift.bell': bell,
 };

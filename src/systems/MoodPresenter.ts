@@ -1,7 +1,7 @@
 import type Phaser from 'phaser';
 import type { Mood } from '../core/feelings/mood';
 import { approach } from '../core/movement/angles';
-import { MOOD, MOOD_SCREEN } from '../data/tuning';
+import { MOOD, MOOD_SCREEN, SENSE } from '../data/tuning';
 import type { HudScene } from '../scenes/HudScene';
 
 /** What the presenter needs to know on each frame. */
@@ -13,6 +13,8 @@ export interface MoodView {
   x: number;
   y: number;
   target: { x: number; y: number } | null;
+  /** Sense is in use: the view dims slightly. */
+  sensing: boolean;
 }
 
 export interface MoodPresenterOptions {
@@ -37,6 +39,8 @@ interface Screen {
   lighter: number;
   leanX: number;
   leanY: number;
+  /** Share of light taken away while sensing. */
+  dim: number;
 }
 
 const QUIET: Screen = {
@@ -48,6 +52,7 @@ const QUIET: Screen = {
   lighter: 0,
   leanX: 0,
   leanY: 0,
+  dim: 0,
 };
 const KEYS = Object.keys(QUIET) as (keyof Screen)[];
 /** Below this, a value counts as gone and the colour filter is switched off. */
@@ -137,17 +142,18 @@ export class MoodPresenter {
         break;
     }
     if (view.mood !== 'afraid') want.dark = Math.max(want.dark, s.waryEdges * wary);
+    if (view.sensing) want.dim = SENSE.dim;
     return want;
   }
 
   /**
    * One colour matrix: take some colour away, wash toward the warm colour,
-   * then multiply by the cool one. A wash lifts the picture a little, which
+   * then multiply by the cool one, and by the dimming of Sense. A wash lifts the picture a little, which
    * suits content. A multiply darkens it a little, which suits fear.
    */
   private applyColour(): void {
-    const { grey, warm, cool } = this.now;
-    if (grey < NOTHING && warm < NOTHING && cool < NOTHING) {
+    const { grey, warm, cool, dim } = this.now;
+    if (grey < NOTHING && warm < NOTHING && cool < NOTHING && dim < NOTHING) {
       this.grade.active = false;
       return;
     }
@@ -159,7 +165,7 @@ export class MoodPresenter {
     const coolTop = Math.max(...coolColour);
     const matrix: number[] = [];
     for (let row = 0; row < 3; row++) {
-      const multiply = 1 - cool + (cool * (coolColour[row] ?? 1)) / coolTop;
+      const multiply = (1 - cool + (cool * (coolColour[row] ?? 1)) / coolTop) * (1 - dim);
       for (let column = 0; column < 3; column++) {
         const own = row === column ? keep : 0;
         matrix.push(multiply * (1 - warm) * (own + grey * (LUMA[column] ?? 0)));

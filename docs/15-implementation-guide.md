@@ -16,11 +16,11 @@ The design is settled in docs 01 to 14. This document adds no rules of play. If 
 
 ## What exists
 
-After steps 0 to 4 and the art and design work of 2026-11-14 to 16.
+After steps 0 to 5 and the art and design work of 2026-11-14 to 16.
 
 | Path | What it is |
 |------|------------|
-| `src/main.ts` | Game config, scene list, the `window.__lvdc` hook for browser tests. `__lvdc.player()` gives the shrimp's place, mode, area, activity and zones. `__lvdc.feelings()` gives the five values, the mood, the forced mood, the conditions, wariness left, what has been found and what the shrimp is curious about |
+| `src/main.ts` | Game config, scene list, the `window.__lvdc` hook for browser tests. `__lvdc.player()` gives the shrimp's place, mode, area, activity and zones. `__lvdc.feelings()` gives the five values, the mood, the forced mood, the conditions, wariness left, what has been found and what the shrimp is curious about. `__lvdc.scent()` gives the ribbons drawn now |
 | `src/app.ts` | Settings, storage and keyboard, shared by all scenes as `app` |
 | `src/config.ts` | Design size, colours, fonts, `DEPTH` layers |
 | `src/core/events.ts` | `EventBus`, typed. Play creates one bus of `GameEvents` and sends the mood, condition, tail flip and discovery events on it |
@@ -29,12 +29,15 @@ After steps 0 to 4 and the art and design work of 2026-11-14 to 16.
 | `src/core/movement/ShrimpMotion.ts` | Walk, swim, dart, glide, tiring, height. Takes `{ x, y, dart }` and a `Mover` |
 | `src/core/movement/collision.ts` | `moveCircle` against circles, rectangles and bounds |
 | `src/core/world/cover.ts`, `zones.ts` | `nearestCover`, `isUnder`, `tuckPoint`. `zoneAt`, `ZoneTracker` with enter and leave |
-| `src/core/activity/Activity.ts` | The activity state machine of doc 10: `free` and `hiding` so far |
+| `src/core/activity/Activity.ts` | The activity state machine of doc 10: `free`, `hiding`, `grazing` and `sensing` so far. `grazeable` says whether Interact would start a graze |
+| `src/core/food/FoodPatch.ts` | `FoodPatch`: `amount`, `graze(dt)` returning the hunger removed, `step(dt)` to grow back. `FoodSpot` |
+| `src/core/scent/ribbons.ts` | `ribbons(x, y, world, range, tuning)`: which ribbons to show. `RibbonMemory` for `ribbon:followed` |
+| `src/data/foods.ts` | `FOODS`: hunger removed, seconds and regrowth for each food |
 | `src/core/movement/angles.ts` | `approach`, `angleDiff`, `rotateToward`, `wrapAngle` |
 | `src/core/save/` | Settings with versions. `KeyValueStore` |
 | `src/core/i18n/`, `src/i18n.ts`, `src/locales/` | `t('key', params)` |
 | `src/core/random.ts` | `seededRandom` |
-| `src/data/tuning.ts` | `MOTION`, `FRAME`, `CAMERA`, `SHADOW`, `WORLD`, `HIDE`, `COVER`, `WATER_LIGHT`, and for the feelings `HUNGER`, `FEAR`, `COMFORT`, `CURIOSITY`, `COMPANY`, `WARY` (together `FEELINGS`), `MOOD`, `MOOD_SCREEN` |
+| `src/data/tuning.ts` | `MOTION`, `FRAME`, `CAMERA`, `SHADOW`, `WORLD`, `HIDE`, `COVER`, `WATER_LIGHT`, and for the feelings `HUNGER`, `FEAR`, `COMFORT`, `CURIOSITY`, `COMPANY`, `WARY` (together `FEELINGS`), `MOOD`, `MOOD_SCREEN`, `GRAZE`, `SENSE` |
 | `src/core/world/kinds.ts` | `FOOD_KINDS`, the closed list of foods, `AREA_IDS` and `LIFE_STAGES` |
 | `src/core/world/discovery.ts` | `curiosityPull` and `DiscoveryTracker`: what pulls curiosity, and when a thing is found |
 | `src/core/feelings/mood.ts` | `MOODS`, the `Mood` type and `MoodPicker`: enter and leave levels, the two timers (T60) |
@@ -51,11 +54,12 @@ After steps 0 to 4 and the art and design work of 2026-11-14 to 16.
 | `src/art/expressions.ts` | `RigExpression`, `RigLook`, `STAGE_LOOKS`, `MOOD_EXPRESSIONS`, and `withConditions`, which adds the conditions to a mood's expression |
 | `src/art/stills.ts` | Still pictures of the animals on a 2D canvas. The atelier and the area loader share it |
 | `src/atelier/`, `atelier.html` | The page that shows the art. `scene.ts` draws an area from its data, by the same rules as the area loader. `stillShrimp.ts` draws a shrimp at rest from an expression |
-| `src/systems/AreaLoader.ts` | Builds a place from an `AreaDef` in Phaser. Returns `obstacles`, `covers`, `zones`, `placeGround` and `update` (cover fade, drifting leaves) |
+| `src/systems/AreaLoader.ts` | Builds a place from an `AreaDef` in Phaser. Returns `obstacles`, `covers`, `foods` (data and picture), `zones`, `placeGround` and `update` (cover fade, drifting leaves) |
 | `src/systems/WaterLight.ts` | The dapple and the murk |
-| `src/systems/MoodPresenter.ts` | The mood on the screen: a colour matrix on the play camera, the zoom, the lean of the view, and the HUD's edges and word (T62) |
-| `src/entities/ShrimpRig.ts` | The shrimp drawn from parts. Takes a look, and on each frame an expression, a target to look at and the startle |
-| `src/scenes/` | Boot, Title, Play, Hud, Pause, Controls. Play takes `{ area, explore, at }`, steps the feelings in its loop and finds things. Hud draws the edges, fear's edges and the mood's name |
+| `src/systems/MoodPresenter.ts` | The mood on the screen: a colour matrix on the play camera, the zoom, the lean of the view, the dimming of Sense, and the HUD's edges and word (T62) |
+| `src/systems/ScentField.ts` | Draws the ribbons with `Rope`, bending the `scent.*` strokes, and fades them in and out (T67) |
+| `src/entities/ShrimpRig.ts` | The shrimp drawn from parts. Takes a look, and on each frame an expression, a target to look at, the startle, the grazing legs and the first-taste wiggle |
+| `src/scenes/` | Boot, Title, Play, Hud, Pause, Controls. Play takes `{ area, explore, at }`, steps the feelings in its loop and finds things. Hud draws the edges, fear's edges, the mood's name and an activity's prompt |
 | `src/platform/` | The only code that touches the browser's keyboard, storage and address. `address.ts` reads `?explore=`, `&at=` and `?debug`. `KeyboardSource.onDebugKey` hears F9 (T63) |
 | `src/ui/` | Buttons, menu list, text styles |
 | `tests/unit/`, `tests/content/`, `tests/e2e/` | Vitest and Playwright. `tests/content/areas.test.ts` checks every area file: images have painters, things are inside the area and not inside each other, strip ends are closed |
@@ -181,7 +185,7 @@ Goes wrong: cover drawn below the shrimp. Depth is `DEPTH.cover`, above `bedAnim
 
 Built on 2026-11-16. What follows is how it was planned. What changed on the way is in T60 to T65: a `MoodPicker` object instead of `pickMood`, a fuller context, antennae by life stage, how the colour and the edges are made, the F9 key, and what curiosity pulls toward before food and saving exist.
 
-Not built yet, and left to the step that brings what it needs: the food ribbons at 30% when hungry (step 5), the pale rim on the curious target (step 5, when animals move), other shrimp brighter when social (step 6), the stopped sway when afraid and the stutter of an afraid walk (step 7), the wary pause every few steps (step 7), the narration that names each mood the first time (step 8), the setting "Name feelings on screen" in a menu (step 11). The setting works already if it is stored.
+Not built yet, and left to the step that brings what it needs: the food ribbons at 30% when hungry (step 5), the pale rim on the curious target (step 6, T70), other shrimp brighter when social (step 6), the stopped sway when afraid and the stutter of an afraid walk (step 7), the wary pause every few steps (step 7), the narration that names each mood the first time (step 8), the setting "Name feelings on screen" in a menu (step 11). The setting works already if it is stored.
 
 Document: 10, all of it. 14 for the expressions.
 
@@ -231,6 +235,10 @@ Goes wrong: mood flicker at a threshold. That is what the enter and leave levels
 
 ## Step 5. Food and scent
 
+Built on 2026-11-16. What follows is how it was planned. What changed on the way is in T66 to T70: food journal entries, the range and look of the ribbons, where the mouth and the food are, the favourite food and the prompts. The patch's picture fades in the scene, from the loader's `foods`, so there is no `FoodPatchView`.
+
+Not built yet: the current bending the ribbons (no current moves anything yet), the danger and shrimp ribbons' sources (steps 6 and 7; the drawing is ready), the pinned challenge's ribbon (step 9), the crabs, snails and fish moving (step 6, T70).
+
 Documents: 10 (hunger, food table), 11 (ribbon looks).
 
 | File | Job |
@@ -251,7 +259,7 @@ Tests: grazing removes the right amount at the right rate. Regrow after 90 s. Ne
 
 ## Step 6. Other shrimp
 
-Documents: 10 ("Other shrimp"), 02 (bonds).
+Documents: 10 ("Other shrimp"), 02 (bonds). Also, moved here from step 5 (T70): the crabs, snails and small fish of the area files start to move, by doc 11, and the curious target gets its pale rim (`fx.rim`).
 
 | File | Job |
 |------|-----|

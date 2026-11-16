@@ -134,6 +134,11 @@ export class FeelingsModel {
     }
   }
 
+  /** Eating takes hunger away, a little on every step of a graze. */
+  eat(hungerRemoved: number): void {
+    this.feelings.hunger = clamp(this.feelings.hunger - hungerRemoved);
+  }
+
   private gain(raw: number): void {
     const t = this.tuning.fear;
     const added = Math.min(t.cap, raw * this.sensitivity);

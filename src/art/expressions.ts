@@ -221,3 +221,20 @@ export function withConditions(
   }
   return e;
 }
+
+/**
+ * What the activity adds after the mood and conditions. Sensing: the antennae
+ * sweep wide and slow (doc 10, "Activities"). Grazing is drawn by the rig's
+ * own picking loop.
+ */
+export function withActivity(base: RigExpression, sensing: boolean): RigExpression {
+  if (!sensing) return base;
+  return {
+    ...base,
+    antennaAngle: base.antennaAngle + 0.12,
+    antennaSweep: Math.max(base.antennaSweep, 0.42),
+    antennaSweepRate: Math.min(base.antennaSweepRate, 0.6),
+    antennaStiff: Math.max(base.antennaStiff, 0.35),
+    aim: 0,
+  };
+}

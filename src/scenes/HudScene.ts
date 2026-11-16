@@ -9,6 +9,8 @@ type Hint = 'move' | 'dart' | 'pause' | 'done';
 
 const HINT_Y = GAME_HEIGHT - 90;
 const WORD_Y = 96;
+/** An activity's prompt sits above the line of hints. */
+const PROMPT_Y = HINT_Y - 72;
 /** Seconds the mood's name takes to come and to go. */
 const WORD_FADE = 0.5;
 /** The colour fear's edges are drawn in: the deep water, almost black. */
@@ -31,6 +33,11 @@ export class HudScene extends Phaser.Scene {
   private fearEdges: Phaser.GameObjects.Image[] = [];
   private word!: Phaser.GameObjects.Text;
   private wordPlate!: Phaser.GameObjects.Graphics;
+  private promptText!: Phaser.GameObjects.Text;
+  private promptPlate!: Phaser.GameObjects.Graphics;
+  /** The prompt's alpha, eased toward 1 while one is asked for. */
+  private promptShown = 0;
+  private promptWanted = false;
   /** Seconds since the word came, or -1 when none shows. */
   private wordAge = -1;
   private wordHold = 0;
@@ -76,6 +83,14 @@ export class HudScene extends Phaser.Scene {
     this.word.setAlpha(0);
     this.wordAge = -1;
 
+    this.promptPlate = this.add.graphics().setAlpha(0);
+    this.promptText = this.add
+      .text(centerX, PROMPT_Y, '', textStyle(30, COLORS.deepTeal))
+      .setOrigin(0.5)
+      .setAlpha(0);
+    this.promptShown = 0;
+    this.promptWanted = false;
+
     this.ready = true;
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.ready = false;
@@ -120,10 +135,37 @@ export class HudScene extends Phaser.Scene {
     this.wordHold = seconds;
   }
 
+  /**
+   * An activity's prompt, such as "Hold E to graze", or null to let it go.
+   * The play scene decides when, and counts the first three times (doc 03).
+   */
+  prompt(text: string | null): void {
+    if (!this.ready) return;
+    this.promptWanted = text !== null;
+    if (text === null || text === this.promptText.text) return;
+    this.promptText.setText(text);
+    const width = this.promptText.width + 56;
+    this.promptPlate.clear();
+    this.promptPlate.fillStyle(TINTS.paper, 0.72);
+    this.promptPlate.fillRoundedRect(GAME_WIDTH / 2 - width / 2, PROMPT_Y - 28, width, 56, 28);
+  }
+
   override update(_time: number, deltaMs: number): void {
-    if (!this.ready || this.wordAge < 0) return;
+    if (!this.ready) return;
+    const dt = deltaMs / 1000;
+    const prompt = this.promptWanted ? 1 : 0;
+    if (this.promptShown !== prompt) {
+      const step = dt / 0.3;
+      this.promptShown =
+        prompt > this.promptShown
+          ? Math.min(1, this.promptShown + step)
+          : Math.max(0, this.promptShown - step);
+      this.promptText.setAlpha(this.promptShown);
+      this.promptPlate.setAlpha(this.promptShown);
+    }
+    if (this.wordAge < 0) return;
     // The word comes in over half a second, stays, and goes in half a second.
-    this.wordAge += deltaMs / 1000;
+    this.wordAge += dt;
     const out = this.wordAge - WORD_FADE - this.wordHold;
     const alpha = Math.max(0, Math.min(1, this.wordAge / WORD_FADE, 1 - out / WORD_FADE));
     this.word.setAlpha(alpha);

@@ -307,3 +307,36 @@ test.describe('feelings', () => {
     expect((await feelings(page)).forced).toBeNull();
   });
 });
+
+test.describe('food and scent', () => {
+  test('holding Sense shows a ribbon that leads to food', async ({ page }) => {
+    const errors = watchErrors(page);
+    // An algae film lies at 1262, 1612, about 2.6 BL ahead.
+    await explore(page, 'mangrove&at=1262,1900');
+    await page.keyboard.down('KeyQ');
+    await page.waitForFunction(() => window.__lvdc?.player()?.activity === 'sensing');
+    await page.waitForFunction(() =>
+      window.__lvdc?.scent()?.some((ribbon) => ribbon.kind === 'food' && ribbon.alpha > 0.5),
+    );
+    await page.keyboard.up('KeyQ');
+    await page.waitForFunction(() => window.__lvdc?.scent()?.length === 0);
+    expect(errors).toEqual([]);
+  });
+
+  test('grazing an algae film lowers hunger, and the first taste is found', async ({ page }) => {
+    await explore(page, 'mangrove&at=1262,1700');
+    const start = await feelings(page);
+    expect(start.discovered).not.toContain('food.algaeFilm');
+    await page.keyboard.down('KeyE');
+    await page.waitForFunction(() => window.__lvdc?.player()?.activity === 'grazing');
+    await page.waitForFunction(
+      (hunger) => (window.__lvdc?.feelings()?.values.hunger ?? 1) < hunger - 0.05,
+      start.values.hunger,
+    );
+    const eating = await feelings(page);
+    expect(eating.mood).toBe('content');
+    expect(eating.discovered).toContain('food.algaeFilm');
+    await page.keyboard.up('KeyE');
+    await page.waitForFunction(() => window.__lvdc?.player()?.activity === 'free');
+  });
+});

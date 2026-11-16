@@ -71,6 +71,8 @@
   "play.hint.move": "{up} {left} {down} {right} to move",
   "play.hint.dart": "{key} for a tail flip",
   "play.hint.pause": "{key} for the menu",
+  "prompt.graze": "Hold {key} to graze",
+  "prompt.taste": "{key} to taste",
 
   "mood.calm": "Calm",
   "mood.hungry": "Hungry",

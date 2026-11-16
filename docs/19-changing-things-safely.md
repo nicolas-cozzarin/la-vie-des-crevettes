@@ -44,6 +44,8 @@ To undo a change that is already published, open the merged pull request on GitH
 | A feeling's number: a rate, a gain, a level, a timer | `HUNGER`, `FEAR`, `COMFORT`, `CURIOSITY`, `COMPANY`, `WARY` or `MOOD` in `src/data/tuning.ts` | Doc 10 | `feelings.test.ts`, `mood.test.ts`, `discovery.test.ts` |
 | How a mood looks in the body | `MOOD_EXPRESSIONS`, and `withConditions` for a condition, in `src/art/expressions.ts` | Doc 14's table of expressions. Look at `atelier.html?show=moods`, then at the game with `?debug` and F9 | The atelier and the game, by eye |
 | How a mood looks on the screen | `MOOD_SCREEN` in `src/data/tuning.ts`. The way it is drawn in `src/systems/MoodPresenter.ts` | Doc 10, "Screen". T62 | The game with `?debug` and F9, by eye |
+| What a food gives: hunger, seconds, regrowth | `FOODS` in `src/data/foods.ts`. The food list itself is **Ask first** (rule 1) | Doc 10, "Hunger" | `food.test.ts` |
+| How grazing and Sense work: reach, mouth, ribbon range and look | `GRAZE` and `SENSE` in `src/data/tuning.ts`. The rules in `src/core/activity/Activity.ts` and `src/core/scent/ribbons.ts` | Doc 10, "Activities". T67, T68 | `activity.test.ts`, `scent.test.ts`. The game with `?explore=mangrove`, by eye |
 | The life stage of an area | `STAGE_IN` in `src/data/areas/index.ts` | Doc 11, "Scale". `STAGE_LOOKS` in `src/art/expressions.ts` for how each stage looks | |
 | The save format | **Ask first** | A version number and a way to read the old version | To build in step 9 |
 | The way the coast runs | See "Turning the coast round" | | |
@@ -59,7 +61,7 @@ To undo a change that is already published, open the merged pull request on GitH
 | `tests/content/rules.test.ts` | The foods are not the six plant foods. A file names an organisation the author asked to keep out. A file in `public/` is not credited. Pictures or rules use `Math.random`. Code outside `src/platform` touches the keyboard or the storage. An asset path starts with `/`. Code asks for a text key that does not exist. A painter imports the engine |
 | `eslint.config.js` | `src/core` imports Phaser, the engine-facing folders, `src/data` or `src/platform` |
 | `tests/unit/*` | A rule of the game changed its result |
-| `tests/e2e/*` | The game does not start, the shrimp does not move, the atelier does not draw. A root does not stop the shrimp. Hide does not tuck it in under a tangle. Explore mode does not open an area or start at the point given. Hunger does not rise while walking. A creature not yet met does not make the shrimp curious, or is not found by staying near it. F9 does not force each mood with `?debug`, or does anything without it |
+| `tests/e2e/*` | The game does not start, the shrimp does not move, the atelier does not draw. A root does not stop the shrimp. Hide does not tuck it in under a tangle. Explore mode does not open an area or start at the point given. Hunger does not rise while walking. A creature not yet met does not make the shrimp curious, or is not found by staying near it. F9 does not force each mood with `?debug`, or does anything without it. Sense shows no ribbon to a nearby food. Grazing does not lower hunger or find the food |
 
 The organisation check holds the names as hashes, so that the test does not write them. Its comment says how they are made.
 

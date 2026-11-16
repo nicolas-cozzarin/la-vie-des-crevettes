@@ -7,7 +7,14 @@ import { DEPTH, GAME_HEIGHT, GAME_WIDTH } from '../config';
 import type { Obstacle } from '../core/movement/collision';
 import { seededRandom } from '../core/random';
 import type { CoverSpot } from '../core/world/cover';
-import type { AreaDef, CoverDef, CreatureDef, NamedZone, WallDef } from '../data/areas/types';
+import type {
+  AreaDef,
+  CoverDef,
+  CreatureDef,
+  FoodDef,
+  NamedZone,
+  WallDef,
+} from '../data/areas/types';
 import { CAMERA, COVER, WORLD } from '../data/tuning';
 
 /**
@@ -28,12 +35,19 @@ export interface CoverHandle extends CoverSpot {
   alpha: number;
 }
 
+/** A food patch as drawn: its data and its picture, which fades as it is eaten. */
+export interface FoodHandle {
+  def: FoodDef;
+  image: Phaser.GameObjects.Image;
+}
+
 export interface LoadedArea {
   area: AreaDef;
   bodyLengthPx: number;
   /** Everything solid: obstacles, edge strips and blocks. */
   obstacles: Obstacle[];
   covers: CoverHandle[];
+  foods: FoodHandle[];
   zones: NamedZone[];
   /** Keep the bed under the view. Call after the camera moves. */
   placeGround(left: number, top: number): void;
@@ -153,9 +167,18 @@ export function loadArea(scene: Phaser.Scene, area: AreaDef): LoadedArea {
   }
 
   // 4. Food and the landmarks that lie on the bed. Fuzz grows on the seagrass: it is drawn with its clump.
+  const foods: FoodHandle[] = [];
   for (const food of area.food ?? []) {
     if (food.kind === 'seagrassFuzz') continue;
-    centred(`food.${food.kind}`, food.x, food.y, food.size, DEPTH.groundObjects, food.rotation);
+    const image = centred(
+      `food.${food.kind}`,
+      food.x,
+      food.y,
+      food.size,
+      DEPTH.groundObjects,
+      food.rotation,
+    );
+    foods.push({ def: food, image });
   }
   for (const landmark of area.landmarks ?? []) {
     if (landmark.layer !== 'ground') continue;
@@ -235,9 +258,16 @@ export function loadArea(scene: Phaser.Scene, area: AreaDef): LoadedArea {
       images.push(centred(cover.image, cover.x, cover.y, width, DEPTH.cover, turn));
       for (const food of area.food ?? []) {
         if (food.kind !== 'seagrassFuzz' || food.x !== cover.x || food.y !== cover.y) continue;
-        images.push(
-          centred('food.seagrassFuzz', food.x, food.y, food.size, DEPTH.cover, food.rotation),
+        const image = centred(
+          'food.seagrassFuzz',
+          food.x,
+          food.y,
+          food.size,
+          DEPTH.cover,
+          food.rotation,
         );
+        images.push(image);
+        foods.push({ def: food, image });
       }
     }
     covers.push({
@@ -259,6 +289,7 @@ export function loadArea(scene: Phaser.Scene, area: AreaDef): LoadedArea {
     bodyLengthPx: bl,
     obstacles,
     covers,
+    foods,
     zones: area.zones ?? [],
     placeGround(left, top) {
       ground.setPosition(left, top).setTilePosition(left / groundScale, top / groundScale);

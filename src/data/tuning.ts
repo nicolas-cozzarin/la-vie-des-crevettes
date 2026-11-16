@@ -229,3 +229,41 @@ export const MOOD_SCREEN = {
   /** Seconds a mood's name stays on screen, with "Name feelings on screen". */
   nameSeconds: 2.5,
 };
+
+/** Grazing. See doc 10, "Activities". BL are from the shrimp's centre. */
+export const GRAZE = {
+  /** BL. Interact starts a graze when the mouth is this close to a patch's edge. */
+  reach: 0.6,
+  /** BL. Where the mouth is, ahead of the centre. */
+  head: 0.4,
+  /** Below this hunger the shrimp is full and stops grazing. */
+  full: 0.15,
+  /** Seconds a full shrimp may still try a food it has not tasted. */
+  taste: 1,
+  /** At this fear or more, grazing and sensing end at once. */
+  fearEnds: 0.5,
+  /** Share of a food picture's width that holds food. */
+  patchShare: 0.4,
+  /** Seconds of the first-taste wiggle (doc 14). */
+  wiggle: 0.8,
+};
+
+/** Sense and its ribbons. See doc 02, "Sense", and doc 11, "Scent ribbons". */
+export const SENSE = {
+  /** At most this many white ribbons, nearest first. */
+  maxUnknown: 3,
+  /** Share of a ribbon's strength lost at the edge of the range. */
+  fade: 0.65,
+  /** Seconds for the ribbons to come and to go. */
+  fadeTime: 0.4,
+  /** A hungry shrimp sees food ribbons this close without Sense, BL, and how faint. */
+  hungryReach: 5,
+  hungryStrength: 0.3,
+  /** Seconds a shown food ribbon counts as followed when its patch is grazed. */
+  followWindow: 30,
+  /** How much the view dims while sensing. */
+  dim: 0.15,
+  /** BL. How thick a ribbon is drawn, and how far it sways. */
+  width: 0.3,
+  sway: 0.25,
+};

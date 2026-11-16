@@ -1,3 +1,4 @@
+import { waste } from '../waste';
 import type { AreaDef, CoverDef, FoodDef } from './types';
 
 /**
@@ -33,6 +34,9 @@ function fuzz(id: string, of: CoverDef): FoodDef {
     rotation: of.rotation ?? 0,
   };
 }
+
+/** Pixels per real centimetre here: 124 px for an 8 cm shrimp (doc 11, "Scale"). */
+const PX_PER_CM = 124 / 8;
 
 const meadow: CoverDef[] = [
   // Zone C. Close together, all bent the same way by the water. Gaps of
@@ -159,6 +163,15 @@ export const lagoon: AreaDef = {
   ],
 
   landmarks: [
+    // Litter (D43), more of it toward the pass and the channel, some at the water's edge.
+    waste('waste.1', 'bottle', 900, 3100, PX_PER_CM, 0.5),
+    waste('waste.2', 'bag', 1900, 2700, PX_PER_CM, -0.4),
+    waste('waste.3', 'rope', 1200, 4300, PX_PER_CM, -0.2),
+    waste('waste.4', 'sandal', 2250, 320, PX_PER_CM, 0.3),
+    waste('waste.5', 'foam', 3600, 360, PX_PER_CM),
+    waste('waste.6', 'bottle', 2500, 2000, PX_PER_CM, 0.15),
+    waste('waste.7', 'foam', 500, 2300, PX_PER_CM, 0.5),
+    waste('waste.8', 'bag', 6700, 3800, PX_PER_CM, -0.6),
     // Zone B: sand mounds. Something lives under each and is never seen.
     {
       id: 'mound.1',

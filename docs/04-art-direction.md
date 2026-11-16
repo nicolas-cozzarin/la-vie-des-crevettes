@@ -13,7 +13,7 @@ This document says what the game should look like. Two documents go deeper:
 
 A watercolour and gouache illustration seen from straight above, as if looking down through clear or tea-coloured water onto the bed. Soft edges, visible paper grain, few colours per area, slow movement. The animals are drawn as they are. Nothing is cute by exaggeration.
 
-Realistic, not a postcard (D41). The water is rarely clear: silt, specks and drifting bits hang in it. Things are worn: torn leaves, broken shells, bare patches, scum along the edges. Light is uneven. Colours stay true to the place and are never pushed to look pretty. The farm is drawn the same way, without gloss and without horror. Nothing is gory: no wounds, no bodies, no blood.
+Realistic, not a postcard (D41). The water is rarely clear: silt, specks and drifting bits hang in it. Things are worn: torn leaves, broken shells, bare patches, scum along the edges. Light is uneven. Colours stay true to the place and are never pushed to look pretty. The farm is drawn the same way, without gloss and without horror. Nothing is gory: no wounds, no bodies, no blood. Human litter lies in the wild, rare in the mangrove and more toward the farm (D43): worn and silted like everything else, with no print or mark, and never pointed at.
 
 ## Layers, from the bed up
 

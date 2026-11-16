@@ -185,6 +185,20 @@ describe.each(Object.entries(areas))('area %s', (_name, area) => {
     }
   });
 
+  it('lays litter on the bed, lit like the rest, with no food on or beside it (D43)', () => {
+    for (const piece of (area.landmarks ?? []).filter((thing) =>
+      thing.image.startsWith('waste.'),
+    )) {
+      expect(piece.layer, piece.id).toBe('ground');
+      expect(Math.abs(piece.rotation ?? 0), piece.id).toBeLessThanOrEqual(0.6);
+      for (const food of area.food ?? []) {
+        const gap =
+          Math.hypot(food.x - piece.x, food.y - piece.y) - piece.width / 2 - food.size / 2;
+        expect(gap, `${piece.id} and ${food.id}`).toBeGreaterThanOrEqual(bl);
+      }
+    }
+  });
+
   it('closes every end of an edge strip that the player can see', () => {
     for (const wall of area.walls ?? []) {
       for (const end of wallEnds(area, wall)) {
@@ -317,5 +331,16 @@ describe('the lagoon', () => {
         expect(nearest, `${px}, ${py}`).toBeLessThanOrEqual(5 * bl);
       }
     }
+  });
+});
+
+describe('litter (D43)', () => {
+  const count = (area: AreaDef): number =>
+    (area.landmarks ?? []).filter((thing) => thing.image.startsWith('waste.')).length;
+
+  it('grows toward the farm: rare in the mangrove, more in the lagoon', () => {
+    expect(count(mangrove)).toBeGreaterThan(0);
+    expect(count(mangrove)).toBeLessThanOrEqual(3);
+    expect(count(lagoon)).toBeGreaterThan(count(mangrove));
   });
 });

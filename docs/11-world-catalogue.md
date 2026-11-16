@@ -467,7 +467,33 @@ The author accepted all of these (D34) and asked for as many more as possible. E
 | `thing.longSound` | A long sound | Open sea | The size of the sea, in one sound |
 | `creature.seaStar`, `channel.seaFan` | Sea star, sea fan | Lagoon, channel | Decoration, and two more things to find |
 
-Still left out of the story's five places: anything man-made other than the hull, the net and the pond's wall (D35, D39), since litter would bring a second message into a game that has one. Rays and crabs that would in life eat shrimp were left out at first, since they would have to be shown as harmless. Doc 17 proposes them for the long coast as what they are: hunters, which never catch anyone.
+Still left out of the story's five places: anything man-made other than the hull, the net, the pond's wall and the litter of D43. Rays and crabs that would in life eat shrimp were left out at first, since they would have to be shown as harmless. Doc 17 proposes them for the long coast as what they are: hunters, which never catch anyone.
+
+## Litter (D43)
+
+Human litter lies in the wild, as on real coasts, and grows toward the farm. It is never mentioned: no text, journal card, narration or sound refers to it. Rules in T53: decor on the bed, never cover, never solid, no food within 1 BL, turned no more than 0.6 radians, none in the first view of an area. Data: `waste()` in `src/data/waste.ts`.
+
+| Id | Real size | Look from above |
+|----|-----------|-----------------|
+| `waste.bottle` | 20 cm long | A plastic bottle on its side, cap gone. Cloudy and greyed, ribbed, dented, silt lying inside along the bottom |
+| `waste.bag` | 30 cm across | A thin bag flattened and crumpled, greyed, torn, holes worn through, a handle at one end, silt in the folds |
+| `waste.rope` | 55 cm long | Blue three-strand rope faded almost grey, frayed at both ends, sunk into the bed along the middle |
+| `waste.sandal` | 25 cm long | The sole of a rubber sandal, worn pale at heel and ball, chipped, one strap left |
+| `waste.foam` | 11 cm across | A broken chunk of white foam gone grey, its beads showing, crumbs beside it |
+| `waste.sack` | 70 cm, folded | An empty woven sack, folded, half under silt, the open end fraying. Near the farm only |
+| `waste.pipe` | 50 cm long | A short length of grey pipe, cut square, the open end dark inside. Near the farm only |
+
+Every piece is worn and silted, with film growing on it. None carries a print, a word, a brand or a mark.
+
+| Area | Pieces | Where |
+|------|--------|-------|
+| Mangrove | 2 | A bottle in the gutter (zone I), a crumb of foam on the bank side. None near the start |
+| Lagoon | 8 | Most toward the pass (zones G and I), some at the water's edge under the beach, one bag near the shallows |
+| Channel | About 20 | Along both sides, half within 10 BL of the pond's outlet: sacks, a pipe, bottles, bags |
+| The shadow | 4 | Caught along the bottom where the net passes |
+| Open sea | 3 | Floating: a bag, foam, a bottle, drifting slowly overhead with their shadows below |
+
+Sizes on screen follow the area's scale (see "Scale" above): a bottle is 6.7 BL long in the mangrove, 2.5 in the lagoon, 1.7 in the channel.
 
 ## After the story: the pond life (D39)
 

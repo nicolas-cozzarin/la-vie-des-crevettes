@@ -7,6 +7,7 @@ import { lagoonPainters } from './lagoon';
 import { lagoonAnimalPainters } from './lagoonAnimals';
 import { mangrovePainters } from './mangrove';
 import { shrimpPainters } from './shrimp';
+import { wastePainters } from './waste';
 import { worldPainters } from './world';
 
 /** Every painter, by image name. See docs/14-art-production.md. */
@@ -19,6 +20,7 @@ export const PAINTERS: Readonly<Record<string, Painter>> = {
   ...creaturePainters,
   ...lagoonAnimalPainters,
   ...channelPainters,
+  ...wastePainters,
   ...effectPainters,
 };
 
@@ -44,5 +46,6 @@ export const PAINTER_GROUPS: PainterGroup[] = [
     names: Object.keys(lagoonAnimalPainters),
   },
   { id: 'channel', title: 'Channel', ground: '#33434A', names: Object.keys(channelPainters) },
+  { id: 'waste', title: 'Litter (D43)', ground: '#A89C7C', names: Object.keys(wastePainters) },
   { id: 'effects', title: 'Effects', ground: '#3F4E52', names: Object.keys(effectPainters) },
 ];

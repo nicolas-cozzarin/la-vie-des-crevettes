@@ -19,28 +19,46 @@ import {
 } from '../paint';
 
 /**
- * The lagoon: bright sand under clear water, seagrass, rounded rocks.
- * Looks are described in docs/11-world-catalogue.md, colours in docs/04-art-direction.md.
+ * The lagoon: dull sand under green, never quite clear water, seagrass,
+ * rounded rocks. Realistic, not a postcard (D41): silt, dead blades, worn
+ * stone, dirty foam. Looks are described in docs/11-world-catalogue.md,
+ * colours in docs/04-art-direction.md.
  */
 const TAU = Math.PI * 2;
 
-const SAND: Rgb = [227, 213, 173];
-const SAND_LIGHT: Rgb = [246, 238, 210];
-const SAND_DARK: Rgb = [188, 168, 124];
-const SAND_WET: Rgb = [198, 178, 138];
-const GRASS = hex('#2F7D5B');
-const GRASS_DARK: Rgb = [24, 78, 62];
-const GRASS_LIGHT: Rgb = [96, 164, 112];
-const GRASS_TIP: Rgb = [170, 206, 150];
+const SAND: Rgb = [194, 183, 152];
+const SAND_LIGHT: Rgb = [214, 206, 180];
+const SAND_DARK: Rgb = [154, 140, 108];
+const SAND_WET: Rgb = [170, 156, 122];
+/** Fine silt settled in the hollows: greyer and greener than the sand. */
+const SILT: Rgb = [128, 124, 98];
+/** The film of tiny algae that browns the sand in places. */
+const FILM: Rgb = [150, 128, 74];
+/** Dead seagrass, browned and rotting on the bed. */
+const DEAD_BLADE: Rgb = [112, 94, 60];
+/** Crumbs of rotting leaf and the like. */
+const CRUMB: Rgb = [70, 62, 44];
+/** The water itself, seen through its depth: green-grey. */
+const WATER = hex('#68806C');
+const GRASS = hex('#3E6E4A');
+const GRASS_DARK: Rgb = [30, 64, 44];
+const GRASS_LIGHT: Rgb = [104, 144, 92];
+const GRASS_TIP: Rgb = [150, 170, 110];
+/** The worn, browned end of an old blade. */
+const GRASS_OLD: Rgb = [142, 120, 70];
 const FUZZ: Rgb = [186, 178, 116];
-const ROCK: Rgb = [136, 132, 120];
-const ROCK_WARM: Rgb = [150, 136, 116];
-const ROCK_COOL: Rgb = [124, 126, 124];
+const ROCK: Rgb = [132, 128, 116];
+const ROCK_WARM: Rgb = [144, 132, 112];
+const ROCK_COOL: Rgb = [122, 124, 118];
 const ROCK_SHADE: Rgb = [40, 44, 52];
 const ALGAE: Rgb = [110, 139, 61];
+/** Short dark turf that grows on any stone left long enough. */
+const TURF: Rgb = [74, 82, 52];
 const GLOW = hex('#7DF9FF');
-const FOAM: Rgb = [250, 250, 242];
-const SHELL: Rgb = [238, 230, 212];
+const FOAM: Rgb = [228, 226, 206];
+/** The dull film that gathers along the water's edge. */
+const SCUM: Rgb = [150, 138, 100];
+const SHELL: Rgb = [222, 214, 194];
 
 interface Blade {
   line: Point[];
@@ -115,19 +133,68 @@ function seagrass(seed: number, count: number): Painter {
       glow(ctx, 0, 0, size * 0.25, mix(SAND_DARK, GRASS_DARK, 0.45), 0.6, 0.35);
       ctx.restore();
 
+      // Dead blades lying in the mat, browned and broken.
+      const age = seededRandom(seed + 2);
+      for (let index = 0; index < 9; index++) {
+        const around = age() * TAU;
+        const out = Math.sqrt(age()) * size * 0.2;
+        const x = rootX + Math.cos(around) * out;
+        const y = rootY + Math.sin(around) * out * 1.3;
+        const angle = (age() - 0.5) * 1.2;
+        const length = size * (0.05 + age() * 0.08);
+        ctx.strokeStyle = rgba(mix(DEAD_BLADE, SILT, age() * 0.5), 0.5 + age() * 0.3);
+        ctx.lineWidth = 6 + age() * 4;
+        ctx.lineCap = 'butt';
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.quadraticCurveTo(
+          x + Math.cos(angle) * length * 0.5,
+          y + Math.sin(angle) * length * 0.5 + (age() - 0.5) * 10,
+          x + Math.cos(angle) * length,
+          y + Math.sin(angle) * length,
+        );
+        ctx.stroke();
+      }
+
       for (const blade of bladesOf(seed, count, size)) {
         const first = blade.line[0] as Point;
         const last = blade.line[blade.line.length - 1] as Point;
         const shade = Math.max(0, Math.min(1, blade.depth));
-        const tone = mix(GRASS_DARK, GRASS_LIGHT, 0.15 + shade * 0.65);
+        // A dull cast of silt over every blade.
+        const tone = mix(mix(GRASS_DARK, GRASS_LIGHT, 0.15 + shade * 0.65), SILT, 0.2);
+        // About half the blades are old: their ends brown, spotted with what grows on them.
+        const old = age() < 0.55;
         const fill = ctx.createLinearGradient(first.x, first.y, last.x, last.y);
         fill.addColorStop(0, rgba(mix(tone, GRASS_DARK, 0.5), 0.96));
         fill.addColorStop(0.55, rgba(mix(tone, GRASS, 0.5), 0.96));
-        fill.addColorStop(1, rgba(mix(tone, GRASS_TIP, 0.7), 0.94));
+        if (old) {
+          fill.addColorStop(0.62, rgba(mix(tone, GRASS_OLD, 0.4), 0.95));
+          fill.addColorStop(1, rgba(mix(GRASS_OLD, DEAD_BLADE, 0.4), 0.92));
+        } else {
+          fill.addColorStop(1, rgba(mix(tone, GRASS_TIP, 0.6), 0.94));
+        }
         ctx.save();
         traceRibbon(ctx, blade.line, bladeWidth(blade.width));
         softFill(ctx, fill, GRASS_DARK, 4, 0.55);
+        ctx.clip();
+        if (old) {
+          for (let spot = 0; spot < 14; spot++) {
+            const t = 0.45 + age() * 0.55;
+            const point = blade.line[Math.round(t * (blade.line.length - 1))] as Point;
+            ctx.fillStyle = rgba(mix(CRUMB, GRASS_OLD, age() * 0.6), 0.25 + age() * 0.3);
+            ctx.beginPath();
+            ctx.arc(
+              point.x + (age() - 0.5) * blade.width,
+              point.y + (age() - 0.5) * blade.width,
+              0.7 + age() * 1.6,
+              0,
+              TAU,
+            );
+            ctx.fill();
+          }
+        }
         ctx.restore();
+        traceRibbon(ctx, blade.line, bladeWidth(blade.width));
         ctx.strokeStyle = rgba(GRASS_DARK, 0.4);
         ctx.lineWidth = 1;
         ctx.stroke();
@@ -211,7 +278,7 @@ function boulder(
     x: x + point.x * cos - point.y * squash * sin,
     y: y + point.x * sin + point.y * squash * cos,
   }));
-  const light = mix(base, [255, 250, 235], 0.32);
+  const light = mix(base, [255, 250, 235], 0.22);
   const dark = mix(base, ROCK_SHADE, 0.5);
   // A flat top: the light holds over most of the rock and falls off at the rim.
   const fill = ctx.createRadialGradient(
@@ -233,8 +300,11 @@ function boulder(
   ctx.clip();
   patches(ctx, random, 9, box, [radius * 0.2, radius * 0.6], [light, dark], [0.08, 0.2]);
   glow(ctx, x + radius * 0.45, y + radius * 0.45, radius * 0.9, ALGAE, 0.34);
+  // Silt settled on the top, and dark turf in tufts.
+  glow(ctx, x - radius * 0.15, y - radius * 0.2, radius * 0.75, SILT, 0.22);
   speckle(ctx, random, Math.round(radius * 1.2), box, [0.5, 1.6], dark, [0.15, 0.4]);
-  speckle(ctx, random, Math.round(radius * 0.5), box, [0.5, 1.4], light, [0.15, 0.4]);
+  speckle(ctx, random, Math.round(radius * 0.9), box, [0.8, 2.2], TURF, [0.12, 0.32]);
+  speckle(ctx, random, Math.round(radius * 0.3), box, [0.5, 1.4], light, [0.12, 0.3]);
   // A crack or two.
   ctx.strokeStyle = rgba(dark, 0.4);
   ctx.lineWidth = 1.3;
@@ -282,7 +352,7 @@ const overhang: Painter = {
     softFill(ctx, rgba([30, 36, 46], 0.72), [20, 24, 30], 22, 0.6);
     ctx.restore();
 
-    const light = mix(ROCK_WARM, [255, 250, 235], 0.4);
+    const light = mix(ROCK_WARM, [255, 250, 235], 0.28);
     const dark = mix(ROCK_WARM, ROCK_SHADE, 0.5);
     const fill = ctx.createLinearGradient(cx - 200, cy - 130, cx + 190, cy + 130);
     fill.addColorStop(0, rgba(light, 1));
@@ -313,6 +383,16 @@ const overhang: Painter = {
       ctx.stroke();
     }
     glow(ctx, cx + 150, cy + 90, 170, ALGAE, 0.26);
+    glow(ctx, cx - 60, cy - 50, 190, SILT, 0.2);
+    speckle(
+      ctx,
+      random,
+      360,
+      { x: cx - 240, y: cy - 160, w: 480, h: 320 },
+      [0.8, 2.4],
+      TURF,
+      [0.1, 0.3],
+    );
     speckle(
       ctx,
       random,
@@ -440,8 +520,8 @@ const shore: Painter = {
     for (let x = width; x >= 0; x -= 8) ctx.lineTo(x, edge(x));
     ctx.closePath();
     const fill = ctx.createLinearGradient(0, 0, 0, 262);
-    fill.addColorStop(0, rgba([247, 240, 216], 1));
-    fill.addColorStop(0.52, rgba([240, 230, 200], 1));
+    fill.addColorStop(0, rgba([226, 218, 194], 1));
+    fill.addColorStop(0.52, rgba([216, 206, 178], 1));
     fill.addColorStop(0.7, rgba(SAND_WET, 1));
     fill.addColorStop(1, rgba(mix(SAND_WET, SAND_DARK, 0.5), 1));
     softFill(ctx, fill, SAND_DARK, 8, 0.4);
@@ -465,16 +545,33 @@ const shore: Painter = {
       SAND_DARK,
       [0.12, 0.35],
     );
-    // The line the last high water left: dried weed and small things, in a broken row.
-    for (let x = 0; x < width; x += 5) {
-      if (Math.sin(x * 0.021 + 1) + Math.sin(x * 0.057) < -0.9) continue;
-      const y = 96 + 10 * Math.sin((x / width) * TAU * 3 + phaseB) + (random() - 0.5) * 12;
-      ctx.fillStyle = rgba(random() < 0.7 ? [92, 84, 54] : [140, 128, 88], 0.35 + random() * 0.4);
-      ctx.beginPath();
-      ctx.ellipse(x, y, 1.5 + random() * 4, 0.8 + random() * 1.6, random() * Math.PI, 0, TAU);
-      ctx.fill();
+    // The line the last high water left: dried weed, dead blades and small
+    // things, in a thick broken row, and a fainter older one above it.
+    for (const [row, every, spread] of [
+      [96, 4, 14],
+      [58, 10, 10],
+    ] as const) {
+      for (let x = 0; x < width; x += every) {
+        if (Math.sin(x * 0.021 + row) + Math.sin(x * 0.057) < -0.9) continue;
+        const y = row + 10 * Math.sin((x / width) * TAU * 3 + phaseB) + (random() - 0.5) * spread;
+        const tone = random();
+        ctx.fillStyle = rgba(
+          tone < 0.5 ? [96, 86, 58] : tone < 0.8 ? DEAD_BLADE : [150, 138, 104],
+          (0.25 + random() * 0.35) * (row < 80 ? 0.7 : 1),
+        );
+        ctx.beginPath();
+        ctx.ellipse(x, y, 1.5 + random() * 6, 0.8 + random() * 1.8, random() * Math.PI, 0, TAU);
+        ctx.fill();
+      }
     }
     ctx.restore();
+
+    // Scum: a dull brownish film that gathers along the water's edge.
+    for (let x = 0; x < width; x += 24) {
+      const radius = 26 + random() * 16;
+      const y = edge(x + 12) + 8;
+      wrapped(width, x + 12, y, radius, (px) => glow(ctx, px, y, radius, SCUM, 0.18), true);
+    }
 
     // Foam where the water meets the sand: a pale broken band and bubbles.
     ctx.lineCap = 'round';
@@ -559,16 +656,29 @@ const caustics: Painter = {
             }
           }
         }
-        // Bright where two cells meet, with a soft fall to either side.
+        // Bright where two cells meet, with a wide soft fall to either side:
+        // the silt in the water blurs the net.
         const border = second - nearest;
-        const line = Math.max(0, 1 - border / 17);
-        const halo = Math.max(0, 1 - border / 58);
+        const line = Math.max(0, 1 - border / 24);
+        const halo = Math.max(0, 1 - border / 70);
         // The net is uneven: bright knots, and stretches where it almost fades.
         const uneven =
           0.5 +
           0.28 * Math.sin(x * wave * 2 + 0.7 + 1.9 * Math.sin(y * wave + 0.3)) +
           0.22 * Math.sin(y * wave * 3 + 2.1 + 1.6 * Math.sin(x * wave * 2 + 1.1));
-        const strength = (line * line * 0.7 + halo * halo * 0.22) * (0.25 + uneven);
+        // Wide stretches where cloud or murk takes the light away almost entirely.
+        const cloud = Math.max(
+          0,
+          Math.min(
+            1,
+            0.45 +
+              0.75 *
+                Math.sin(x * wave + 1.1 + 2 * Math.sin(y * wave + 0.5)) *
+                Math.sin(y * wave + 2.3 + 1.4 * Math.sin(x * wave + 0.2)),
+          ),
+        );
+        const strength =
+          (line * line * 0.55 + halo * halo * 0.22) * (0.25 + uneven) * (0.15 + 0.85 * cloud);
         const at = (y * size + x) * 4;
         data[at] = 255;
         data[at + 1] = 249;
@@ -761,7 +871,165 @@ const sandVolcano: Painter = {
   },
 };
 
+/**
+ * The lagoon's bed: dull sand under green water, never clean (D41). Silt
+ * settles in the hollows, a film of tiny algae browns it in places, and bits
+ * of dead seagrass, shell grit and dark crumbs lie everywhere. The ripple
+ * marks are faint and broken. Repeats in both directions.
+ */
+const bed: Painter = {
+  width: 1024,
+  height: 1024,
+  paint(ctx, size) {
+    const random = seededRandom(389);
+    ctx.fillStyle = rgba(SAND, 1);
+    ctx.fillRect(0, 0, size, size);
+    const pool = (x: number, y: number, radius: number, color: Rgb, alpha: number): void =>
+      wrapped(size, x, y, radius, (px, py) => glow(ctx, px, py, radius, color, alpha));
+
+    // Broad patches: paler sand, darker sand, and silt in the hollows.
+    for (let index = 0; index < 80; index++) {
+      const pick = random();
+      const color = pick < 0.3 ? SAND_LIGHT : pick < 0.6 ? SAND_DARK : SILT;
+      pool(random() * size, random() * size, 70 + random() * 170, color, 0.1 + random() * 0.16);
+    }
+    // The algae film: uneven golden-brown stains, a few pools to each.
+    for (let index = 0; index < 22; index++) {
+      const x = random() * size;
+      const y = random() * size;
+      for (let drop = 0; drop < 4; drop++) {
+        pool(
+          x + (random() - 0.5) * 140,
+          y + (random() - 0.5) * 100,
+          30 + random() * 60,
+          FILM,
+          0.06 + random() * 0.1,
+        );
+      }
+    }
+
+    // Ripple marks, faint and broken: the water here is mostly still.
+    ctx.lineCap = 'round';
+    for (let index = 0; index < 70; index++) {
+      const x = random() * size;
+      const y = random() * size;
+      const length = 110 + random() * 200;
+      const angle = (random() - 0.5) * 0.36;
+      const bend = (random() - 0.5) * 24;
+      const strength = 0.4 + random() * 0.5;
+      const gapAt = 0.3 + random() * 0.4;
+      const cos = Math.cos(angle);
+      const sin = Math.sin(angle);
+      wrapped(size, x, y, length, (px, py) => {
+        for (const [shift, color, alpha, width] of [
+          [0, SAND_DARK, 0.14, 7],
+          [6, SAND_LIGHT, 0.16, 4],
+        ] as const) {
+          ctx.strokeStyle = rgba(color, alpha * strength);
+          ctx.lineWidth = width;
+          ctx.beginPath();
+          for (let step = 0; step <= 12; step++) {
+            const t = step / 12;
+            const along = (t - 0.5) * length;
+            const across = Math.sin(t * Math.PI) * bend + shift;
+            const sx = px + cos * along - sin * across;
+            const sy = py + sin * along + cos * across;
+            // A break where the ripple has been flattened.
+            if (step === 0 || Math.abs(t - gapAt) < 0.09) ctx.moveTo(sx, sy);
+            else ctx.lineTo(sx, sy);
+          }
+          ctx.stroke();
+        }
+      });
+    }
+
+    // Bits of dead seagrass: short brown strips, some bent. Most lie in small
+    // drifts where the water left them, a few alone.
+    const drifts: Point[] = [];
+    for (let index = 0; index < 14; index++)
+      drifts.push({ x: random() * size, y: random() * size });
+    for (let index = 0; index < 80; index++) {
+      const alone = index >= 64;
+      const drift = drifts[index % drifts.length] as Point;
+      const x = alone ? random() * size : drift.x + (random() - 0.5) * 90;
+      const y = alone ? random() * size : drift.y + (random() - 0.5) * 60;
+      const length = 14 + random() * 34;
+      // The bits of one drift lie roughly the same way, as the water laid them.
+      const angle = alone ? random() * TAU : (index % drifts.length) * 2.4 + (random() - 0.5) * 0.7;
+      const bend = (random() - 0.5) * 12;
+      const width = 3 + random() * 3.5;
+      const color = rgba(mix(DEAD_BLADE, SILT, random() * 0.6), 0.25 + random() * 0.3);
+      const cos = Math.cos(angle);
+      const sin = Math.sin(angle);
+      wrapped(size, x, y, length, (px, py) => {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = width;
+        ctx.lineCap = 'butt';
+        ctx.beginPath();
+        ctx.moveTo(px - (cos * length) / 2, py - (sin * length) / 2);
+        ctx.quadraticCurveTo(
+          px - sin * bend,
+          py + cos * bend,
+          px + (cos * length) / 2,
+          py + (sin * length) / 2,
+        );
+        ctx.stroke();
+      });
+    }
+
+    // Shell grit: small pale broken bits with a darker edge.
+    for (let index = 0; index < 260; index++) {
+      const x = random() * size;
+      const y = random() * size;
+      const w = 1.2 + random() * 3.2;
+      const h = w * (0.4 + random() * 0.5);
+      const turn = random() * Math.PI;
+      const alpha = 0.35 + random() * 0.4;
+      wrapped(size, x, y, w * 2, (px, py) => {
+        ctx.fillStyle = rgba(mix(SHELL, SAND_DARK, 0.2), alpha);
+        ctx.strokeStyle = rgba(SAND_DARK, alpha * 0.7);
+        ctx.lineWidth = 0.6;
+        ctx.beginPath();
+        ctx.ellipse(px, py, w, h, turn, 0, TAU);
+        ctx.fill();
+        ctx.stroke();
+      });
+    }
+
+    // Dark crumbs, then the grains.
+    const whole = { x: 0, y: 0, w: size, h: size };
+    speckle(ctx, random, 1600, whole, [0.6, 2], CRUMB, [0.15, 0.45]);
+    speckle(ctx, random, 9000, whole, [0.5, 1.3], SAND_DARK, [0.12, 0.32]);
+    speckle(ctx, random, 3500, whole, [0.5, 1.4], SAND_LIGHT, [0.15, 0.35]);
+  },
+};
+
+/**
+ * The lagoon's murk: green-grey water that is never quite clear (D41). A thin
+ * veil even close by, then things fade beyond about 5 BL and are hard to make
+ * out by 11 BL. Drawn at twice the size of the view, like the mangrove's.
+ */
+const murk: Painter = {
+  width: 512,
+  height: 288,
+  paint(ctx, width, height) {
+    const cx = width / 2;
+    const cy = height / 2;
+    // The view is about 12.5 BL wide: one BL is about 20 pixels here.
+    const bl = width / 25;
+    const fill = ctx.createRadialGradient(cx, cy, bl * 1.5, cx, cy, bl * 11);
+    fill.addColorStop(0, rgba(WATER, 0.08));
+    fill.addColorStop(0.35, rgba(WATER, 0.22));
+    fill.addColorStop(0.7, rgba(WATER, 0.52));
+    fill.addColorStop(1, rgba(WATER, 0.8));
+    ctx.fillStyle = fill;
+    ctx.fillRect(0, 0, width, height);
+  },
+};
+
 export const lagoonPainters: Record<string, Painter> = {
+  'lagoon.bed': bed,
+  'lagoon.murk': murk,
   'lagoon.seagrass.a': seagrass(CLUMPS.a[0], CLUMPS.a[1]),
   'lagoon.seagrass.b': seagrass(CLUMPS.b[0], CLUMPS.b[1]),
   'lagoon.seagrass.c': seagrass(CLUMPS.c[0], CLUMPS.c[1]),
@@ -776,5 +1044,3 @@ export const lagoonPainters: Record<string, Painter> = {
   'fx.glow': glowPoint,
   'thing.sandVolcano': sandVolcano,
 };
-
-void SAND;

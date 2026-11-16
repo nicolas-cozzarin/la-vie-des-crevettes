@@ -19,7 +19,7 @@ Help the general public see shrimp differently: as animals that feel and deserve
 Use these to judge any feature. If a feature fails one, cut it or change it.
 
 1. **You are the shrimp.** Camera, sound and interface express what the shrimp senses and feels. No health bar, no meters.
-2. **Calm first.** Fear exists and chases happen, but they are short and always resolve into safety.
+2. **Calm to play, true to life (D41).** The controls, the pace and the music stay calm. The life does not: hunger, murk, crowding, fear and loss are part of it, shown as they are, in the wild as on a farm. Chases are short and resolve into safety. Nothing is gory, and nothing is so hard that people stop playing.
 3. **True to the animal.** Every behaviour in the game is one real shrimp show, simplified (D7).
 4. **No animal is consumed.** See hard rules.
 5. **Never preach.** The game shows and lets the player feel. Facts wait in an optional journal (D3).

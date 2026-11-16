@@ -60,13 +60,13 @@ export const lagoon: AreaDef = {
   id: 'lagoon',
   size: { w: 8000, h: 5000 },
   bodyLengthPx: 124,
-  ground: 'ground.sand',
+  ground: 'lagoon.bed',
   groundPatches: [
     // Zone A: muddy sand where the creek opens.
     { image: 'mangrove.sandmud', zone: { x: 6800, y: 1500, w: 1600, h: 2300 }, feather: 380 },
   ],
   spawn: { x: 7600, y: 2650, heading: Math.PI },
-  light: { dapple: 'light.caustics', dappleStrength: 0.55 },
+  light: { dapple: 'light.caustics', dappleStrength: 0.35, murk: 'lagoon.murk' },
   dayCycle: true,
   music: 'music.lagoon',
   ambience: 'amb.lagoon',

@@ -177,7 +177,7 @@ A long bar of sand with shallow lagoons behind it. Warm, still, green.
 | Sand waves | Shelf | 20000 by 12000 | Dunes of sand under water, in long rows | Sand dollar beds. A ray. A swimming crab's eyes. Trails of snails |
 | Sand slope | Deep | 14000 by 12000 | A long slope of sand going down into blue | A field of sea pens. The gathering, larger at full moon |
 
-If level 3 of D39 is chosen, the pond wall of doc 18 also stands along the back of the old forest, where the trees end in a straight line.
+The pond wall of doc 18 (D39) also stands along the back of the old forest, where the trees end in a straight line.
 
 ## New creatures and things, in one list
 
@@ -314,7 +314,7 @@ Drafts. Names and texts would go into doc 13, conditions into doc 12.
 
 - No animal is eaten on screen, by anyone. Hunters hunt and never catch.
 - An animal that would eat a shrimp is a hunter or a shadow. It is never a friend.
-- Nothing man-made, unless D39 adds the pond wall.
+- Nothing man-made except the pond wall (D39).
 - A threat still needs 60 s of quiet before the next. More kinds of hunter do not mean more frights an hour.
 - Every place has cover within 7 BL of any point, as doc 11 asks.
 - Nothing in the long coast is needed to finish anything in the story.

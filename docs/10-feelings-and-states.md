@@ -471,7 +471,7 @@ How it plays:
 1. **Cue.** The throb. The specks in the water start to tremble. Companions stop.
 2. **Hull.** The long shadow crosses. Fear +0.3.
 3. **Grid.** It comes on. Everyone scatters. The grid is slower than a swimming shrimp along its path, so the player has time, but running ahead of it only delays things. The way out is to the side, or down into rock.
-4. **Release.** The throb fades. A cloud of stirred silt hangs for 20 s. Nothing else is left behind. The shoal is scattered: finding it again is the next story step.
+4. **Release.** The throb fades. A cloud of stirred silt hangs for 20 s. Nothing else is left behind. The shoal is scattered: finding it again is the next story step. When it is found, it may be one or two smaller ("Losses", below).
 
 No animal is inside the grid when it leaves. Nothing is explained (D4).
 
@@ -563,6 +563,24 @@ A tail flip within 1.5 BL of a Stranger gives it the harmless-startle stimulus. 
 ### The shoal
 
 From chapter 2. Each shrimp steers by three pulls: toward the middle of the group beyond 4 BL, away from any shrimp closer than 0.8 BL, and along the group's average heading. The pulls shape Wander and Follow. They never override Flee, Hide or Freeze.
+
+### Losses (D42)
+
+In life, many young shrimp are taken. The game lets the shoal grow smaller, and never shows how.
+
+| Rule | Value |
+|------|-------|
+| Who can go missing | Only unnamed shrimp: `who: 'young'` and strangers. Never Brise, Nacre or Écume |
+| When | At the moment a threat reaches its release stage: the bird leaves, the fish gives up, the net has passed |
+| Which one | Chosen among the unnamed shrimp that are outside the view and more than 10 BL from the player at that moment. Never one the player can see. If there is none, nobody goes missing |
+| How many | The bird: one, one time in three. The fish: one, one time in two. The net: one or two, always at least one while four or more unnamed shrimp remain |
+| Floor | The shoal keeps at least two unnamed shrimp. Below that, nobody more goes missing |
+| What is seen | Nothing. The shrimp is removed while out of view. No sound, no trace, no body. The player finds out only by counting when the shoal is together again |
+| New members | At the start of chapters 3 and 5, zero to two strangers join the shoal, as shoals mix in life |
+| The save | `stats.missing` counts them. Nothing else changes |
+| Narration | Proposed, new text to approve: once, the first time the regrouped shoal is smaller, a "may" line: "Fewer than before." / "Moins nombreux qu'avant." |
+
+Tests: a named companion is never removed. A shrimp in view is never removed. The floor of two holds. The draws use the game's seeded random so a run can be replayed.
 
 ## Molting
 

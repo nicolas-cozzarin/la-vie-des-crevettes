@@ -273,6 +273,8 @@ From doc 07, with ids for the code.
 | `card.feel` | Able to feel | Finishing chapter 2 |
 | `card.howMany` | How many | Spawning. Optional, the author to keep or cut (T17) |
 
+The page "Among humans" and its cards come with D39. They are listed, with what unlocks each, in doc 18 under "Level 2". The page sits after "What shrimp feel", and does not exist until its first card unlocks. The pond life adds its four places to Discoveries (doc 11).
+
 ## Icons
 
 One hand for all of them: a dark pencil-ink line of even weight, slightly wobbly, with one flat watercolour wash that does not quite fill the line. Drawn by code like everything else (doc 14).

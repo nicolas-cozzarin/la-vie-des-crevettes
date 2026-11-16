@@ -10,8 +10,9 @@ Time figures are guesses for one person working with Claude Code. Treat them as 
 |---------|----------|-------|
 | **0.1 Mangrove** | Drift and Mangrove. Movement, feelings, food, sense, cover, other shrimp, bonds, the bird, molt, narration, journal, challenges, achievements, rebinding, French and English, counter | 2 to 3 weeks |
 | **0.2 Lagoon** | Day and night, burrowing, the shoal, companions in full, turtle, pistol shrimp and goby, the hunting fish | 1 to 2 weeks |
-| **0.3 To the sea** | Channel, The shadow, Open sea, spawning | 1 to 2 weeks |
+| **0.3 To the sea** | Channel, The shadow, Open sea, spawning. The pond's wall in the channel and the journal page "Among humans" (D39) | 1 to 2 weeks |
 | **1.0 Free life** | Generations, every challenge and achievement, sound and art pass, facts checked | 1 to 2 weeks |
+| **1.1 Another life** | The pond life after the story: the tank, the bag, the pond, the draining (D39, doc 18) | 1 to 2 weeks |
 | Later | Painted art, touch controls, gamepad, more languages | |
 
 ## Release 0.1, step by step
@@ -113,6 +114,9 @@ Checks: the browser test passes. Five people who have not seen the game play it 
 - The shadow: hull, engine, net grid, crevices.
 - Open sea area. Third molt. Spawning scene.
 - Chapters 3 to 5 story steps, challenges, journal entries, sound.
+- The pond's wall, gate, plume and the crowd behind the mesh in zone D of the channel (D39, doc 18, level 3).
+- The journal page "Among humans", with the cards the author has said yes to.
+- Losses in the shoal after the fish and the net (D42, doc 10).
 
 ## Release 1.0 Free life
 
@@ -121,6 +125,14 @@ Checks: the browser test passes. Five people who have not seen the game play it 
 - Remaining achievements.
 - Every "to check" in doc 07 confirmed or removed.
 - Sound levels, loading times and frame rate against the budgets in doc 06.
+
+## Release 1.1 Another life
+
+- A second entry on the title screen once the story is finished, with its one line.
+- The tank, the bag, the pond over four days and nights, the draining, the cut to white (doc 18, level 4).
+- The conditions `crowded` and `cold`. Thin water everywhere before dawn.
+- Its four places in the journal and its cards.
+- Its own playtest: fewer than one player in ten stops before the end.
 
 ## Later
 

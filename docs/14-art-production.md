@@ -317,7 +317,9 @@ This table is the checklist for the art. Update it in the same commit as a paint
 
 | Name | Size | Status |
 |------|------|--------|
-| `lagoon.seagrass.a`, `.b`, `.c` | 600 | Built. Three clumps rooted left of centre, blades bent to the right |
+| `lagoon.bed` | 1024, tile | Built. The lagoon's ground: dull sand with silt, film, dead blade bits and shell grit (D41) |
+| `lagoon.murk` | 512 by 288 | Built. Green-grey, a thin veil at the centre, heavy at the rim. Drawn at twice the size of the view |
+| `lagoon.seagrass.a`, `.b`, `.c` | 600 | Built. Three clumps rooted left of centre, blades bent to the right. About half the blades old and brown at the tip |
 | `food.seagrassFuzz` | 600 | Built. The fuzz on clump `a`'s blades, laid over it |
 | `food.sandFilm` | 380 | Built |
 | `rock.overhang` | 560 by 400 | Built. Cover: the gap under it is where the shrimp hides |
@@ -355,6 +357,26 @@ This table is the checklist for the art. Update it in the same commit as a paint
 | `sea.ledge` | 760 by 420 | To paint |
 | `channel.seaFan` | 360 by 300 | Built. Added. Its foot, where it holds the rock, is at the left middle. It sways about that point |
 | `fx.egg` | 16 | To paint |
+| `pond.wall` | 1024 by 360, repeats sideways | To paint. D39. Packed earth, straight, grass tufts on the crest, cracked mud at the foot |
+| `pond.outlet` | 420 by 300 | To paint. D39. A concrete gate stained green-brown, its opening closed by a mesh |
+| `pond.plume` | 1024 by 512 | To paint. D39. A soft green-brown stain, densest at the left edge where it leaves the gate |
+
+### The pond life (D39)
+
+Release 1.1. Realistic and bare, without gloss and without horror (D41). The shrimp, the larva and the shoal are drawn by the rig.
+
+| Name | Size | Status |
+|------|------|--------|
+| `farm.tank.floor` | 1024, tile | To paint. Off-white, scuffed, faint rings of dried scale |
+| `farm.tank.wall` | 1024 by 300, repeats sideways | To paint. Smooth, white to pale grey where it curves up out of the light |
+| `farm.bag` | 1024 by 576 | To paint. Clear creased plastic seen from inside, dim light through it, bubbles along one edge. Laid over the view |
+| `farm.pond.clay` | 1024, tile | To paint. Soft grey-brown clay with a thin film, tracks and dents |
+| `farm.pond.sludge` | 512 | To paint. A black, soft-edged patch with a dull sheen |
+| `farm.pond.bank` | 1024 by 400, repeats sideways | To paint. Packed earth from inside the pond, straight, slumped in places |
+| `farm.pond.gate` | 640 by 420 | To paint. Concrete sluice with wooden boards in grooves and a mesh behind them |
+| `farm.pond.murk` | 512 by 288 | To paint. Opaque green, clear only within 3 BL of the centre. Drawn at twice the size of the view |
+| `fx.mesh` | 256, tile | To paint. The shadow of a net's mesh, soft |
+| `fx.surface` | 1024, tile | To paint. The underside of the surface coming close: bright creases, moving |
 
 ### Interface and icons
 
@@ -413,9 +435,9 @@ How the numbers in an area file become pictures on the screen. The reference is 
 | Burrowed shrimp | The shrimp, then the ground drawn over it in a rounded shape from 0.78 BL behind its centre to 0.24 BL ahead and 0.44 BL across, blurred at the rim and a little darker. The eyes and antennae stay out |
 | Dapple | The tile at 1 / 1.4, laid over the bed, the things and the cover with the SCREEN blend, at `dappleStrength` |
 | Bird | Two `bird.foot` 3.6 BL wide, 2.6 BL apart, each with `fx.ripple`. `bird.shadow.body` 9 BL wide. `bird.shadow.head` 4.25 BL wide, pinned 2.2 BL ahead of the body and turned toward the strike point. `fx.ripple` 2 BL wide at the strike point |
-| Dusk | `#F0B27A` laid over everything with the MULTIPLY blend at 55%. Caustics at 40% of their strength |
-| Night | `#1B2350` with MULTIPLY at 86%. No caustics. Then glowing plankton: `fx.glow` points 0.1 to 0.22 BL wide with the SCREEN blend at 22%, two for each square BL in the bright shallows and a third as many elsewhere. Within 1.5 BL of the wake of anything moving, up to full strength and 2.6 times wider |
 | Murk | The image centred on the shrimp, at twice the size of the view |
+| Dusk | `#F0B27A` laid over everything, the murk too, with the MULTIPLY blend at 55%. Caustics at 40% of their strength |
+| Night | `#1B2350` with MULTIPLY at 86%, over the murk too. No caustics. Then glowing plankton: `fx.glow` points 0.1 to 0.22 BL wide with the SCREEN blend at 22%, two for each square BL in the bright shallows and a third as many elsewhere. Within 1.5 BL of the wake of anything moving, up to full strength and 2.6 times wider |
 | Over everything | `fx.vignette` stretched to the screen, then `fx.grain` at 7% |
 
 ## Replacing a painter with a painted file

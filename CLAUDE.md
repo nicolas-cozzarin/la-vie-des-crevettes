@@ -41,7 +41,7 @@ If code and docs disagree, stop and ask which is right. If a decision in `docs/0
 ## Rules that never bend
 
 1. **No animal is eaten.** No shrimp, no other animal and no animal product is consumed by any character, in play, images, text or sound. `FoodKind` is a closed list of algae and plants. Do not add to it.
-2. **No death or injury on screen.** Predators and the net never catch anyone. Companions always escape.
+2. **No death or injury on screen.** Nobody is caught on screen, by a predator or by the net. Named companions always escape. Unnamed shrimp of the shoal can go missing off-screen, never shown and never explained (D42). The pond life ends in a cut to white before anything is shown (D39).
 3. **No preaching.** No text tells the player what to think or do. No moral words. Facts appear only in the journal, worded by the rules in doc 07.
 4. **No unsourced facts.** A journal card needs a source key from doc 07. Do not write new facts from memory. Propose them with a source, marked "to check".
 5. **Never say shrimp eat only plants.** The game shows plant foods and is silent on the rest.

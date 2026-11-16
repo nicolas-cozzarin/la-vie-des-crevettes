@@ -23,6 +23,7 @@ export interface ImageFit {
 
 const FIT: Readonly<Record<string, ImageFit>> = {
   'ground.sand': { tile: 'both' },
+  'lagoon.bed': { tile: 'both' },
   'fx.grain': { tile: 'both' },
   'rock.a': { fill: 0.84 },
   'rock.b': { fill: 0.84 },

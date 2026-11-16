@@ -16,6 +16,9 @@ const SAND_LIGHT: Rgb = [244, 234, 204];
 const SAND_DARK: Rgb = [196, 178, 134];
 const GRAIN_DARK: Rgb = [122, 102, 72];
 const ALGAE: Rgb = [110, 139, 61];
+/** Fine silt settled on stone, and the short dark turf that grows on it (D41). */
+const SILT: Rgb = [128, 124, 98];
+const TURF: Rgb = [74, 82, 52];
 
 /** Sand seen through shallow water. Repeats in both directions. */
 const sand: Painter = {
@@ -95,7 +98,7 @@ function rock(seed: number, base: Rgb): Painter {
       const centre = size / 2;
       const radius = centre * ROCK_FILL;
       const shape = blob(random, centre, centre, radius * 0.97, 0.07);
-      const light = mix(base, [255, 250, 235], 0.35);
+      const light = mix(base, [255, 250, 235], 0.25);
       const dark = mix(base, [40, 44, 52], 0.45);
 
       ctx.save();
@@ -148,9 +151,24 @@ function rock(seed: number, base: Rgb): Painter {
       ctx.fillStyle = film;
       ctx.fillRect(0, 0, size, size);
 
+      // Silt on the top, where the water lets it settle, and turf in tufts.
+      const silt = ctx.createRadialGradient(
+        centre - radius * 0.15,
+        centre - radius * 0.2,
+        0,
+        centre - radius * 0.15,
+        centre - radius * 0.2,
+        radius * 0.8,
+      );
+      silt.addColorStop(0, rgba(SILT, 0.24));
+      silt.addColorStop(1, rgba(SILT, 0));
+      ctx.fillStyle = silt;
+      ctx.fillRect(0, 0, size, size);
+
       const whole = { x: 0, y: 0, w: size, h: size };
       speckle(ctx, random, 380, whole, [0.6, 1.8], dark, [0.1, 0.3]);
-      speckle(ctx, random, 200, whole, [0.6, 1.6], light, [0.12, 0.35]);
+      speckle(ctx, random, 260, whole, [0.8, 2.2], TURF, [0.1, 0.3]);
+      speckle(ctx, random, 120, whole, [0.6, 1.6], light, [0.1, 0.3]);
 
       // A few cracks.
       ctx.strokeStyle = rgba(dark, 0.4);
@@ -237,8 +255,8 @@ const pebble: Painter = {
     ctx.shadowOffsetX = 1.5;
     ctx.shadowOffsetY = 2;
     const fill = ctx.createRadialGradient(centre - 5, centre - 6, 2, centre, centre, 19);
-    fill.addColorStop(0, 'rgb(236,232,222)');
-    fill.addColorStop(1, 'rgb(168,162,150)');
+    fill.addColorStop(0, 'rgb(214,208,194)');
+    fill.addColorStop(1, 'rgb(150,144,132)');
     ctx.fillStyle = fill;
     tracePath(ctx, shape);
     ctx.fill();
@@ -300,7 +318,7 @@ const grain: Painter = {
 export const worldPainters: Record<string, Painter> = {
   'ground.sand': sand,
   'rock.a': rock(11, [140, 135, 120]),
-  'rock.b': rock(23, [118, 124, 130]),
+  'rock.b': rock(23, [120, 122, 118]),
   'rock.c': rock(37, [150, 136, 116]),
   'rock.slab': slab,
   pebble,

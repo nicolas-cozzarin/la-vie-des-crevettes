@@ -610,16 +610,8 @@ export function renderScene(view: SceneView): HTMLCanvasElement {
   // 8b. Large animals over the seagrass.
   for (const creature of swimmers) drawCreature(ctx, creature, bl);
 
-  // 9. The time of day, then light from above: weaker at dusk, gone at night.
+  // 9. Light from above: weaker at dusk, gone at night.
   const time = area.dayCycle ? (view.time ?? 'day') : 'day';
-  if (time !== 'day') {
-    ctx.save();
-    ctx.globalCompositeOperation = 'multiply';
-    ctx.globalAlpha = time === 'dusk' ? DUSK_STRENGTH : NIGHT_STRENGTH;
-    ctx.fillStyle = time === 'dusk' ? DUSK : NIGHT;
-    ctx.fillRect(view.x, view.y, view.w, view.h);
-    ctx.restore();
-  }
   if (area.light?.dapple && time !== 'night') {
     ctx.save();
     ctx.globalCompositeOperation = 'screen';
@@ -628,8 +620,6 @@ export function renderScene(view: SceneView): HTMLCanvasElement {
     ctx.fillRect(view.x, view.y, view.w, view.h);
     ctx.restore();
   }
-
-  if (time === 'night') drawPlankton(ctx, view, bl);
 
   // 10. The bird: a shadow on the water, two feet on the mud, a ring where it will strike.
   if (view.bird) {
@@ -677,6 +667,17 @@ export function renderScene(view: SceneView): HTMLCanvasElement {
     const h = (1080 / 1.4) * 2;
     ctx.drawImage(murk, view.murkAt.x - w / 2, view.murkAt.y - h / 2, w, h);
   }
+
+  // 11b. The time of day, over the murk too, then the living light at night.
+  if (time !== 'day') {
+    ctx.save();
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.globalAlpha = time === 'dusk' ? DUSK_STRENGTH : NIGHT_STRENGTH;
+    ctx.fillStyle = time === 'dusk' ? DUSK : NIGHT;
+    ctx.fillRect(view.x, view.y, view.w, view.h);
+    ctx.restore();
+  }
+  if (time === 'night') drawPlankton(ctx, view, bl);
 
   if (view.showZones) {
     ctx.save();

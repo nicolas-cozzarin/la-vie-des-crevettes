@@ -17,3 +17,9 @@ export function exploreStart(): { x: number; y: number } | null {
   const match = at ? /^(\d+),(\d+)$/.exec(at) : null;
   return match ? { x: Number(match[1]), y: Number(match[2]) } : null;
 }
+
+/** `?debug`: debug keys for the author, such as cycling the mood. Never in the game's menus. */
+export function debugRequested(): boolean {
+  if (typeof window === 'undefined') return false;
+  return new URLSearchParams(window.location.search).has('debug');
+}

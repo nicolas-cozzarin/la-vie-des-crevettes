@@ -70,5 +70,12 @@
 
   "play.hint.move": "{up} {left} {down} {right} to move",
   "play.hint.dart": "{key} for a tail flip",
-  "play.hint.pause": "{key} for the menu"
+  "play.hint.pause": "{key} for the menu",
+
+  "mood.calm": "Calm",
+  "mood.hungry": "Hungry",
+  "mood.content": "Content",
+  "mood.curious": "Curious",
+  "mood.social": "In company",
+  "mood.afraid": "Afraid"
 }

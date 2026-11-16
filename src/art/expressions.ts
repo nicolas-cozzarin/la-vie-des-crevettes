@@ -1,4 +1,6 @@
+import type { Condition } from '../core/feelings/types';
 import type { Mood } from '../core/feelings/mood';
+import type { LifeStage } from '../core/world/kinds';
 
 /**
  * How a shrimp holds its body. The rig eases toward these numbers.
@@ -65,6 +67,14 @@ export const DEFAULT_LOOK: RigLook = {
   gutAlpha: 1,
   eyeScale: 1.15,
   alpha: 1,
+};
+
+/** What changes in the look as the shrimp grows. Larva is drawn by its own rig. */
+export const STAGE_LOOKS: Readonly<Record<LifeStage, Partial<RigLook>>> = {
+  larva: {},
+  juvenile: { antennaLength: 1.0, eyeScale: 1.15 },
+  subAdult: { antennaLength: 1.25, eyeScale: 1 },
+  adult: { antennaLength: 1.5, eyeScale: 1 },
 };
 
 export const MOOD_EXPRESSIONS: Readonly<Record<Mood, RigExpression>> = {
@@ -177,3 +187,37 @@ export const MOOD_EXPRESSIONS: Readonly<Record<Mood, RigExpression>> = {
     rock: 0,
   },
 };
+
+/**
+ * The mood's expression with the conditions applied after it, as the table
+ * "Conditions change the expression" in doc 14 says. `inCurrent` and
+ * `startled` move the whole rig, so the rig applies them itself.
+ */
+export function withConditions(
+  base: RigExpression,
+  has: (condition: Condition) => boolean,
+): RigExpression {
+  const e = { ...base };
+  if (has('wary')) {
+    e.antennaAngle += 0.1;
+    e.antennaStiff = Math.min(1, e.antennaStiff + 0.2);
+    e.antennaSweepRate *= 1.5;
+  }
+  if (has('soft')) {
+    e.antennaSweepRate *= 0.6;
+    e.antennuleRate *= 0.6;
+    e.antennaAngle += 0.15;
+    e.antennaCurl += 0.04;
+  }
+  if (has('veryHungry')) e.aim = Math.max(e.aim, 0.5);
+  if (has('tired')) e.fan = 0.1;
+  if (has('frozen')) {
+    e.antennaSweepRate = 0;
+    e.antennuleRate = 0;
+    e.fanSway = 0;
+    e.rock = 0;
+    e.flat = 1;
+    e.tremble = 0;
+  }
+  return e;
+}

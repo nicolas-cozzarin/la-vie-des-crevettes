@@ -70,5 +70,12 @@
 
   "play.hint.move": "{up} {left} {down} {right} pour te déplacer",
   "play.hint.dart": "{key} pour un coup de queue",
-  "play.hint.pause": "{key} pour le menu"
+  "play.hint.pause": "{key} pour le menu",
+
+  "mood.calm": "Calme",
+  "mood.hungry": "Affamée",
+  "mood.content": "Bien",
+  "mood.curious": "Curieuse",
+  "mood.social": "En compagnie",
+  "mood.afraid": "Effrayée"
 }

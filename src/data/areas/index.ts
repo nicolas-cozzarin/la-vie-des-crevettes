@@ -1,3 +1,4 @@
+import type { LifeStage } from '../../core/world/kinds';
 import { WORLD } from '../tuning';
 import { lagoon } from './lagoon';
 import { mangrove } from './mangrove';
@@ -8,6 +9,12 @@ import type { AreaDef } from './types';
 export const AREAS = { mangrove, lagoon } as const;
 
 export type PlayableArea = keyof typeof AREAS;
+
+/** The stage the shrimp lives each area at (doc 11, "Scale"). */
+export const STAGE_IN: Record<PlayableArea, LifeStage> = {
+  mangrove: 'juvenile',
+  lagoon: 'subAdult',
+};
 
 /** The area the story starts in, until the Drift is built (step 8). */
 export const FIRST_AREA: PlayableArea = 'mangrove';

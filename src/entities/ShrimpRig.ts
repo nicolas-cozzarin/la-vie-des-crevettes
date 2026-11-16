@@ -8,10 +8,16 @@ import {
   partOriginX,
   type PartDef,
 } from '../art/shrimpParts';
+import {
+  DEFAULT_LOOK,
+  MOOD_EXPRESSIONS,
+  type RigExpression,
+  type RigLook,
+} from '../art/expressions';
 import { ensureTexture } from '../art/TextureFactory';
-import { angleDiff, approach, TAU } from '../core/movement/angles';
+import { angleDiff, approach, TAU, wrapAngle } from '../core/movement/angles';
 import type { MotionMode } from '../core/movement/ShrimpMotion';
-import { SHADOW } from '../data/tuning';
+import { MOOD, SHADOW } from '../data/tuning';
 
 /** What the rig needs to know about the shrimp on this frame. */
 export interface RigPose {
@@ -27,6 +33,31 @@ export interface RigPose {
   height: number;
 }
 
+/** How the shrimp holds itself on this frame: its mood's expression, and what it looks at. */
+export interface RigFeel {
+  /** The expression with its conditions applied (`withConditions`). */
+  expression: RigExpression;
+  /** Blending into afraid is faster than into anything else. */
+  afraid: boolean;
+  /** What the antennae turn toward and the body leans to. */
+  target: { x: number; y: number } | null;
+  /** The 0.35 s flinch of doc 10. */
+  startled: boolean;
+}
+
+/** The expression as the rig holds it: `fan` always a number, and how firmly it is held. */
+interface Held extends Omit<RigExpression, 'fan'> {
+  fan: number;
+  /** 0 the movement decides the tail fan, 1 the expression does. */
+  fanHold: number;
+}
+
+function held(expression: RigExpression): Held {
+  return { ...expression, fan: expression.fan ?? 0.5, fanHold: expression.fan === null ? 0 : 1 };
+}
+
+const CHANNELS = Object.keys(held(MOOD_EXPRESSIONS.calm)) as (keyof Held)[];
+
 const SEGMENTS = SHRIMP.segmentLengths.length;
 /** How much of each abdominal plate lies over the one behind it. */
 const PLATE_OVERLAP = 1.22;
@@ -36,7 +67,6 @@ const JOINT_LAG = 0.02;
 const JOINT_LIMIT = 0.26;
 
 const ANTENNA_POINTS = 14;
-const ANTENNA_LENGTH = 1.25;
 /** Longest time step for the antennae, in seconds. Longer frames are cut up. */
 const ANTENNA_STEP = 1 / 120;
 /** The most one link of an antenna bends from the link before it, in radians. */
@@ -106,11 +136,24 @@ export class ShrimpRig {
   private shadowY = 0;
   private shadowAlpha = 0;
 
+  /** The expression as shown now, eased channel by channel toward the one asked for. */
+  private readonly shown: Held = held(MOOD_EXPRESSIONS.calm);
+  private sweepPhase = 0;
+  private flickPhase = 0;
+  private swayPhase = 0;
+  private rockPhase = 0;
+  /** 0 to 1: how far into the flinch the body is. */
+  private flinch = 0;
+  private target: { x: number; y: number } | null = null;
+  private readonly look: RigLook;
+
   constructor(
     scene: Phaser.Scene,
     private readonly bodyLengthPx: number,
     depth: number,
+    look: Partial<RigLook> = {},
   ) {
+    this.look = { ...DEFAULT_LOOK, ...look, bodyLengthPx };
     const image = (name: string, originX: number): Phaser.GameObjects.Image =>
       scene.add.image(0, 0, ensureTexture(scene, name)).setOrigin(originX, 0.5);
     const part = (def: PartDef): Phaser.GameObjects.Image => image(def.name, partOriginX(def));
@@ -147,7 +190,10 @@ export class ShrimpRig {
     this.root.destroy(true);
   }
 
-  update(dt: number, pose: RigPose): void {
+  update(dt: number, motionPose: RigPose, feel?: RigFeel): void {
+    this.feel(dt, feel);
+    const e = this.shown;
+    const pose = this.lean(motionPose);
     const speed = Math.hypot(pose.vx, pose.vy);
     const darting = pose.mode === 'dart';
     const gliding = pose.mode === 'glide';
@@ -163,6 +209,8 @@ export class ShrimpRig {
     else if (gliding) spreadTarget = 0.75;
     else if (swimming) spreadTarget = 0.18;
     else if (pose.mode === 'walk') spreadTarget = 0.36;
+    // The mood holds the fan, except in an escape, which always spreads it.
+    if (!darting && !gliding) spreadTarget = lerp(spreadTarget, e.fan, e.fanHold);
     this.spread += (spreadTarget - this.spread) * approach(dt, 0.12);
 
     this.gait += (speed / (0.4 * this.bodyLengthPx)) * TAU * dt;
@@ -170,6 +218,10 @@ export class ShrimpRig {
 
     // Rising off the bed brings the shrimp a little closer to the eye.
     const bl = this.bodyLengthPx * (1 + 0.05 * Math.min(pose.height, 1.6));
+    this.sweepPhase += e.antennaSweepRate * dt;
+    this.flickPhase += e.antennuleRate * dt;
+    this.swayPhase += 1.4 * dt;
+    this.rockPhase += 1.1 * dt;
     const scale = bl / PART_PX_PER_BL;
     const heading = pose.heading;
     const fx = Math.cos(heading);
@@ -193,13 +245,49 @@ export class ShrimpRig {
     this.placed = true;
   }
 
+  /** Eases every channel of the expression toward the one asked for. */
+  private feel(dt: number, feel: RigFeel | undefined): void {
+    const wanted = held(feel?.expression ?? MOOD_EXPRESSIONS.calm);
+    const amount = this.placed ? approach(dt, feel?.afraid ? MOOD.bodyAfraid : MOOD.body) : 1;
+    for (const channel of CHANNELS) {
+      this.shown[channel] += (wanted[channel] - this.shown[channel]) * amount;
+    }
+    this.target = feel?.target ?? null;
+    const startled = feel?.startled === true;
+    this.flinch += ((startled ? 1 : 0) - this.flinch) * approach(dt, startled ? 0.04 : 0.12);
+  }
+
+  /** Where the body is drawn: leaning toward what it looks at, flinching, trembling, rocking. */
+  private lean(pose: RigPose): RigPose {
+    const e = this.shown;
+    const bl = this.bodyLengthPx;
+    const toward = this.target
+      ? Math.atan2(this.target.y - pose.y, this.target.x - pose.x)
+      : pose.heading;
+    const shake = e.tremble * (bl / 110);
+    return {
+      ...pose,
+      x:
+        pose.x +
+        Math.cos(toward) * e.lean * bl -
+        Math.cos(pose.heading) * 0.15 * bl * this.flinch +
+        shake * Math.sin(this.clock * 53),
+      y:
+        pose.y +
+        Math.sin(toward) * e.lean * bl -
+        Math.sin(pose.heading) * 0.15 * bl * this.flinch +
+        shake * Math.cos(this.clock * 47),
+      heading: pose.heading + e.rock * Math.sin(this.rockPhase),
+    };
+  }
+
   /** Carapace, abdomen and tail fan. The abdomen follows the head like a chain. */
   private placeBody(dt: number, pose: RigPose, bl: number, scale: number): void {
     const heading = pose.heading;
     this.carapace.setPosition(pose.x, pose.y).setRotation(heading).setScale(scale);
 
     // Seen from above, a tail flip folds the abdomen under the body and shortens it.
-    const stretch = 1 - 0.42 * this.fold;
+    const stretch = (1 - 0.42 * this.fold) * (1 - 0.08 * this.shown.tuck);
     const relax = this.placed ? Math.exp(-dt / JOINT_LAG) : 0;
 
     let previous = heading;
@@ -233,7 +321,7 @@ export class ShrimpRig {
       previous = angle;
     }
 
-    const fan = this.angles[SEGMENTS] as number;
+    const fan = (this.angles[SEGMENTS] as number) + this.shown.fanSway * Math.sin(this.swayPhase);
     this.telson
       .setPosition(x, y)
       .setRotation(fan)
@@ -277,12 +365,14 @@ export class ShrimpRig {
 
   /** Soft blobs under the body. They slide away and fade as the shrimp rises. */
   private placeShadows(pose: RigPose, bl: number): void {
-    const offset = SHADOW.contactPx + pose.height * SHADOW.perHeight * this.bodyLengthPx;
+    const flat = this.shown.flat;
+    const offset =
+      (SHADOW.contactPx + pose.height * SHADOW.perHeight * this.bodyLengthPx) * (1 - 0.6 * flat);
     const norm = Math.hypot(SHADOW.directionX, SHADOW.directionY);
     const ox = (SHADOW.directionX / norm) * offset;
     const oy = (SHADOW.directionY / norm) * offset;
     const grow = 1 + 0.28 * pose.height;
-    const alpha = 0.34 / (1 + 0.9 * pose.height);
+    const alpha = (0.34 / (1 + 0.9 * pose.height)) * (1 + 0.25 * flat);
     this.shadowX = ox;
     this.shadowY = oy;
     this.shadowAlpha = 0.2 / (1 + 0.9 * pose.height);
@@ -329,7 +419,8 @@ export class ShrimpRig {
     fy: number,
   ): void {
     const stepping = Math.min(1, speed / (1.2 * this.bodyLengthPx)) * (1 - this.tuck);
-    const reach = bl * lerp(0.115, 0.045, this.tuck);
+    const reach = bl * lerp(0.115, 0.045, this.tuck) * this.shown.legReach;
+    const spreadOut = 1 - 0.5 * this.shown.flat;
     const heading = pose.heading;
     const width = 1.5 * stroke;
     const alpha = lerp(0.9, 0.55, this.tuck);
@@ -345,7 +436,7 @@ export class ShrimpRig {
         // Neighbouring legs, and the two legs of a pair, step out of time.
         const phase = this.gait + index * 2.4 + (side > 0 ? Math.PI : 0);
         const swing = Math.sin(phase) * 0.42 * stepping;
-        const forward = lerp((LEG_ANGLES[index] as number) + swing, -1.15, this.tuck);
+        const forward = lerp((LEG_ANGLES[index] as number) * spreadOut + swing, -1.15, this.tuck);
         const direction = heading + side * (Math.PI / 2 - forward);
         const kneeX = rootX + Math.cos(direction) * reach * 0.58;
         const kneeY = rootY + Math.sin(direction) * reach * 0.58;
@@ -418,7 +509,7 @@ export class ShrimpRig {
     for (const side of [-1, 1]) {
       const baseX = pose.x + fx * 0.3 * bl + rx * side * 0.012 * bl;
       const baseY = pose.y + fy * 0.3 * bl + ry * side * 0.012 * bl;
-      const flick = 0.05 * Math.sin(this.clock * 5.2 + side * 1.3);
+      const flick = this.shown.antennuleFlick * Math.sin(this.flickPhase + side * 1.3);
       const direction = pose.heading + side * (0.24 + flick);
       const forkX = baseX + Math.cos(direction) * 0.075 * bl;
       const forkY = baseY + Math.sin(direction) * 0.075 * bl;
@@ -454,13 +545,19 @@ export class ShrimpRig {
     rx: number,
     ry: number,
   ): void {
-    const link = (ANTENNA_LENGTH * bl) / (ANTENNA_POINTS - 1);
+    const e = this.shown;
+    const angle = e.antennaAngle + (2.2 - e.antennaAngle) * this.flinch;
+    const curl = e.antennaCurl * (1 - 0.7 * (this.target ? e.aim : 0));
+    // How fast the tip follows its rest: loose antennae trail, stiff ones are held.
+    const tipRate = Math.max(1.2, 3.2 + (e.antennaStiff - 0.3) * 12);
     // Small steps keep the chain smooth however long the frame was.
     const steps = this.placed ? Math.min(12, Math.max(1, Math.ceil(dt / ANTENNA_STEP))) : 1;
     const stepTime = dt / steps;
     const turned = angleDiff(pose.heading, this.lastHeading);
 
     [-1, 1].forEach((side, which) => {
+      const factor = which === 0 ? this.look.leftAntennaFactor : 1;
+      const link = (this.look.antennaLength * factor * bl) / (ANTENNA_POINTS - 1);
       const chain = this.antennae[which] as Point[];
       const base = chain[0] as Point;
       const fromX = base.x;
@@ -468,7 +565,7 @@ export class ShrimpRig {
       const toX = pose.x + fx * 0.295 * bl + rx * side * 0.036 * bl;
       const toY = pose.y + fy * 0.295 * bl + ry * side * 0.036 * bl;
       // A slow sweep, out of time on the two sides.
-      const sweep = 0.14 * Math.sin(this.clock * 0.8 + which * 2.1);
+      const sweep = e.antennaSweep * Math.sin(this.sweepPhase + which * 2.1);
 
       for (let step = 1; step <= steps; step++) {
         const share = step / steps;
@@ -476,14 +573,20 @@ export class ShrimpRig {
         base.x = this.placed ? fromX + (toX - fromX) * share : toX;
         base.y = this.placed ? fromY + (toY - fromY) * share : toY;
 
-        let previousLink = heading + side * (0.5 + sweep);
+        let first = heading + side * (angle + sweep);
+        if (this.target && e.aim > 0) {
+          // Turn toward the target, a little apart so that the two do not cross.
+          const toTarget = Math.atan2(this.target.y - base.y, this.target.x - base.x) + side * 0.07;
+          first += wrapAngle(toTarget - first) * e.aim;
+        }
+        let previousLink = first;
         for (let index = 1; index < ANTENNA_POINTS; index++) {
           const before = chain[index - 1] as Point;
           const point = chain[index] as Point;
-          const rest = heading + side * (0.5 + sweep + index * 0.115);
+          const rest = first + side * index * curl;
           if (this.placed) {
             // Stiff near the head, loose toward the tip.
-            const pull = approach(stepTime, 1 / lerp(24, 3.2, index / (ANTENNA_POINTS - 1)));
+            const pull = approach(stepTime, 1 / lerp(24, tipRate, index / (ANTENNA_POINTS - 1)));
             point.x += (before.x + Math.cos(rest) * link - point.x) * pull;
             point.y += (before.y + Math.sin(rest) * link - point.y) * pull;
           }

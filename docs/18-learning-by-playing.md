@@ -39,8 +39,8 @@ Added to the table in doc 07 if the item they support is accepted. **Read** mean
 
 | Key | Reference | Animal | What it supports | Standing |
 |-----|-----------|--------|------------------|----------|
-| FAO | FAO species fact sheet, *Penaeus vannamei*. FAO (2009), text by M. Briggs, in *Cultured aquatic species fact sheets* | Whiteleg shrimp | Nauplii "swim intermittently and are positively phototactic" and do not feed. Later larvae are carried shoreward by tides. Rostrum with 7 to 10 teeth above and 2 to 4 below. On farms, read 2026-11-16: about 21 days from hatching to PL12; PL10 to 12 carried "at reduced temperature either in plastic bags or oxygenated transportation tanks"; stocking 4 to 10 a square metre extensive, 10 to 30 semi-intensive, 60 to 300 intensive; semi-intensive ponds 1 to 5 ha and 1.0 to 1.2 m deep, fed on natural food "supplemented by formulated diets 2–3 times daily", aeration "at best minimal"; harvest by "draining the pond at low tide through a bag net installed in the outlet sluice gate"; then "immediately killed in iced water at 0–4 °C"; one eyestalk of each breeding female "is ablated" | Read |
-| SANTOS2013 | Santos, Freire, Pontes (2013). Shrimp behavior in different substrates in light and dark phases of the day. *Pesquisa Agropecuária Brasileira* 48(8). This is the key SUBSTRATE of doc 07 | Whiteleg shrimp | Burial mainly in the light phase. Swimming mainly in the dark phase. Fine and very fine sand preferred for staying and burying | Read (abstract) |
+| FAO | FAO species fact sheet, *Penaeus vannamei*. FAO (2009), text by M. Briggs, in *Cultured aquatic species fact sheets* | Whiteleg shrimp | Nauplii "swim intermittently and are positively phototactic" and do not feed. Later larvae are carried shoreward by tides. Rostrum with 7 to 10 teeth above and 2 to 4 below. On farms, read 2026-11-16: about 21 days from hatching to PL12; PL10 to 12 carried "at reduced temperature either in plastic bags or oxygenated transportation tanks"; stocking 4 to 10 a square metre extensive, 10 to 30 semi-intensive, 60 to 300 intensive; semi-intensive ponds 1 to 5 ha and 1.0 to 1.2 m deep, fed on natural food "supplemented by formulated diets 2–3 times daily", aeration "at best minimal"; harvest by "draining the pond at low tide through a bag net installed in the outlet sluice gate"; then "immediately killed in iced water at 0–4 °C"; one eyestalk of each breeding female "is ablated". Intensive farms, read 2026-11-16: "commonly located in non-tidal areas", more and more "far from the sea"; ponds "generally small (0.1–1.0 ha) and square or round", water "usually >1.5 m" deep; "often earthen, but liners are also used"; 60 to 300 a square metre; "heavy aeration"; "artificial diets" given "4–5 times per day"; harvest "similarly", by draining through a bag net, or with seine nets dragged round the pond | Read |
+| SANTOS2013 | Santos, Freire, Pontes (2013). Shrimp behavior in different substrates in light and dark phases of the day. *Pesquisa Agropecuária Brasileira* 48(8). Now in doc 07 | Whiteleg shrimp | Burial mainly in the light phase. Swimming mainly in the dark phase. Fine and very fine sand preferred for staying and burying | Read (abstract) |
 | CRIALES2011 | Criales, Robblee, Browder, Cardenas, Jackson (2011). Field observations on selective tidal-stream transport for postlarval and juvenile pink shrimp in Florida Bay. *Journal of Crustacean Biology* 31(1), 26 to 33 | Pink shrimp | Postlarvae rose in the water on the flood tide at night and rested near the bottom on the ebb. Juveniles were near the surface almost only on the ebb | Read (abstract) |
 | SCHAPKER2002 | Schapker, Breithaupt, Shuranova, Burmistrov, Cooper (2002). Heart and ventilatory measures in crayfish during environmental disturbances and social interactions. *Comparative Biochemistry and Physiology A* 131, 397 to 407 | Crayfish | After a disturbance the heart and the breathing may slow for a few beats, then rise above the resting rate. The authors propose both as a measure of what the animal has noticed | Read |
 | RAMON2004 | Ramón, Hernández-Falcón, Nguyen, Bullock (2004). Slow wave sleep in crayfish. *PNAS* 101(32), 11857 to 11861 | Crayfish | A resting posture with a higher threshold for being roused and slow brain waves. More of it after being kept awake | Read |
@@ -49,14 +49,14 @@ Added to the table in doc 07 if the item they support is accepted. **Read** mean
 | DAVIES2019 | Davies, Gagen, Bull, Pope (2019). Maze learning and memory in a decapod crustacean. *Biology Letters* 15, 20190407 | Shore crab | Crabs learned a maze and remembered it two weeks later | Title |
 | KRASNE1969 | Krasne, Woodsmall (1969). Waning of the crayfish escape response as a result of repeated stimulation. *Animal Behaviour* 17, 416 to 424 | Crayfish | The tail flip fades when a harmless touch is repeated | Title |
 | DENTON1985 | Denton, Gray (1985). Lateral-line-like antennae of certain of the Penaeidea (Crustacea, Decapoda, Natantia). *Proceedings of the Royal Society B* | Penaeid shrimp | The long antennae sense water movement | Title |
-| EAP2020 | Eap, Correa, Ngo-Vu, Derby (2020). Chemosensory basis of feeding behavior in Pacific white shrimp, *Litopenaeus vannamei*. *The Biological Bulletin*. This is the key CHEMO2020 of doc 07 | Whiteleg shrimp | Which parts of the body taste and smell food | Title |
+| EAP2020 | Eap, Correa, Ngo-Vu, Derby (2020). Chemosensory basis of feeding behavior in Pacific white shrimp, *Litopenaeus vannamei*. *The Biological Bulletin* 239(2). This is the key CHEMO2020 of doc 07 | Whiteleg shrimp | The short antennae lead the search for food. Once food is held, sensors on the mouthparts and legs control how much is eaten. With the legs' sensors blocked, shrimp found food as well but ate less | Read 2026-11-16, abstract and results |
 | MAGEE2016 | Magee, Elwood (2016). Trade-offs between predator avoidance and electric shock avoidance in hermit crabs demonstrate a non-reflexive response to noxious stimuli consistent with prediction of pain. *Behavioural Processes* 130, 31 to 35 | Hermit crab | Weighing one danger against another | Title |
 | ELWOOD2015 | Elwood, Adams (2015). Electric shock causes physiological stress responses in shore crabs, consistent with prediction of pain. *Biology Letters* 11, 20150800 | Shore crab | A stress response in the body that movement alone does not explain | Title |
 | YANO1988 | Yano, Kanna, Oyama, Wyban (1988). Mating behaviour in the penaeid shrimp *Penaeus vannamei*. *Marine Biology* 97, 171 to 175 | Whiteleg shrimp | The male follows the female before mating | Title |
-| FOSSAT2014 | Already in doc 07 | Crayfish | Wariness after stress | Title confirmed on 2026-11-15. The text is still to read |
-| ACTIVITY | Already in doc 07: Daily activity pattern of the marine shrimp *Litopenaeus vannamei* juveniles under laboratory conditions | Whiteleg shrimp | Activity through the day | Title |
+| FOSSAT2014 | Already in doc 07 | Crayfish | Wariness after stress, for about an hour | Read at second hand on 2026-11-16, in a press release. The paper is still to read |
+| PONTES2006 | Now in doc 07, in place of the key ACTIVITY | Whiteleg shrimp | More moving and swimming in the dark. Searching the bed peaks five to seven hours into the day | Read 2026-11-16 (abstract) |
 | KREIDL1893 | Kreidl (1893). An experiment in which shrimp that had molted were given iron filings in place of sand, and then followed a magnet | A shrimp or prawn, to check which | Balance organs that hold grains of sand, replaced at each molt | Memory. Also to check: that this holds for the whiteleg shrimp's family |
-| RENAUD1986 | Renaud (1986). Detecting and avoiding oxygen deficient sea water by brown shrimp, *Penaeus aztecus*, and white shrimp, *Penaeus setiferus*. *Journal of Experimental Marine Biology and Ecology* 98, 283 to 292 | Brown shrimp, white shrimp of the Gulf of Mexico | Shrimp sense water low in oxygen and leave it | Memory |
+| RENAUD1986 | Renaud (1986). Detecting and avoiding oxygen deficient sea water by brown shrimp, *Penaeus aztecus*, and white shrimp, *Penaeus setiferus*. *Journal of Experimental Marine Biology and Ecology* 98, 283 to 292 | Brown shrimp, white shrimp of the Gulf of Mexico | Shrimp sense water low in oxygen and leave it | Memory. The PDF could not be opened on 2026-11-16 |
 | DALL1990 | Dall, Hill, Rothlisberg, Sharples (1990). The biology of the Penaeidae. *Advances in Marine Biology* 27 | The whiteleg shrimp's family | Body parts, molting, senses, burrowing, the eye | Memory. The standard reference: find a copy |
 | RP2023 | Already in doc 07 | | New from it, by way of fishcount.org.uk: about 25 trillion wild shrimp caught in 2020 (range 6.5 to 66 trillion), of which about 19 trillion of one small species | Read (at second hand) |
 | RPW2023 | McKay, McAuliffe, Waldhorn (2023). Welfare considerations for farmed shrimp. Rethink Priorities. doi.org/10.17605/OSF.IO/YAFQV | Farmed shrimp | The list of what most affects them: disease, water quality (oxygen, temperature, salinity, pH, ammonia), pollutants, stocking density, handling, transport and slaughter, eyestalk ablation. Read 2026-11-16: shrimp "are often exposed to hypoxic conditions" at night; at low oxygen they show "surface-seeking behavior"; crowding "increases vulnerability to aggression and disease"; ponds are "often lined with plastic or concrete" and "often lack shelters"; liners "likely" stop burrowing; ice slurry is the most common way of killing, after the FAO sheets | Read, the sections named |
@@ -66,6 +66,8 @@ Added to the table in doc 07 if the item they support is accepted. **Read** mean
 | KELLEHER2005 | Kelleher (2005). Discards in the world's marine fisheries: an update. FAO Fisheries Technical Paper 470 | | Shrimp trawls: 1.13 million tonnes landed, 1.87 million tonnes thrown back, a discard rate of 62.3% | Read |
 | HAMILTON2013 | Hamilton (2013). Assessing the role of commercial aquaculture in displacing mangrove forest. *Bulletin of Marine Science* 89(2), 585 to 601 | | In eight countries, 51.9% of mangrove area lost. Aquaculture accounts for 28% of the loss | Read (abstract). The years covered are to check |
 | WEINECK2018 | Weineck, Ray, Fleckenstein, Medley, Dzubuk, Piana, Cooper (2018). Physiological changes as a measure of crustacean welfare under different standardized stunning techniques: cooling and electroshock. *Animals* 8(9), 158 | Crayfish, crab, shrimp | How fast each method stops the heart and the nerves | Title |
+| GUTIERREZ2024 | Gutiérrez-Vera, Ponce-Rivas, Braga, Paniagua-Chávez, Alfaro-Montoya, Rosales-Leija (2024). Evidence of the existence of site-specific female contact pheromones involved in the sexual interaction behavior of the Pacific whiteleg shrimp *Penaeus vannamei*. *Animals* 14(11), 1523. doi.org/10.3390/ani14111523 | Whiteleg shrimp | Males touched with their antennae, pushed and stayed against plastic tubes coated with a female's shell extract: "contact female sex pheromones with sexual recognition function". Contact only: a trail through the water was not tested | Read 2026-11-16 (abstract and parts of the text) |
+| CRAWFORD1992 | Crawford (1992). Acclimation of the shrimp *Periclimenes anthophilus* to the giant sea anemone *Condylactis gigantea*. *Bulletin of Marine Science* 50, 331 to 341 | An anemone shrimp | A shrimp not yet used to the anemone "was stung and jerked backwards upon the first few contacts". A leg that stuck to a tentacle was pulled free | Read at second hand, in a summary of the paper on a teaching site |
 
 Two findings from this reading changed the design:
 
@@ -89,8 +91,8 @@ Twenty-nine items, counting the sting. **Ready**: the source was read and no rul
 
 | Id | The player does and feels | What it teaches | Standing |
 |----|---------------------------|-----------------|----------|
-| `footTaste` | Walking onto food makes the patch pulse under the feet, with a soft note, before any key is pressed. Swimming over it does nothing | A shrimp tastes with its legs | To check. EAP2020 |
-| `sniff` | Sense, as built. The short pair of antennae flicks while it is held | A shrimp smells with its short antennae, in flicks | In the game. EAP2020 to read |
+| `footTaste` | Walking onto food makes the patch pulse under the feet, with a soft note, before any key is pressed. Swimming over it does nothing | A shrimp tastes with its legs | Ready. EAP2020 |
+| `sniff` | Sense, as built. The short pair of antennae flicks while it is held | A shrimp smells with its short antennae, in flicks | In the game. EAP2020 for the antennae. The flicks are to check |
 | `stillSense` | After one second without moving, every moving animal within 8 BL sends a faint ring through the murk, and the long antenna on that side lifts toward it | The long antennae feel the water move. Keeping still lets the shrimp sense more | To check. DENTON1985 |
 | `pulse` | A small dark beat shows through the shell, behind the head. It is slow at rest, quick in fear, and it misses one beat at each fright before it races. It shows on other shrimp too, from 2 BL | The heart of a startled crustacean pauses, then speeds up. It tells what the animal has noticed even when it does not move | Needs a yes: it is the first sign of a feeling that is not posture. SCHAPKER2002, read |
 | `gutLine` | The line of the gut, seen through the body, is clear when the shrimp is hungry and fills with the colour of what it last ate | The body is see-through. A full gut can be seen from outside | Needs a yes: Écume's mark is "a darker gut line" and would need another. Source to find |
@@ -126,7 +128,7 @@ Twenty-nine items, counting the sting. **Ready**: the source was read and no rul
 
 ### One item apart: the sting
 
-Needs a yes, because it touches rule 2 of `CLAUDE.md`. Default: not built.
+Decided by the author on 2026-11-16: built, if it is a fact (D46). Rule 2 of `CLAUDE.md` now allows it: it hurts for a few seconds and leaves no wound.
 
 The idea is to let the player live the one experiment the journal already quotes. In the 2008 study a prawn touched on one antenna by an irritant did not just flinch. It rubbed and groomed that antenna for a long time, and far less under a local anaesthetic (BARR2008). That gap between a flinch and what follows is what researchers mean when they say pain is more than a reflex.
 
@@ -139,7 +141,18 @@ The idea is to let the player live the one experiment the journal already quotes
 
 There is no wound and nothing lasts. Other shrimp do the same when they touch one: a stranger flinches, rubs, and keeps away afterwards. One good food patch sits beside an anemone, so the player gets to weigh it up.
 
-If the answer is yes: one anemone in the mangrove's creek mouth and two in the lagoon's rock garden. The "Grooming" card would unlock here, and its title would become "More than a reflex". That an anemone's sting does this to a shrimp is itself to check.
+Where: one anemone in the mangrove's creek mouth and two in the lagoon's rock garden. The "Grooming" card unlocks here, and its title becomes "More than a reflex".
+
+What each step rests on, checked on 2026-11-16:
+
+| Step | Source | Animal | Standing |
+|------|--------|--------|----------|
+| Touch: stung, jerks backward | CRAWFORD1992 | An anemone shrimp not yet used to its anemone | Read at second hand |
+| Rub: long grooming of the touched antenna | BARR2008 | A prawn, with an irritant, not a sting | Reference confirmed. Read the paper before release |
+| Memory: keeping away from where it hurt | MAGEE2013 | Shore crab | Read |
+| Sea anemones in mangrove creeks and lagoons of this coast | None yet | | To check |
+
+Each step is a fact, in a shrimp, a prawn or a crab. Nobody has filmed all four in a whiteleg shrimp. The journal says only what each study saw, in the animal it used (doc 07, rule 6).
 
 ## The journal grows
 
@@ -219,7 +232,7 @@ For the page "What shrimp feel". Same rules as doc 07. Each is a draft until its
 | `card.toLight` | The end of the first 10 s of Drift | FAO | A whiteleg shrimp hatches as a nauplius. It lives on its yolk and swims toward light. | La crevette à pattes blanches naît sous forme de nauplius. Elle vit sur ses réserves et nage vers la lumière. |
 | `card.shapes` | The second change of shape | FAO | Before it looks like a shrimp, a larva passes through twelve stages: six as a nauplius, three as a protozoea, three as a mysis. | Avant de ressembler à une crevette, la larve passe par douze stades : six de nauplius, trois de protozoé, trois de mysis. |
 | `card.rideTide` | Landfall | CRIALES2011 | Young pink shrimp in Florida rose into the water at night when the tide ran toward the coast, and rested near the bottom when it ran back. The tide did the travelling. | En Floride, de jeunes crevettes roses montaient dans l'eau, la nuit, quand la marée portait vers la côte, et se posaient près du fond quand elle repartait. C'est la marée qui faisait le voyage. |
-| `card.footTaste` | The fifth patch found on foot | EAP2020, to read | A shrimp does not taste with its mouth alone. Sensors on its antennae, its legs and its mouthparts tell it what is in the water and what it is standing on. | Une crevette ne goûte pas qu'avec la bouche. Des capteurs sur ses antennes, ses pattes et ses pièces buccales lui disent ce qu'il y a dans l'eau et ce sur quoi elle marche. |
+| `card.footTaste` | The fifth patch found on foot | EAP2020 | A shrimp does not taste with its mouth alone. In a 2020 study, whiteleg shrimp found food with their short antennae, and the sensors on their legs and mouthparts governed how much they ate. | Une crevette ne goûte pas qu'avec la bouche. Dans une étude de 2020, des crevettes à pattes blanches trouvaient leur nourriture avec leurs antennules, et les capteurs de leurs pattes et de leurs pièces buccales réglaient la quantité qu'elles mangeaient. |
 | `card.feelWater` | The first ring felt while still | DENTON1985, to read | The long antennae of shrimp of this family carry fine hairs that feel the water move, much as the line along a fish's side does. | Les longues antennes des crevettes de cette famille portent de fins poils qui sentent l'eau bouger, un peu comme la ligne sur le flanc d'un poisson. |
 | `card.heart` | The first fright | SCHAPKER2002 | When something startles a crayfish, its heart slows for a few beats, then races. Researchers read the heart to know that an animal has noticed something, even when it does not move. | Quand quelque chose surprend une écrevisse, son cœur ralentit le temps de quelques battements, puis s'emballe. Les chercheurs lisent le cœur pour savoir qu'un animal a remarqué quelque chose, même s'il ne bouge pas. |
 | `card.habit` | A leaf shadow that no longer startles | KRASNE1969, to read | A crayfish touched again and again, with nothing bad following, flips its tail less and less. | Une écrevisse touchée encore et encore, sans que rien de mauvais ne suive, donne de moins en moins de coups de queue. |
@@ -237,6 +250,22 @@ For the page "What shrimp feel". Same rules as doc 07. Each is a draft until its
 | `card.followed` | The gathering | YANO1988, to read | Before mating, a male whiteleg shrimp follows a female closely, swimming just beneath her. | Avant l'accouplement, le mâle de la crevette à pattes blanches suit la femelle de près, en nageant juste au-dessous d'elle. |
 
 With the eleven cards of doc 07 that makes thirty.
+
+## A wild life is not an easy one
+
+The author asked on 2026-11-16 to look at what wild animals live through, not only farmed ones. Most wild animals die young: of hunger, hunters, disease, parasites and weather. D41 already says the wild must not look idyllic. This is what the game can show of it, and what supports it. Nothing here is shown as a wound or a body (rule 2), and nothing is said about it in play (rule 3).
+
+| Hardship | In play | Source | Standing |
+|----------|---------|--------|----------|
+| Most never grow up | `fewArrive`, new (T54). The Drift begins in a cloud of larvae hatched together. Across zones B to D they thin out, one at a time, always off-screen. About a third reach the haze. Two or three settle with the player at landfall. Nothing says why | FAO gives 100,000 to 250,000 eggs a spawn, already the `eggs` item. How few grow up is not in the sheet | Proposed. The play needs no fact. A card on survival needs a source still to find |
+| Hunger | As built: patches empty as they are eaten and hunger comes back (doc 10). It never slows the shrimp (T8) | | In the game |
+| Hunters | As built: they never catch anyone. Unnamed shrimp of the shoal can go missing (D42) | | In the game |
+| Water short of oxygen at dawn | `thinWater` | RENAUD1986, not reached | To check |
+| Disease | Not shown: a sick shrimp is gore (D41). One card on "Among humans", `card.wildVirus`, since the survey was made around farms | MACIAS2014 | Abstract read |
+| Parasites | Left out | A page on bopyrid isopods says they live in the gill chamber and usually leave a female without eggs. It does not name the whiteleg shrimp's family | To check |
+| Storms, rain that freshens a lagoon, cold | Left out | None found | To check |
+
+`fewArrive` asks no skill of the player and costs them nothing. It only makes the cloud smaller each time they look. It touches rule 2 the way D42 does, so it waits for a yes.
 
 ## What people do to shrimp
 
@@ -268,6 +297,7 @@ Rules, on top of those of doc 07:
 | `card.fromSea` | Getting out from under the net | RP2023 | By one estimate, about 25 trillion wild shrimp were caught in 2020. Most belong to one very small species. | Selon une estimation, environ 25 000 milliards de crevettes sauvages ont été pêchées en 2020. La plupart appartiennent à une seule espèce, très petite. |
 | `card.withThem` | Finding the shoal again | KELLEHER2005 | Shrimp trawls bring up more than shrimp. In a count made for the United Nations in 2005, 62% of what they caught was thrown back into the sea. | Les chaluts à crevettes ne remontent pas que des crevettes. D'après un bilan dressé en 2005 pour les Nations unies, 62 % de ce qu'ils prenaient était rejeté à la mer. |
 | `card.inPonds` | Passing the pond, or reaching the open sea | RP2023 | At any moment about 230 billion shrimp are alive in farm ponds, by one estimate. | À tout moment, environ 230 milliards de crevettes vivent dans des bassins d'élevage, selon une estimation. |
+| `card.wildVirus`, new | Passing the pond's outlet in the channel | MACIAS2014, to read in full | In 2014, around shrimp farms on the Pacific coast of Mexico, a survey found a shrimp virus in 344 of 1,736 wild animals, among them crabs and shrimp. | En 2014, autour d'élevages de crevettes de la côte pacifique du Mexique, une étude a trouvé un virus de crevette chez 344 animaux sauvages sur 1 736, dont des crabes et des crevettes. |
 | `card.whereMangrove` | Leaving the mangrove | HAMILTON2013 | In eight countries studied, about half of the mangrove has gone. Ponds for aquaculture account for 28% of that loss. | Dans huit pays étudiés, environ la moitié de la mangrove a disparu. Les bassins d'aquaculture comptent pour 28 % de cette perte. |
 | `card.oneEye` | Spawning | GSA2024, ZACARIAS2019, RPW2023 | In many hatcheries one eyestalk is removed from each breeding female, because her eggs then ripen sooner. In 2019 a study on a working farm bred females that kept both. | Dans beaucoup d'écloseries, on retire un pédoncule oculaire à chaque femelle reproductrice, car ses œufs mûrissent alors plus vite. En 2019, une étude menée dans un élevage a fait se reproduire des femelles qui gardaient les deux. |
 | `card.pondWater` | Leaving thin water | RPW2023 | A 2023 review of shrimp farming lists what most affects the animals: disease, the oxygen and the ammonia in the water, how many share a pond, handling, transport, and the way they are killed. | Une synthèse de 2023 sur l'élevage des crevettes dresse la liste de ce qui affecte le plus les animaux : les maladies, l'oxygène et l'ammoniac de l'eau, leur nombre par bassin, les manipulations, le transport et la mise à mort. |
@@ -312,7 +342,9 @@ D39 decides that it exists. Its shape below is proposed, as T49 to T52 in doc 09
 
 #### The farm (T50)
 
-A semi-intensive pond on this coast, as the FAO sheet describes them: an earthen pond of about 2 ha, 1.0 to 1.2 m deep, stocked at 10 to 30 young shrimp per square metre. The game uses 20. Drawn at the pond life's scale, that is one shrimp about every 2 BL in every direction, as far as the player swims: about twenty on every screen, everywhere. Food is the pond's own, "natural foods enhanced by pond fertilization" (FAO). Harvest is by "draining the pond at low tide through a bag net installed in the outlet sluice gate" (FAO).
+The author chose a lined pond on 2026-11-16. An intensive pond, as the FAO sheet describes them: square, about 0.5 ha, 1.6 m deep, lined with black plastic over its floor and banks, stocked at 60 to 300 young shrimp per square metre. The game uses 100. Drawn at the pond life's scale, that is one shrimp about every 1.2 BL in every direction, as far as the player swims: about fifty on every screen, everywhere. "Heavy aeration" (FAO): paddle wheels churn at the edges and drive a slow current round the pond. Feed is given "4–5 times per day" (FAO), and is never shown (T49). Harvest is by draining through a bag net at the outlet gate, which FAO gives for intensive ponds too.
+
+Where it stands: FAO says intensive farms are "commonly located in non-tidal areas", more and more far from the sea. This one stands behind the channel's bank, pumps its water from the channel and lets it out there through its gate. That keeps the pond seen in level 3 and the meeting at the mesh. Whether such a farm is usual on this coast is to check.
 
 #### Four parts
 
@@ -320,8 +352,8 @@ A semi-intensive pond on this coast, as the FAO sheet describes them: an earthen
 |------|--------|-------|---------------|------------------------|
 | 1. The tank | 2 min | A hatchery tank seen from above: bare white floor, a curved wall all round, 4 m across | Hard white light that never changes. Hundreds of postlarvae of one age, the player among them, in the last larval shape of the Drift. Clouds of microalgae to eat | Swim, eat, sense. Every direction ends at the same white wall within seconds. Hide finds nothing. At the end the water is drawn down and everyone with it. Dark |
 | 2. The bag | 45 s | Inside a plastic bag of water, about 3 BL across | Dim light through the plastic. The water is cold. The bag sways. Many others pressed close | Almost nothing. The cold slows everything: speed halves, turns are slow. Then light, the bag opens over the pond, and its water pours in with a new taste |
-| 3. The pond | About 6 min: four days and nights of about 90 s each | The pond, drawn at the lagoon's scale, 124 px to a BL | Opaque green water: the view reaches 3 BL. A bottom of soft clay with a film on it. In the middle, black sludge where the water tastes wrong. Straight banks of packed earth. Shrimp everywhere, 2 BL apart, the same in every direction | Graze the film, which is everywhere. Burrow where the clay is soft, but not near the sludge. Rest. Meet strangers, many, none known. By day most lie still. At night they move, and the water thins (below) |
-| 4. The draining | 90 s | The same pond, at night, at low tide | The gate opens. The water starts to move toward it, then to fall. The surface comes down toward the bottom. The crowd closes in until they touch. Ahead, the mesh of the bag net shows as a shadow on the clay | Tail flips against the current hold the shrimp back for a few seconds each time, and each time the water is lower. Before the mesh is reached, the picture fades to white over 1 s. Silence for 3 s. Then the title screen |
+| 3. The pond | About 6 min: four days and nights of about 90 s each | The pond, drawn at the lagoon's scale, 124 px to a BL | Opaque green water: the view reaches 3 BL. A floor of black plastic with a thin film on it, smooth, creased where sheets overlap. In the middle, black sludge where the water tastes wrong. Straight banks under the same plastic. A slow current, and the churn of a paddle wheel always somewhere. Shrimp everywhere, 1.2 BL apart, the same in every direction | Graze the film. Try to burrow: the legs scrape plastic twice and stop. Rest. Meet strangers, many, none known. By day most lie still. At night they move, and the water thins (below) |
+| 4. The draining | 90 s | The same pond, at night | The gate opens. The water starts to move toward it, then to fall. The surface comes down toward the bottom. The crowd closes in until they touch. Ahead, the mesh of the bag net shows as a shadow on the clay | Tail flips against the current hold the shrimp back for a few seconds each time, and each time the water is lower. Before the mesh is reached, the picture fades to white over 1 s. Silence for 3 s. Then the title screen |
 
 What happens in the pond, night by night:
 
@@ -330,7 +362,7 @@ What happens in the pond, night by night:
 | 1 | The first night. Nothing more than the crowd. `card.howDense` unlocks at dusk |
 | 2 | The water thins before dawn (`thinWater`, everywhere at once, with nowhere better to go). Everyone rises toward the surface and drifts to the banks. The player's sides flutter and it will not eat until the sun is up. `card.nightWater` unlocks at dawn |
 | 3 | The player molts, among strangers. Nobody stays close. Strangers bump into the soft shrimp, each bump a startle. Nothing is hurt. The soft hours pass |
-| 4 | Near the gate, the tide outside brings a wild shoal past the mesh. One comes to it. If the player goes too, their antennae touch through the mesh, as in level 3 from the other side. The shoal moves on with the tide. Then the draining begins |
+| 4 | Near the gate, the tide in the channel outside brings a wild shoal past the mesh. One comes to it. If the player goes too, their antennae touch through the mesh, as in level 3 from the other side. The shoal moves on with the tide. Then the draining begins |
 
 #### Feelings in the pond life
 
@@ -338,8 +370,8 @@ Proposed rules, for doc 10 when this is built:
 
 | Feeling or condition | In the pond life |
 |----------------------|------------------|
-| Hunger | Never more than low. The film is everywhere, and farmed shrimp are fed. No feed is shown |
-| Comfort | Its target is capped at 0.3. No cover works. Burrowing in soft clay adds 0.1 |
+| Hunger | Never more than low. Farmed shrimp are fed several times a day. No feed is shown (T49) |
+| Comfort | Its target is capped at 0.25. No cover works, and the plastic cannot be burrowed |
 | `crowded`, new | More than 8 shrimp within 2 BL. Comfort target down 0.2. A stranger's bump is a harmless startle. The player's own tail flip stops short at half its length when it meets another shrimp. RPW2023: crowding "increases vulnerability to aggression and disease" |
 | `cold`, new | In the bag. Speed and turning at half. Fear cannot rise above 0.4: there is nothing to flee |
 | Fear | No predators. Fear comes from bumps, the thinning water before dawn, and the draining, when it rises to 0.8 and stays |
@@ -347,24 +379,24 @@ Proposed rules, for doc 10 when this is built:
 | Curiosity | Little is new. The journal gains the farm's places and its cards |
 | Thin water | As `thinWater`, but all of the pond at once, before each dawn from the second night |
 
-**Sound.** The tank: a steady hum and the bubbling of air. The bag: muffled, the slosh of water. The pond: wind on the surface, a far engine now and then, at night the beat of a paddle wheel if one is found to run on such farms. The draining: the rush of water through the gate, growing. No music.
+**Sound.** The tank: a steady hum and the bubbling of air. The bag: muffled, the slosh of water. The pond: the churn of the paddle wheels, near or far, day and night, and the hum of the pump that fills the pond. The draining: the rush of water through the gate, growing. No music.
 
 **Journal.** Four places, each a drawing with no words, as "The shadow" has: "The tank", "The bag", "The pond", "The gate". The cards of "Among humans" unlock as listed above.
 
-**Text to approve.** All new, all waiting for a yes before they go into doc 13:
+**Text.** The author said yes to the entry on 2026-11-16, without the length (T52). The rest waits for its yes before it goes into doc 13:
 
 | Key, proposed | English | Français |
 |---------------|---------|----------|
 | `title.otherLife` | Another life | Une autre vie |
-| `title.otherLife.note` | A life on a farm. About ten minutes. | Une vie dans un élevage. Une dizaine de minutes. |
+| `title.otherLife.note` | A life on a farm. | Une vie dans un élevage. |
 | `place.tank` | The tank | La cuve |
 | `place.bag` | The bag | Le sac |
 | `place.pond` | The pond | Le bassin |
 | `place.gate` | The gate | La vanne |
 
-**To check before building.** How postlarvae are taken out of a hatchery tank. Whether they are let into the pond slowly, so the water's taste changes by degrees. Whether sludge gathers in the middle of earthen ponds. Whether paddle wheels run at night on semi-intensive farms. Whether draining is done at night. Whether wild shrimp come up to a pond's outlet from outside.
+**To check before building.** How postlarvae are taken out of a hatchery tank. Whether they are let into the pond slowly, so the water's taste changes by degrees. Whether sludge gathers in the middle of lined ponds. Whether paddle wheels run day and night. Whether a film grows on the liner. Whether draining is done at night. Whether wild shrimp come up to a pond's outlet from outside.
 
-**Pictures.** About ten, in doc 14: a tank floor and its wall, the bag's edge with light through it, a pond clay tile with film, a sludge patch, the pond's bank strip, the gate from inside, the bag net's mesh shadow, a green murk image, and the falling surface. The shrimp, the larva and the shoal exist.
+**Pictures.** About ten, in doc 14: a tank floor and its wall, the bag's edge with light through it, a pond liner tile with film, a sludge patch, a paddle wheel seen from below, the pond's bank strip, the gate from inside, the bag net's mesh shadow, a green murk image, and the falling surface. The shrimp, the larva and the shoal exist.
 
 **Playtests.** Do players stop before the end? The aim is fewer than one in ten. Asked afterwards "How was that life?", do they answer with feelings? Asked "Did anything feel like a lesson?", the aim stays at nobody.
 
@@ -537,8 +569,7 @@ Added to the playtest questions of doc 08:
 
 ## Open questions
 
-1. The pond life's food, farm, shape and text: T49 to T52 in doc 09. Defaults as written.
-2. The sting: yes or no? Default: no.
-3. `pulse`: a heartbeat seen through the shell. It is a true thing and it is not a bar, but it is a new kind of sign. Default: yes.
-4. `gutLine`: hunger read on the body. Écume would need another mark, such as two dark dots at the base of her tail fan. Default: yes.
-5. Thirty cards instead of eleven. Too many for one journal page? Default: keep them, in the order unlocked.
+Answered by the author on 2026-11-16: the farm is a lined pond (T50), its shape and entry as written (T51, T52), the sting if it is a fact (D46), `pulse` and `gutLine` yes (T55), thirty cards, `fewArrive` (T54), `card.wildVirus`, and the cards of "Among humans" for now.
+
+1. T49, food in the pond: only what grows there, feed never shown. Asked again in plainer words. Default: yes.
+2. The sting's steps rest on three animals, none of them a whiteleg shrimp. Build it so? Default: yes.

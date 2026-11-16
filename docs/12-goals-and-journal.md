@@ -247,7 +247,7 @@ Almost nothing. Design positions:
 
 | Line | When | Look | Timing |
 |------|------|------|--------|
-| Narration | Story moments, first moods | Fraunces 36 px, paper colour, soft dark shadow, no plate | In 0.6 s. Holds 4 s plus 0.06 s per letter. Out 0.8 s. At least 20 s between lines, except a first-mood line, which may come at once |
+| Narration | Story moments, first moods | Fraunces 36 px, paper colour, soft dark shadow, no plate | In 0.6 s. Holds 4 s plus 0.06 s per letter, or until its spoken line ends plus 1 s if that is longer (D47). Out 0.8 s. At least 20 s between lines, except a first-mood line, which may come at once |
 | Prompt | An action is possible, first three times | Atkinson 30 px on a paper pill, as built | Stays while possible. In and out 0.5 s |
 | Small line | A discovery, a challenge moving, an achievement | A paper tag with a 48 px icon and Atkinson 26 px | 4 s. One at a time, queued. A low bell, two for an achievement |
 | Caption | "Captions for sounds" is on | Atkinson 26 px in square brackets, at 85% | As long as the sound, at least 2 s |

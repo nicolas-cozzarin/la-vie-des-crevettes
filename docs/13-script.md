@@ -18,7 +18,7 @@ From doc 07 and `CLAUDE.md`. They apply to every line below.
 - Prompts always show the player's own key through `{key}`.
 - Goals are worded as things a shrimp does. French uses the infinitive: "Saluer trois crevettes".
 
-Before release, a French speaker reads every French line aloud (doc 07).
+Before release, the author, a French speaker, reads every French line aloud (doc 07).
 
 ## Narration
 
@@ -141,6 +141,7 @@ The next generation begins with `narr.c0.start` again.
 | `narr.rain` | The roof of the water fills with small sounds. | Le plafond de l'eau s'emplit de petits bruits. | First rain |
 | `narr.tooFast` | You moved too fast. She is afraid of you. | Tu es allée trop vite. Elle a peur de toi. | First time the player startles a stranger |
 | `narr.hermit` | It was there. Now there is only a shell. | Il était là. Il ne reste qu'une coquille. | First time a hermit crab pulls in. New |
+| `narr.fewer` | Fewer than before. | Moins nombreuses qu'avant. | The first time the regrouped shoal is smaller (D42, T56) |
 | `narr.cornered` | Dark. Still. You are all here. | Du noir. Du calme. Tu es entière. | Waking after being cornered. Each time |
 
 `narr.cornered` is the one line that must always show. It tells the player that nothing was lost.
@@ -434,7 +435,7 @@ Keys that exist already (`title.*`, `pause.*`, `controls.*`, `action.*`, `key.*`
 
 | Group | Lines |
 |-------|-------|
-| Narration | 75, of which 28 must show |
+| Narration | 76, of which 28 must show |
 | Prompts | 14 |
 | Small lines | 6 |
 | Captions | 12 |

@@ -54,7 +54,7 @@ Look and rig: doc 04 and doc 14. Told apart from above by:
 | The player | None. The view follows it | 1 BL | As steered |
 | Brise | Left antenna a third shorter, with a blunt tip | 1.05 BL | Long straight lines. Leads |
 | Nacre | Tail fan almost white. Slightly paler body | 1 BL | Stops often. Antennae high |
-| Écume | Smaller. A darker gut line | 0.85 BL | Quick loops away and back |
+| Écume | Smaller. A darker gut line, until `gutLine` is built. Then two dark dots at the base of her tail fan (T55) | 0.85 BL | Quick loops away and back |
 | Shoal members | Small differences in tint and antenna length, seeded | 0.9 to 1.05 BL | Each by its own temperament |
 
 ### Effects used in every area
@@ -503,7 +503,7 @@ A separate life on a farm, opened from the title screen once the story is finish
 |-------|------|-----------------|------------------|
 | The tank | 4 m across. At the larva's scale, about 300 BL | A bare white floor, scuffed, with a drain at the centre. A smooth curved wall all round. Hard light from above, the same all the time. Hundreds of postlarvae, all of one age | Hatchery tank |
 | The bag | 3 BL across | Water pressed in by clear plastic, creased, with dim light coming through it. Bubbles at the top edge. Others pressed close | Hatchery tank, dimmed |
-| The pond | About 2 ha. At 124 px a BL, endless on screen; the banks are reached only by swimming far | Opaque green water: the view reaches 3 BL. Soft grey-brown clay with a thin film, tracks and dents in it. Black sludge in the middle. Straight banks of packed earth. A shrimp about every 2 BL | Farm pond |
+| The pond | About 0.5 ha, square, lined (T50). At 124 px a BL, endless on screen; the banks are reached only by swimming far | Opaque green water: the view reaches 3 BL. Black plastic with a thin film, creased at the seams. Black sludge in the middle. Straight banks under the same plastic. Paddle wheels at the edges. A shrimp about every 1.2 BL | Farm pond |
 | The gate | 3 BL wide | Seen from inside the pond: a concrete sluice with wooden boards stacked in grooves, a mesh behind them. At the draining, the boards are lifted and the bag net's mesh shows as a shadow | Farm pond, at night |
 
 Nothing here is a hiding place. No rock, root, leaf or seagrass. That is the point of the place, and it is never said.

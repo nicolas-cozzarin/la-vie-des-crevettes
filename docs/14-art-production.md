@@ -341,6 +341,20 @@ This table is the checklist for the art. Update it in the same commit as a paint
 | `pistol.body` | 100 by 60 | Built. The small claw is part of it |
 | `pistol.claw` | 70 by 44 | Built. Joint at the left |
 
+### Litter (D43)
+
+Worn, faded and silted, never shiny. No print, word or mark. Each has a soft contact shadow. Drawn at true size: `src/data/waste.ts` holds the real width each image stands for.
+
+| Name | Size | Status |
+|------|------|--------|
+| `waste.bottle` | 640 by 220 | Built. Neck to the right, cap gone |
+| `waste.bag` | 600 by 520 | Built. Handles at the left, one torn |
+| `waste.rope` | 720 by 260 | Built |
+| `waste.sandal` | 560 by 240 | Built. Toe to the right |
+| `waste.foam` | 300 by 260 | Built |
+| `waste.sack` | 760 by 640 | Built. Open end at the left |
+| `waste.pipe` | 720 by 200 | Built. Open end to the right |
+
 ### Channel, shadow, open sea
 
 | Name | Size | Status |

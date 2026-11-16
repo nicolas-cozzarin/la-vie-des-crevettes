@@ -314,7 +314,7 @@ Drafts. Names and texts would go into doc 13, conditions into doc 12.
 
 - No animal is eaten on screen, by anyone. Hunters hunt and never catch.
 - An animal that would eat a shrimp is a hunter or a shadow. It is never a friend.
-- Nothing man-made except the pond wall (D39).
+- Nothing man-made except the pond wall (D39) and litter, which grows toward the farm (D43).
 - A threat still needs 60 s of quiet before the next. More kinds of hunter do not mean more frights an hour.
 - Every place has cover within 7 BL of any point, as doc 11 asks.
 - Nothing in the long coast is needed to finish anything in the story.

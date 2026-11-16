@@ -1,4 +1,5 @@
 import type { AreaDef } from './types';
+import { waste } from '../waste';
 
 /**
  * Chapter 1. The mangrove: sheltered, warm, murky. The map, the zones and
@@ -7,6 +8,9 @@ import type { AreaDef } from './types';
  * The sea is to the left. The creek mouth on the left edge is the way in and
  * the way out. One body length here is 110 pixels.
  */
+/** Pixels per real centimetre here: 110 px for a 3 cm shrimp (doc 11, "Scale"). */
+const PX_PER_CM = 110 / 3;
+
 export const mangrove: AreaDef = {
   id: 'mangrove',
   size: { w: 6000, h: 4000 },
@@ -250,6 +254,9 @@ export const mangrove: AreaDef = {
   ],
 
   landmarks: [
+    // Litter (D43): rare here, toward the creek mouth.
+    waste('waste.1', 'bottle', 1000, 3150, PX_PER_CM, 0.3),
+    waste('waste.2', 'foam', 420, 820, PX_PER_CM, 0.4),
     {
       id: 'sunkenBranch',
       image: 'thing.sunkenBranch',

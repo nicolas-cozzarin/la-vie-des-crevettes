@@ -30,6 +30,10 @@ export default tseslint.config(
               group: ['**/scenes/*', '**/entities/*', '**/systems/*', '**/ui/*', '**/art/*'],
               message: 'src/core must not depend on engine-facing code.',
             },
+            {
+              group: ['**/data/*', '**/platform/*'],
+              message: 'src/core takes content and the browser as arguments, never as imports.',
+            },
           ],
         },
       ],

@@ -17,7 +17,7 @@ ensureTexture(scene, 'mangrove.root.a')
 |------|-------|
 | `src/art/TextureFactory.ts` | `ensureTexture`, for the game |
 | `src/art/painters/index.ts` | `PAINTERS`: every painter by image name. `PAINTER_GROUPS`: the same, by family |
-| `src/art/painters/*.ts` | One file per family: `shrimp`, `world`, `drift`, `mangrove`, `creatures`, `effects`. `lagoon` and `icons` to come |
+| `src/art/painters/*.ts` | One file per family: `shrimp`, `world`, `drift`, `mangrove`, `lagoon`, `creatures`, `effects`. `icons` to come |
 | `src/art/paint.ts` | Shared helpers: colours, washes, `blob`, `speckle`, `patches`, `glow`, `softFill`, `band` for a root or a branch, `traceLeaf`, `wrapped` for tiles, `onLayer` for a part that must fade |
 | `src/art/fit.ts` | `imageFit(name)`: how the solid part of a picture sits inside the picture. See "From data to picture" |
 | `src/art/expressions.ts` | `RigExpression`, `RigLook`, and `MOOD_EXPRESSIONS`, the table below as code |
@@ -242,9 +242,9 @@ Simple rigs, each a few images moved by code. No drawn frames.
 
 ## The manifest
 
-Every image name the game will ask for. **Status**: built, or to paint. **New** marks things that wait for the author. Sizes are in pixels of the image.
+Every image name the game will ask for. **Status**: built, or to paint. **Added** marks things the author accepted on 2026-11-15 (D34). Sizes are in pixels of the image.
 
-This table is the checklist for the art. Update it in the same commit as a painter.
+This table is the checklist for the art. Update it in the same commit as a painter. The content test `tests/content/art.test.ts` reads it: every painter needs a row that starts with "Built" and gives its size, and a row that says "Built" needs a painter. Write names as the rows below do: `a.b.c`, `.d` for a sibling, `a.b.c` to `.f` for a run of letters.
 
 ### Shared
 
@@ -270,8 +270,8 @@ This table is the checklist for the art. Update it in the same commit as a paint
 |------|------|--------|
 | `larva.early`, `larva.mid`, `larva.late` | 200 by 120 | Built. Each faces right. The body is about half the image long, so a larva is drawn twice as wide as its length |
 | `food.microalgae.a`, `.b`, `.c` | 64 | Built: a bead, a chain of beads, a disc |
-| `drift.copepod` | 96 | To paint. New |
-| `drift.bell` | 256 | To paint. New |
+| `drift.copepod` | 96 | To paint. Added |
+| `drift.bell` | 256 | To paint. Added |
 | `drift.shaft` | 300 by 900 | Built. Laid on with the SCREEN blend |
 | `drift.rootShadow` | 640 by 200 | Built |
 
@@ -282,7 +282,7 @@ This table is the checklist for the art. Update it in the same commit as a paint
 | `mangrove.mud` | 1024, tile | Built |
 | `mangrove.sandmud` | 1024, tile | Built |
 | `mangrove.root.a` to `.f` | 320 | Built. Six limbs, each coming down a different way |
-| `mangrove.root.barnacled` | 320 | To paint. New |
+| `mangrove.root.barnacled` | 320 | To paint. Added |
 | `mangrove.clump` | 640 | Built |
 | `mangrove.wall` | 1024 by 420, repeats sideways | Built |
 | `mangrove.bank` | 1024 by 420, repeats sideways | Built |
@@ -295,16 +295,16 @@ This table is the checklist for the art. Update it in the same commit as a paint
 | `thing.seedPod.standing` | 96 | Built |
 | `thing.seedPod.lying` | 420 by 96 | Built |
 | `thing.sunkenBranch` | 1800 by 520 | Built. The left end is sunk, the right end is lifted |
-| `thing.breathingRoot` | 64 | To paint. New |
+| `thing.breathingRoot` | 64 | To paint. Added |
 | `light.dapple` | 1024, tile | Built |
 | `mangrove.murk` | 512 by 288 | Built. Drawn at twice the size of the view |
 | `crab.body` | 220 by 190 | Built |
 | `crab.claw` | 170 by 90 | Built. Joint at (16, 45) |
 | `crab.burrow` | 128 | Built |
-| `thing.crabPellets` | 160 | To paint. New |
+| `thing.crabPellets` | 160 | To paint. Added |
 | `snail.shell` | 160 by 90 | Built |
-| `hermit.legs` | 130 by 110 | To paint. New |
-| `barnacle` | 48 | To paint. New |
+| `hermit.legs` | 130 by 110 | To paint. Added |
+| `barnacle` | 48 | To paint. Added |
 | `fish.small` | 110 by 44 | Built |
 | `bird.shadow.body` | 1024 by 720 | Built |
 | `bird.shadow.head` | 470 by 220 | Built |
@@ -316,13 +316,17 @@ This table is the checklist for the art. Update it in the same commit as a paint
 
 | Name | Size | Status |
 |------|------|--------|
-| `lagoon.seagrass.a`, `.b`, `.c` | 600 | To paint |
-| `food.seagrassFuzz` | 600 | To paint |
+| `lagoon.seagrass.a`, `.b`, `.c` | 600 | Built. Three clumps rooted left of centre, blades bent to the right |
+| `food.seagrassFuzz` | 600 | Built. The fuzz on clump `a`'s blades, laid over it |
 | `food.sandFilm` | 380 | Built |
-| `rock.overhang` | 560 by 400 | To paint |
-| `thing.sandVolcano` | 110 | To paint. New |
-| `fx.glow` | 32 | To paint |
-| `light.caustics` | 1024, tile | To paint |
+| `rock.overhang` | 560 by 400 | Built. Cover: the gap under it is where the shrimp hides |
+| `lagoon.reef` | 1024 by 420, repeats sideways | Built. Worn boulders, the lagoon's rocky edge |
+| `lagoon.shore` | 1024 by 420, repeats sideways | Built. The beach edge |
+| `lagoon.litter.a`, `.b` | 128 | Built. A seagrass blade and a shell fragment |
+| `burrow.mouth` | 140 | Built |
+| `light.caustics` | 1024, tile | Built |
+| `fx.glow` | 32 | Built |
+| `thing.sandVolcano` | 110 | To paint. Added |
 | `turtle.shell` | 860 by 720 | To paint |
 | `turtle.head` | 220 by 180 | To paint |
 | `turtle.flipper.front` | 480 by 210 | To paint |
@@ -332,7 +336,6 @@ This table is the checklist for the art. Update it in the same commit as a paint
 | `goby` | 130 by 60 | To paint |
 | `pistol.body` | 100 by 60 | To paint |
 | `pistol.claw` | 70 by 44 | To paint |
-| `burrow.mouth` | 140 | To paint |
 
 ### Channel, shadow, open sea
 
@@ -375,7 +378,7 @@ A page that shows the art without starting the game. It is how the author looks 
 | Mangrove scenes | `?show=scenes` | Ten views drawn from `src/data/areas/mangrove.ts`, each the size of the game's screen: arriving, grazing, hidden under a tangle, the bird, meeting Nacre, the crabs, the leaf bed, the hollow, the sunken branch, and a map of the whole area with its zones |
 | The six moods | `?show=moods` | The shrimp held still in each posture of the table above |
 | Telling shrimp apart | `?show=companions` | The player, Brise, Nacre and Écume side by side |
-| Sheets | `?show=shrimp`, `world`, `drift`, `mangrove`, `creatures`, `effects` | Every painter of a family on the ground colour of its area, with its name and size. Tiles are shown repeated. Cover is shown a second time at 40% |
+| Sheets | `?show=shrimp`, `world`, `drift`, `mangrove`, `lagoon`, `creatures`, `effects` | Every painter of a family on the ground colour of its area, with its name and size. Tiles are shown repeated. Cover is shown a second time at 40% |
 | Any place | `?view=x,y` | One screen of the mangrove centred as near that point as the game's camera could be |
 
 The scenes are pictures of how an area should look. They are not the game: nothing moves. But `src/atelier/scene.ts` draws an area from its data by the rules of the next section, and the game's area loader must follow the same rules, so that the game looks like the scenes.

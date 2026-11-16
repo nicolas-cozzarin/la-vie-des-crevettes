@@ -2,7 +2,7 @@
 
 **La vie des crevettes** (The Life of Shrimp) is a personal project.
 
-Code: MIT licence, once confirmed (decision D27a).
+Code: MIT licence. See `LICENSE` (decision D27a).
 
 ## Third-party assets
 

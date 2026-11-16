@@ -28,8 +28,13 @@ It is not affiliated with any organisation. Do not add an organisation's name, l
 | How pictures are painted, rig postures, the list of images | `docs/14-art-production.md` |
 | How to build each step: files, patterns, tests, pitfalls | `docs/15-implementation-guide.md` |
 | Why things are the way they are | `docs/16-history.md` |
+| A much larger world after the story, proposed | `docs/17-the-long-coast.md` |
+| Facts the player learns by playing, proposed | `docs/18-learning-by-playing.md` |
+| Where each thing lives, and the checks that guard it | `docs/19-changing-things-safely.md` |
 
 For a roadmap step, read doc 15 first. It names the other documents the step needs. Docs 10 to 13 are the detail and docs 01 to 07 the overview. Where the detail changes the overview, doc 09 lists the change (T24 onward).
+
+Before changing anything, find its row in doc 19: it names the one place to change and what else must follow.
 
 If code and docs disagree, stop and ask which is right. If a decision in `docs/09-decisions.md` must change, change it there first.
 
@@ -67,12 +72,13 @@ npm run preview    serve the build
 npm test           unit and content tests
 npm run test:e2e   browser test
 npm run lint       lint and format check
+npm run check      lint, tests and build together
 ```
 
 ## Done means
 
 - The step's checks in `docs/08-roadmap.md` pass.
-- `npm run lint`, `npm test` and `npm run build` pass.
+- `npm run check` passes: lint, tests and build. Never skip or loosen a test to pass it (doc 19).
 - New rules have unit tests. New text exists in both languages. New assets are credited.
 - Played in the browser, not only compiled.
 - Work is on a branch. Merging to `main` publishes the game.

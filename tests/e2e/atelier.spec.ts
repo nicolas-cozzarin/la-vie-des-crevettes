@@ -14,8 +14,11 @@ test('the atelier paints every picture and every scene without errors', async ({
   await page.waitForSelector('body[data-ready="true"]', { timeout: 150_000 });
 
   expect(errors).toEqual([]);
-  expect(await page.locator('.scene canvas').count()).toBe(10);
-  for (const name of ['shrimp.carapace', 'mangrove.root.a', 'mangrove.clump', 'crab.claw']) {
+  // Ten mangrove scenes and four of the Drift, at least. Each has its picture.
+  const scenes = await page.locator('.scene').count();
+  expect(scenes).toBeGreaterThanOrEqual(14);
+  expect(await page.locator('.scene canvas').count()).toBe(scenes);
+  for (const name of ['shrimp.carapace', 'mangrove.root.a', 'larva.mid', 'crab.claw']) {
     await expect(page.locator(`figure[data-name="${name}"]`).first()).toBeAttached();
   }
 });

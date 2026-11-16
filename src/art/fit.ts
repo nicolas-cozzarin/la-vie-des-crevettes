@@ -45,9 +45,19 @@ const FIT: Readonly<Record<string, ImageFit>> = {
   'mangrove.leaf.floating.a': { cover: true },
   'mangrove.leaf.floating.b': { cover: true },
   'thing.seedPod.standing': { fill: 0.5 },
+  'lagoon.seagrass.a': { fill: 0.8, cover: true },
+  'lagoon.seagrass.b': { fill: 0.8, cover: true },
+  'lagoon.seagrass.c': { fill: 0.8, cover: true },
+  'rock.overhang': { margin: 40, cover: true },
+  'lagoon.reef': { tile: 'x', solid: 0.5 },
+  'lagoon.shore': { tile: 'x', solid: 0.56 },
   'light.dapple': { tile: 'both', light: true },
+  'light.caustics': { tile: 'both', light: true },
   'drift.shaft': { light: true },
 };
+
+/** Every image with a row above. The content tests check each names a painter. */
+export const FITTED_IMAGES: readonly string[] = Object.keys(FIT);
 
 export function imageFit(name: string): ImageFit {
   return FIT[name] ?? {};

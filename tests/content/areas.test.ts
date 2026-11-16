@@ -3,10 +3,41 @@ import { imageFit } from '../../src/art/fit';
 import { PAINTERS } from '../../src/art/painters';
 import { AREA_IDS, FOOD_KINDS } from '../../src/core/world/kinds';
 import { mangrove } from '../../src/data/areas/mangrove';
-import { sandFlat } from '../../src/data/areas/sandFlat';
 import type { AreaDef, WallDef, Zone } from '../../src/data/areas/types';
 
-const areas: Record<string, AreaDef> = { mangrove, sandFlat };
+/**
+ * Every file in src/data/areas is tested, including files added later, so
+ * there is no list here to keep up to date. A file holds one area, exported
+ * under the file's name, and the area's id is that name too.
+ */
+const modules = import.meta.glob<Record<string, unknown>>(
+  ['../../src/data/areas/*.ts', '!../../src/data/areas/types.ts'],
+  { eager: true },
+);
+
+function isArea(value: unknown): value is AreaDef {
+  return typeof value === 'object' && value !== null && 'size' in value && 'spawn' in value;
+}
+
+const areas: Record<string, AreaDef> = {};
+for (const module of Object.values(modules)) {
+  for (const value of Object.values(module)) if (isArea(value)) areas[value.id] = value;
+}
+
+describe('the area files', () => {
+  it('are found', () => {
+    expect(Object.keys(areas)).toContain('mangrove');
+  });
+
+  it.each(Object.entries(modules))('%s holds one area, named like the file', (path, module) => {
+    const name = path.split('/').pop()?.replace(/\.ts$/, '');
+    const found = Object.entries(module).filter(([, value]) => isArea(value));
+    expect(found.length).toBe(1);
+    const [exported, area] = found[0] ?? [];
+    expect(exported).toBe(name);
+    expect((area as AreaDef).id).toBe(name);
+  });
+});
 
 /** Every image an area asks for, with where it is asked. */
 function imagesOf(area: AreaDef): [string, string][] {

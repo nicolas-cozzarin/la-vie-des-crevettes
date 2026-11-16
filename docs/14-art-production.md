@@ -17,7 +17,7 @@ ensureTexture(scene, 'mangrove.root.a')
 |------|-------|
 | `src/art/TextureFactory.ts` | `ensureTexture`, for the game |
 | `src/art/painters/index.ts` | `PAINTERS`: every painter by image name. `PAINTER_GROUPS`: the same, by family |
-| `src/art/painters/*.ts` | One file per family: `shrimp`, `world`, `drift`, `mangrove`, `lagoon`, `creatures`, `effects`. `icons` to come |
+| `src/art/painters/*.ts` | One file per family: `shrimp`, `world`, `drift`, `mangrove`, `lagoon`, `creatures` (the mangrove's animals), `lagoonAnimals`, `effects`. `icons` to come |
 | `src/art/paint.ts` | Shared helpers: colours, washes, `blob`, `speckle`, `patches`, `glow`, `softFill`, `band` for a root or a branch, `traceLeaf`, `wrapped` for tiles, `onLayer` for a part that must fade |
 | `src/art/fit.ts` | `imageFit(name)`: how the solid part of a picture sits inside the picture. See "From data to picture" |
 | `src/art/expressions.ts` | `RigExpression`, `RigLook`, and `MOOD_EXPRESSIONS`, the table below as code |
@@ -234,10 +234,10 @@ Simple rigs, each a few images moved by code. No drawn frames.
 | Hermit crab | `snail.shell`, `hermit.legs` | The legs slide in under the shell |
 | Barnacle | `barnacle`, a feathered line | The line sweeps out and in |
 | Small fish | `fish.small` | Whole image, with a slight side-to-side turn |
-| Hunting fish | `fish.hunter.body`, `fish.hunter.tail` | The tail swings at its joint, slow or fast |
-| Turtle | `turtle.shell`, `turtle.head`, `turtle.flipper.front` twice, `turtle.flipper.rear` twice | Flippers swing at the shoulder. The head turns and dips |
+| Hunting fish | `fish.hunter.body`, `fish.hunter.tail` | The tail swings at its joint, slow or fast. The tail's joint `HUNTER_TAIL_OWN_JOINT` is pinned at `HUNTER_TAIL_JOINT` on the body, in `painters/lagoonAnimals.ts` |
+| Turtle | `turtle.shell`, `turtle.head`, `turtle.flipper.front` twice, `turtle.flipper.rear` twice | Flippers swing at the shoulder. The head turns and dips. The parts lie under the shell. `TURTLE_JOINTS` gives where each is pinned on the shell, `TURTLE_PART_JOINTS` each part's own joint. The lower flippers are the upper ones mirrored across the shell's middle |
 | Goby | `goby` | Tail flick |
-| Pistol shrimp | `pistol.body`, `pistol.claw` | Slides out of the burrow pushing sand, slides back |
+| Pistol shrimp | `pistol.body`, `pistol.claw` | Slides out of the burrow pushing sand, slides back. The big claw's joint `PISTOL_CLAW_OWN_JOINT` is pinned at `PISTOL_CLAW_JOINT` on the body. Antennae are lines drawn by code: one rests on the goby's tail |
 | Wading bird | `bird.shadow.body`, `bird.shadow.head`, `bird.foot` twice, `bird.beak`, `bird.splash` | See doc 10. The neck's shadow turns about `BIRD_NECK_START` in `painters/creatures.ts` |
 
 ## The manifest
@@ -327,15 +327,15 @@ This table is the checklist for the art. Update it in the same commit as a paint
 | `light.caustics` | 1024, tile | Built |
 | `fx.glow` | 32 | Built |
 | `thing.sandVolcano` | 110 | To paint. Added |
-| `turtle.shell` | 860 by 720 | To paint |
-| `turtle.head` | 220 by 180 | To paint |
-| `turtle.flipper.front` | 480 by 210 | To paint |
-| `turtle.flipper.rear` | 250 by 170 | To paint |
-| `fish.hunter.body` | 600 by 170 | To paint |
-| `fish.hunter.tail` | 170 by 170 | To paint |
-| `goby` | 130 by 60 | To paint |
-| `pistol.body` | 100 by 60 | To paint |
-| `pistol.claw` | 70 by 44 | To paint |
+| `turtle.shell` | 860 by 720 | Built. Head end to the right. Five middle plates, four side plates on each side, a rim of small ones, pale streaks fanning across each |
+| `turtle.head` | 220 by 180 | Built. The neck comes from the left edge |
+| `turtle.flipper.front` | 480 by 210 | Built. Joint at the left, tip curving back |
+| `turtle.flipper.rear` | 250 by 170 | Built |
+| `fish.hunter.body` | 600 by 170 | Built. The tail root at the left, the snout at the right |
+| `fish.hunter.tail` | 170 by 170 | Built. Its joint is at the right |
+| `goby` | 130 by 60 | Built |
+| `pistol.body` | 100 by 60 | Built. The small claw is part of it |
+| `pistol.claw` | 70 by 44 | Built. Joint at the left |
 
 ### Channel, shadow, open sea
 
@@ -378,7 +378,7 @@ A page that shows the art without starting the game. It is how the author looks 
 | Mangrove scenes | `?show=scenes` | Ten views drawn from `src/data/areas/mangrove.ts`, each the size of the game's screen: arriving, grazing, hidden under a tangle, the bird, meeting Nacre, the crabs, the leaf bed, the hollow, the sunken branch, and a map of the whole area with its zones |
 | The six moods | `?show=moods` | The shrimp held still in each posture of the table above |
 | Telling shrimp apart | `?show=companions` | The player, Brise, Nacre and Écume side by side |
-| Sheets | `?show=shrimp`, `world`, `drift`, `mangrove`, `lagoon`, `creatures`, `effects` | Every painter of a family on the ground colour of its area, with its name and size. Tiles are shown repeated. Cover is shown a second time at 40% |
+| Sheets | `?show=shrimp`, `world`, `drift`, `mangrove`, `lagoon`, `creatures`, `lagoonAnimals`, `effects` | Every painter of a family on the ground colour of its area, with its name and size. Tiles are shown repeated. Cover is shown a second time at 40% |
 | Any place | `?view=x,y` | One screen of the mangrove centred as near that point as the game's camera could be |
 
 The scenes are pictures of how an area should look. They are not the game: nothing moves. But `src/atelier/scene.ts` draws an area from its data by the rules of the next section, and the game's area loader must follow the same rules, so that the game looks like the scenes.

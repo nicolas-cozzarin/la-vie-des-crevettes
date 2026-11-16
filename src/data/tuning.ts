@@ -353,3 +353,37 @@ export const SHOAL = {
   away: 0.8,
   along: 0.2,
 };
+
+/** The animals that move in the areas. See doc 11, "Mangrove creatures". */
+export const CREATURES = {
+  crab: {
+    wave: 2,
+    bout: { min: 4, max: 5 },
+    rest: { min: 4, max: 8 },
+    side: 0.35,
+    sideSpeed: 0.25,
+    out: 8,
+    outSpread: 4,
+  },
+  snail: {
+    speed: 0.05,
+    turn: 0.25,
+    home: 1.5,
+    rushed: 2,
+    calm: 4,
+    trailStep: 0.06,
+    trailPoints: 40,
+  },
+  fish: {
+    spread: 1.9,
+    wide: 1.3,
+    deep: 0.8,
+    sway: 0.12,
+    burst: 5,
+    pull: 4,
+    drag: 3.2,
+    reach: 5,
+  },
+  /** How bright the pale rim on a curiosity target is, and its width in pixels (doc 11, `fx.rim`). */
+  rim: { color: 0xf4f1e4, strength: 0.35, width: 6 },
+};

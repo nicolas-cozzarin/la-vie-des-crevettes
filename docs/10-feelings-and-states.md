@@ -31,11 +31,11 @@ Rule D7: only behaviours real shrimp show, simplified. Each behaviour below name
 | Tiring after several tail flips | Common in crustacean escape studies | To check a reference |
 | Freezing when something large passes | LSE2021 | Shown in several decapods. To check for shrimp |
 | Hiding, and leaving a shelter only when the cost of staying is high | ELWOOD2009, hermit crabs | Citation and abstract read |
-| Staying wary after a fright, keeping near cover | FOSSAT2014, crayfish | To check. The page could not be read |
+| Staying wary after a fright, keeping near cover | FOSSAT2014, crayfish | Read at second hand on 2026-11-16: the state lasted about an hour. The paper is still to read |
 | Avoiding the place where the fright happened | LSE2021 | To check which study |
-| Finding food by scent, with the antennules flicking faster when food is near | CHEMO2020, whiteleg shrimp | To check. Found by title. The page could not be read |
+| Finding food by scent, with the antennules flicking faster when food is near | CHEMO2020, whiteleg shrimp | Read 2026-11-16: the short antennae lead the search for food. Faster flicking near food is not in what was read |
 | Grooming the antennae | BARR2008, the prawn *Palaemon elegans* | Reference confirmed |
-| Burrowing in sand by day, active at night | ACTIVITY and SUBSTRATE, two studies of whiteleg shrimp | To check. Found by title. Whiteleg shrimp may burrow less than other species |
+| Burrowing in sand by day, active at night | SANTOS2013 and PONTES2006, two studies of whiteleg shrimp | Read 2026-11-16, abstracts: burial mostly by day, more moving and swimming in the dark |
 | Molting in shelter, soft and slow afterwards | Crustacean biology | Established. To check a reference |
 | Larvae that do not eat at first | FAO: "Nauplii do not feed, but live on their yolk reserves" | Read |
 | Body tint follows the ground | FAO | Read |
@@ -213,7 +213,7 @@ Company moves toward the target with a time of 2 s when rising and 20 s when fal
 
 ### Wary
 
-After a bad moment the shrimp is not calm again at once. This is the game's version of what was observed in crayfish (FOSSAT2014, to check).
+After a bad moment the shrimp is not calm again at once. This is the game's version of what was observed in crayfish (FOSSAT2014, read at second hand).
 
 - Starts when the afraid mood ends.
 - Lasts 20 s. After being cornered, 40 s. After a harmless startle, 10 s.

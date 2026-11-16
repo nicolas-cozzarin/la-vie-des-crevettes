@@ -30,13 +30,14 @@ The full script, with every narration line and its key, is in [13-script.md](13-
 | RP2023 | Waldhorn, Autric (2023). *Shrimp: The animals most commonly used and killed for food production.* Rethink Priorities | doi.org/10.31219/osf.io/b8n3t | Checked: about 440 billion farmed shrimp killed a year (range 300 to 620 billion), about 230 billion alive on farms at any time |
 | FAO | FAO species fact sheet, *Penaeus vannamei* | fao.org/fishery/docs/CDrom/aquaculture/I1129m/file/en/en_whitelegshrimp.htm | Checked: range, life cycle, egg numbers, hatching time, age at maturity, colour |
 | UK2022 | Animal Welfare (Sentience) Act 2022, United Kingdom | legislation.gov.uk/ukpga/2022/22 | Checked 2026-11-14: section 5 defines "animal" as any vertebrate other than a human, any cephalopod mollusc and any decapod crustacean |
-| FOSSAT2014 | Fossat, Bacqué-Cazenave, De Deurwaerdère, Delbecque, Cattaert (2014). Anxiety-like behavior in crayfish is controlled by serotonin. *Science* 344, 1293 to 1297 | doi.org/10.1126/science.1248811 | To check: the page could not be opened on 2026-11-14. Authors, pages and link are from memory |
+| FOSSAT2014 | Fossat, Bacqué-Cazenave, De Deurwaerdère, Delbecque, Cattaert (2014). Anxiety-like behavior in crayfish is controlled by serotonin. *Science* 344, 1293 to 1297 | doi.org/10.1126/science.1248811 | Read at second hand on 2026-11-16, in a press release about the paper: stressed crayfish kept to the dark arms of a maze, the state wore off after about an hour, and a benzodiazepine, a drug that eases anxiety in people, stopped it. The paper itself could not be opened. Read it before release |
 | ELWOOD2009 | Elwood, Appel (2009). Pain experience in hermit crabs? *Animal Behaviour* 77(5), 1243 to 1246 | doi.org/10.1016/j.anbehav.2009.01.028 | Reference confirmed 2026-11-14. Study animal: the hermit crab *Pagurus bernhardus*. Crabs given small shocks inside their shell left it, and fewer left a shell of the kind they prefer. Read the paper before release |
 | ARNOTT1998 | Arnott, Neil, Ansell (1998). Tail-flip mechanism and size-dependent kinematics of escape swimming in the brown shrimp *Crangon crangon*. *Journal of Experimental Biology* 201(11), 1771 to 1784 | journals.biologists.com/jeb | Reference confirmed 2026-11-14. Study animal: the brown shrimp. Covers the tail flip itself, not a comparison with hunters |
-| MAGEE2013 | Magee, Elwood (2013). Shock avoidance by discrimination learning in the shore crab (*Carcinus maenas*) is consistent with a key criterion for pain. *Journal of Experimental Biology* 216, 353 to 358 | | To check: from memory. Proposed as the source for "learn to avoid a place" in card 3 |
-| CHEMO2020 | Chemosensory basis of feeding behavior in Pacific white shrimp, *Litopenaeus vannamei*. *The Biological Bulletin* (2020) | doi.org/10.1086/710337 | To check: found by title only, not read |
-| ACTIVITY | Daily activity pattern of the marine shrimp *Litopenaeus vannamei* (Boone 1931) juveniles under laboratory conditions | | To check: found by title only, not read |
-| SUBSTRATE | Shrimp behavior in different substrates in light and dark phases of the day. *Pesquisa Agropecuária Brasileira* | | To check: found by title only, not read |
+| MAGEE2013 | Magee, Elwood (2013). Shock avoidance by discrimination learning in the shore crab (*Carcinus maenas*) is consistent with a key criterion for pain. *Journal of Experimental Biology* 216(3), 353 to 358 | journals.biologists.com/jeb | Text read 2026-11-16. Study animal: the shore crab. Given two dark shelters, crabs learned to avoid the one where they were shocked. The authors call it consistent with a key criterion for pain, and say it does not prove pain alone. The source for "learn to avoid a place" in card 3 |
+| CHEMO2020 | Eap, Correa, Ngo-Vu, Derby (2020). Chemosensory basis of feeding behavior in Pacific white shrimp, *Litopenaeus vannamei*. *The Biological Bulletin* 239(2) | doi.org/10.1086/710337 | Read 2026-11-16, abstract and results. The short antennae lead the search for food. Once food is held, sensors on the mouthparts and legs control how much is eaten. Same paper as EAP2020 in doc 18 |
+| PONTES2006 | Pontes (2006). Displacement pattern of marine shrimp *Litopenaeus vannamei* in light and dark phases during a 24-hour period. *Revista Brasileira de Zoologia* 23(1), 223 to 227 | doi.org/10.1590/S0101-81752006000100015 | Read 2026-11-16, abstract. Juveniles moved more, and swam more, in the dark phase. Replaces the key ACTIVITY, whose title could not be found as written |
+| SANTOS2013 | Santos, Freire, Pontes (2013). Shrimp behavior in different substrates in light and dark phases of the day. *Pesquisa Agropecuária Brasileira* 48(8) | scielo.br/j/pab | Read 2026-11-16, abstract. Whiteleg shrimp buried themselves mostly in the light phase and swam mostly in the dark. They preferred fine and very fine sand. Replaces the key SUBSTRATE |
+| MACIAS2014 | Macías-Rodríguez and others (2014). Prevalence of viral pathogens WSSV and IHHNV in wild organisms at the Pacific Coast of Mexico. *Journal of Invertebrate Pathology* | | Read 2026-11-16, abstract. Around shrimp farms, IHHNV was found in 344 of 1,736 wild animals and WSSV in 65, among them crabs and shrimp. The abstract's percentages do not match its counts: use the counts, and read the paper before release |
 
 More from the FAO fact sheet, read on 2026-11-14: the larva passes through six nauplius stages, three protozoea stages and three mysis stages. The nauplii do not feed and live on their yolk. This supports the first seconds of Drift (T42). The sheet also lists what later stages eat, which is why rule 5 stands: the game is silent on diet beyond what it shows.
 
@@ -48,14 +49,14 @@ More from the FAO fact sheet, read on 2026-11-14: the larva passes through six n
 | A female releases a cloud of eggs. Larvae hatch within a day | FAO: 100,000 to 250,000 eggs, hatching in about 16 hours | Established for whiteleg shrimp |
 | Body tint follows the ground | FAO: colour changes with the bottom, food and water clarity | Established for whiteleg shrimp |
 | Tail flip to escape, and tiring after several | Escape reflex of shrimp, crayfish and lobsters. ARNOTT1998 for the flip. Tiring: to check a reference | Established. Shown in the brown shrimp |
-| Finding food and each other by scent with the antennae | Crustacean chemical sensing. CHEMO2020 | Established. Reference to check |
+| Finding food and each other by scent with the antennae | CHEMO2020 for food. Finding each other: to check a reference | Established for food in whiteleg shrimp |
 | Molting, then hiding while soft | Crustacean biology | Established. To check a reference |
 | Grooming the antennae | BARR2008 | Shown in a prawn |
-| Fear: freezing, hiding, avoiding a place where something bad happened | LSE2021, ELWOOD2009 | Shown in crabs and hermit crabs. Less studied in shrimp |
-| Staying wary for a while after a fright | FOSSAT2014 | Shown in crayfish. To check |
+| Fear: freezing, hiding, avoiding a place where something bad happened | LSE2021, ELWOOD2009, MAGEE2013 | Shown in crabs and hermit crabs. Less studied in shrimp |
+| Staying wary for a while after a fright | FOSSAT2014 | Shown in crayfish. Read at second hand |
 | Preferring some foods | Common in feeding studies | To check a reference |
 | Living in groups | Whiteleg shrimp gather in groups | To check a reference |
-| Burrowing in sand by day, active at night | Common in the shrimp family. Strength in whiteleg shrimp: ACTIVITY, SUBSTRATE | To check |
+| Burrowing in sand by day, active at night | SANTOS2013, PONTES2006 | Established for whiteleg shrimp in tanks |
 | Three named companions with lasting bonds | None for this species | Design choice |
 | Fear easing beside a companion | None for shrimp | Design choice |
 | Eating only algae and plant matter | Real shrimp also eat small animals | Design choice, required (D7) |
@@ -67,7 +68,7 @@ Evidence is stronger for some decapods, such as crabs, than for shrimp, which ha
 
 Draft texts in both languages. Each unlocks from the event listed.
 
-**1. Scent / L'odorat.** Unlocks: first use of Sense. Source: to check.
+**1. Scent / L'odorat.** Unlocks: first use of Sense. Source: CHEMO2020 for the trail to food. To check: "or to another shrimp" has no source yet. Without one, that half comes out.
 - EN: A shrimp's antennae are covered in sensors that taste the water. It can follow a trail to food, or to another shrimp, in the dark.
 - FR: Les antennes d'une crevette sont couvertes de capteurs qui goûtent l'eau. Elle peut suivre une piste jusqu'à sa nourriture, ou jusqu'à une autre crevette, dans le noir.
 
@@ -75,11 +76,11 @@ Draft texts in both languages. Each unlocks from the event listed.
 - EN: One snap of the tail throws a shrimp backward faster than most hunters can follow. It is tiring, so it is kept for emergencies.
 - FR: D'un coup de queue, une crevette se projette en arrière plus vite que la plupart des chasseurs. C'est épuisant, alors elle le garde pour les urgences.
 
-**3. Fear / La peur.** Unlocks: the first time fear rises and settles again. Sources: LSE2021, ELWOOD2009. To check: ELWOOD2009 supports the second half (giving up a shelter). The first half (avoiding a place) needs its own source. MAGEE2013 is proposed.
+**3. Fear / La peur.** Unlocks: the first time fear rises and settles again. Sources: LSE2021, ELWOOD2009 for the second half (giving up a shelter), MAGEE2013 for the first (avoiding a place).
 - EN: Crabs and hermit crabs learn to avoid a place where something hurt them, and will give up a good shelter to stay away from it.
 - FR: Les crabes et les bernard-l'ermite apprennent à éviter un endroit où quelque chose leur a fait mal, quitte à abandonner un bon abri.
 
-**4. Still wary / Encore inquiète.** Unlocks: leaving cover after a chase. Source: FOSSAT2014, to check.
+**4. Still wary / Encore inquiète.** Unlocks: leaving cover after a chase. Source: FOSSAT2014, read at second hand. The paper itself is still to read.
 - EN: After a bad moment, crayfish keep to dark corners for a while. Given a medicine that eases anxiety in people, they go exploring again.
 - FR: Après un mauvais moment, les écrevisses restent un temps dans les coins sombres. Avec un médicament qui calme l'anxiété chez l'humain, elles repartent explorer.
 

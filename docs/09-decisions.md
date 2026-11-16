@@ -120,6 +120,7 @@ All proposed. Say so if any is wrong.
 | T51 | The pond life's shape: four parts in about ten minutes (the tank, the bag, four days and nights in the pond, the draining). No narration, no steps, no challenges, nothing to fail. It begins and ends with the water drawn down. On the fourth night a wild shoal passes the mesh, the other side of level 3 | Long enough to be a life, short enough that people finish it (D41). The meeting at the mesh ties it to the story without a word |
 | T52 | The pond life's entry on the title screen, "Another life", with one line under it: "A life on a farm. About ten minutes." Its four places in the journal: the tank, the bag, the pond, the gate. All new text, waiting for a yes | The player chooses to go in, knowing what it is and how long it takes. The line names, it does not judge |
 | T53 | Litter is decor on the bed: not cover, not solid, no food within 1 BL of it, no sound of its own. Each piece at its true size for the area, turned no more than 0.6 radians so its light stays from the upper left. Counts: mangrove 2, lagoon 8, channel about 20 with half within 10 BL of the pond's outlet, the shadow 4, open sea 3 floating. None in the first view of an area | Seen, never used. Nothing gives the shrimp a reason to touch it, and the first sight of each place stays its own |
+| T54 | Proposed, `fewArrive` (doc 18): the larvae hatched with the player thin out across the Drift, one at a time and always off-screen, as the shoal can (D42). About a third reach the haze. Two or three settle with the player at landfall. Nothing says why | Most young shrimp never grow up. The player sees it only as fewer, which keeps it true without a wound or a word |
 
 ## Still needed from the author
 
@@ -131,6 +132,8 @@ New on 2026-11-16:
 
 - D43 decided: litter, growing toward the farm. T53 holds where it lies and how it is drawn.
 - T49 to T52: the pond life's food, farm, shape and entry text. Defaults as written in doc 18.
+- T54: larvae of the Drift thin out off-screen. It touches rule 2 as D42 does. Default: yes.
+- Doc 18: `card.wildVirus` for "Among humans", and `card.footTaste` reworded to match its paper. Doc 07: card 1 loses "or to another shrimp" unless a source is found.
 - Doc 18: six new cards for "Among humans" (`card.tankToPond`, `card.howDense`, `card.nightWater`, `card.noSand`, `card.lastMinutes`, and `card.oneEye` now with a second source) and the ten lines of the pond life. Journal text waits for a yes.
 
 New on 2026-11-15:

@@ -16,35 +16,42 @@ The design is settled in docs 01 to 14. This document adds no rules of play. If 
 
 ## What exists
 
-After steps 0 to 2 and the art and design work of 2026-11-14 and 15.
+After steps 0 to 3 and the art and design work of 2026-11-14 to 16.
 
 | Path | What it is |
 |------|------------|
-| `src/main.ts` | Game config, scene list, the `window.__lvdc` hook for browser tests |
+| `src/main.ts` | Game config, scene list, the `window.__lvdc` hook for browser tests. `__lvdc.player()` gives the shrimp's place, mode, area, activity and zones |
 | `src/app.ts` | Settings, storage and keyboard, shared by all scenes as `app` |
 | `src/config.ts` | Design size, colours, fonts, `DEPTH` layers |
 | `src/core/events.ts` | `EventBus`, typed. No bus is created yet: step 4 creates the first |
 | `src/core/input/` | Actions, bindings, presets, key labels, `ActionState` |
 | `src/core/movement/ShrimpMotion.ts` | Walk, swim, dart, glide, tiring, height. Takes `{ x, y, dart }` and a `Mover` |
 | `src/core/movement/collision.ts` | `moveCircle` against circles, rectangles and bounds |
+| `src/core/world/cover.ts`, `zones.ts` | `nearestCover`, `isUnder`, `tuckPoint`. `zoneAt`, `ZoneTracker` with enter and leave |
+| `src/core/activity/Activity.ts` | The activity state machine of doc 10: `free` and `hiding` so far |
 | `src/core/movement/angles.ts` | `approach`, `angleDiff`, `rotateToward`, `wrapAngle` |
 | `src/core/save/` | Settings with versions. `KeyValueStore` |
 | `src/core/i18n/`, `src/i18n.ts`, `src/locales/` | `t('key', params)` |
 | `src/core/random.ts` | `seededRandom` |
-| `src/data/tuning.ts` | `MOTION`, `FRAME`, `CAMERA`, `SHADOW` |
+| `src/data/tuning.ts` | `MOTION`, `FRAME`, `CAMERA`, `SHADOW`, `WORLD`, `HIDE`, `COVER`, `WATER_LIGHT` |
 | `src/core/world/kinds.ts` | `FOOD_KINDS`, the closed list of foods, and `AREA_IDS` |
 | `src/core/feelings/mood.ts` | `MOODS` and the `Mood` type. Step 4 adds `pickMood` to this file |
 | `src/data/areas/types.ts` | `AreaDef` in full: ground patches, edge strips, obstacles, blocks, cover, food, landmarks, creatures, other shrimp, currents, zones, triggers, exits, light |
-| `src/data/areas/mangrove.ts` | The whole of chapter 1 as data. Nothing loads it yet |
-| `src/data/areas/sandFlat.ts` | The test area the game runs in today |
+| `src/data/areas/mangrove.ts`, `lagoon.ts` | Chapters 1 and 2 as data. Play opens the mangrove |
+| `src/data/areas/index.ts` | `AREAS`, the areas that can be played, `areaFor(id)` and `pointFor` (the coast's mirror) |
+| `src/data/areas/mirror.ts` | `mirrorArea`, doc 19 |
+| `src/data/areas/sandFlat.ts` | The test area of step 2. The game no longer loads it |
 | `src/art/painters/` | Every painter, by family. `index.ts` lists them all as `PAINTERS` |
 | `src/art/TextureFactory.ts` | `ensureTexture(scene, name)` |
 | `src/art/fit.ts` | `imageFit(name)`: which part of a picture is solid, which pictures are tiles, cover or light |
 | `src/art/expressions.ts` | `RigExpression`, `RigLook`, `MOOD_EXPRESSIONS`. `ShrimpRig` does not take them yet |
-| `src/atelier/`, `atelier.html` | The page that shows the art. `scene.ts` draws an area from its data and is the model for the area loader. `stillShrimp.ts` draws a shrimp at rest from an expression |
+| `src/art/stills.ts` | Still pictures of the animals on a 2D canvas. The atelier and the area loader share it |
+| `src/atelier/`, `atelier.html` | The page that shows the art. `scene.ts` draws an area from its data, by the same rules as the area loader. `stillShrimp.ts` draws a shrimp at rest from an expression |
+| `src/systems/AreaLoader.ts` | Builds a place from an `AreaDef` in Phaser. Returns `obstacles`, `covers`, `zones`, `placeGround` and `update` (cover fade, drifting leaves) |
+| `src/systems/WaterLight.ts` | The dapple and the murk |
 | `src/entities/ShrimpRig.ts` | The shrimp drawn from parts |
-| `src/scenes/` | Boot, Title, Play, Hud, Pause, Controls |
-| `src/platform/` | The only code that touches the browser's keyboard and storage |
+| `src/scenes/` | Boot, Title, Play, Hud, Pause, Controls. Play takes `{ area, explore, at }` |
+| `src/platform/` | The only code that touches the browser's keyboard, storage and address. `address.ts` reads `?explore=` and `&at=` |
 | `src/ui/` | Buttons, menu list, text styles |
 | `tests/unit/`, `tests/content/`, `tests/e2e/` | Vitest and Playwright. `tests/content/areas.test.ts` checks every area file: images have painters, things are inside the area and not inside each other, strip ends are closed |
 
@@ -57,6 +64,8 @@ After steps 0 to 2 and the art and design work of 2026-11-14 and 15.
 **The scene gathers, the rules decide.** Things the rules need from the world (is there cover within 1.5 BL, how far is the nearest unknown thing, who is within 4 BL) are worked out by the scene or a system and passed in as a plain `context` object. The rules never query the world themselves.
 
 **Events out, not calls across.** A rule reports what happened by returning it or by emitting on the bus. `Progress`, `Narrator`, `AudioDirector` and the journal listen. They never call each other.
+
+**Explore mode stays open.** `?explore=<area>` opens Play in any area of `AREAS` with no title and no story, and `&at=x,y` starts the shrimp at a point of the data file (T57). The author walks the places this way while the story is built. Each step keeps it working: a system that needs the story, such as the narrator or the steps, stays quiet when `explore` is set, and a new area joins `AREAS` as soon as its data loads.
 
 **Body lengths inside, pixels outside.** Tuning is in BL. Area data is in design pixels. Convert once, at the edge, with the shrimp's current `bodyLengthPx`.
 
@@ -124,6 +133,8 @@ export type GameEvents = {
 
 ## Step 3. The mangrove as a place
 
+Built on 2026-11-16. What follows is how it was planned. What changed on the way: hiding walks in at the shrimp's own pace (T58), ground patches lie at depth 0.5 (T59), and explore mode was added for the author (T57). The atelier mirrors whole views, not only areas, so its named scenes keep looking at the same things.
+
 Documents: 11 (the map and the things), 14 (images), 04.
 
 What is already there: every mangrove painter, `src/data/areas/mangrove.ts` with the full layout, the area types in `src/data/areas/types.ts`, `src/art/fit.ts`, and a picture of the result. Open `atelier.html?show=scenes` before writing a line: the game must look like those ten views. `atelier.html?view=x,y` shows any other place.
@@ -156,6 +167,8 @@ Notes:
 - Build `WORLD.mirror` and `mirrorArea` as doc 19 says under "Turning the coast round", and pass every area through it in the loader and the atelier. The setting stays `false`. It lets the author turn the coast later without touching the data (T24).
 
 Tests: `nearestCover` picks the nearest and respects the limit. `areas.test.ts` runs on every area as written and mirrored. The activity moves `free` to `hiding` only within range, and a tail flip leaves cover. Zones report enter once. Browser: the shrimp cannot pass through a root, and holding Hide near a tangle ends with `__lvdc.player().activity === 'hiding'`.
+
+Goes wrong, found while building it: a headless browser draws with SwiftShader, which drops parts of a picture under Phaser's shader for many textures at once: a hard straight edge cuts a root or a patch, and moves with the view. It is not in the game. To check a screenshot, make the page report one texture unit before the game starts, with an init script that wraps `getParameter(MAX_TEXTURE_IMAGE_UNITS)`.
 
 Goes wrong: cover drawn below the shrimp. Depth is `DEPTH.cover`, above `bedAnimals`. An edge strip turned the wrong way round, with its dark mass toward the inside: check each of the four sides against the map scene. A bare band at the side of the screen near the area's edge: the murk was sized to the view. Tile seams when the ground tile is scaled by a non-integer. Hundreds of scatter images each with its own tint: fine, but do not give each its own filter.
 

@@ -345,7 +345,7 @@ Proposed order, after release 1.0. Each is a release that can be played:
 ## Open questions
 
 1. Is this the right shape: named, hand-made places on a map that grows, and not a world drawn by chance? Default: yes. A world drawn by chance is larger and emptier.
-2. The eight new hunters: yes (D44). The author wants them to catch lives later on. Until that is designed, nobody is caught.
+2. The eight new hunters: yes (D44). Later they will catch other shrimp on screen, never the one the player lives. Until that is designed, nobody is caught.
 3. The three new foods: yes (D45).
 4. Should the clock also run in the story's places once the story is over? Default: yes.
 5. Names. "Dry coast", "River coast", "Rocky coast" and "Lagoon coast" are working names, and so are the places'.

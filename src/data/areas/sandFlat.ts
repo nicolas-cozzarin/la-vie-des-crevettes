@@ -1,8 +1,10 @@
 import type { AreaDef } from './types';
 
 /**
- * A patch of sand with a few rocks. It is not part of the story: it exists to
- * get the shrimp's movement right before anything else is built on it.
+ * A patch of sand with a few rocks. It is not part of the story: it was made
+ * to get the shrimp's movement right in step 2. Since step 3 the game opens
+ * the mangrove and never loads it. It stays as a small area the content
+ * tests check like any other.
  */
 export const sandFlat: AreaDef = {
   id: 'sandFlat',

@@ -60,10 +60,10 @@ Status: 2026-11-15, with the author's answers of that day. One row per decision.
 | D41 | Tone | Realistic. Calm in how it plays, not a calm life: neither the wild nor the farm is shown as idyllic. Hunger, murk, crowding, fear and loss are shown as they are. Nothing gory, and never so hard that people stop playing. Rule 2 of `CLAUDE.md` stands unless D42 changes it | Decided 2026-11-16 by the author | 01, 04, 07, 18 |
 | D42 | Losses in the shoal | Unnamed shrimp of the shoal can go missing off-screen, as happens in life: after the bird, the hunting fish or the net, the shoal is a few smaller. It is never shown and never explained. Named companions always come back. Rules in doc 10, "The shoal" | Decided 2026-11-16 by the author | 01, 10, `CLAUDE.md` |
 | D43 | Litter | Human litter lies in the wild, as on real coasts: rare in the mangrove, more in the lagoon, most along the channel and at the pond's outlet. A bottle, a bag, rope, a sandal, broken foam, and near the farm an empty sack and a length of pipe. Worn and silted, with no print, word or mark. Never mentioned: no text, journal card, narration or sound refers to it. The shrimp never eats from it and is never caught in it. Changes D35. See doc 11, "Litter" | Decided 2026-11-16 by the author | 04, 11, 14, 17 |
-| D44 | Hunters of the long coast | All eight come in: ray, octopus, swimming crab, mantis shrimp, spoonbill, skimmer, fishing bat, paws. For now they never catch anyone, as rule 2 says. The author on 2026-11-16: "we will make them catch lives later on". What that means is not designed yet, and rule 2 stands until it is | Decided 2026-11-16 by the author. Catching: open | 17, `CLAUDE.md` |
+| D44 | Hunters of the long coast | All eight come in: ray, octopus, swimming crab, mantis shrimp, spoonbill, skimmer, fishing bat, paws. For now they never catch anyone, as rule 2 says. The author on 2026-11-16: "we will make them catch lives later on", meaning other shrimp, on screen, not the one the player lives. How is not designed yet, and rule 2 stands until it is | Decided 2026-11-16 by the author. How they catch: later | 17, `CLAUDE.md` |
 | D45 | Foods of the long coast | Sea lettuce, turf on rock and the film on drifting wood join `FoodKind` when the long coast is built. All three are algae. Nothing else is added | Decided 2026-11-16 by the author | 02, 17 |
-| D46 | The sting | Built, if it is a fact (the author, 2026-11-16). A sea anemone's tentacles sting the shrimp when it brushes them: a jolt, a tail flip, then long grooming of the touched antenna. It hurts for a few seconds and leaves no wound. Each part needs a source before it is built. See doc 18, "One item apart: the sting" | Decided 2026-11-16 by the author, on condition | 18, `CLAUDE.md` |
-| D47 | Spoken narration | The narration is spoken as well as shown, in English and in French, with the most natural voices available, so that it never sounds robotic. The text still shows. How the voices are made is open: see doc 05, "Voice" | Decided 2026-11-16 by the author. Method: open | 05, 12, 13 |
+| D46 | The sting | Built (the author, 2026-11-16: yes, with the journal naming the animal each step was seen in). A sea anemone's tentacles sting the shrimp when it brushes them: a jolt, a tail flip, then long grooming of the touched antenna. It hurts for a few seconds and leaves no wound. Each step rests on a source, each in another animal. See doc 18, "One item apart: the sting" | Decided 2026-11-16 by the author | 18, `CLAUDE.md` |
+| D47 | Spoken narration | The narration is spoken as well as shown, in English and in French, with the most natural voices available, so that it never sounds robotic. The text still shows. The author records both languages later. No AI voice. The game plays a line's recording when there is one, and shows the text alone when there is not. As simple as possible, never glitchy. See doc 05, "Voice" | Decided 2026-11-16 by the author | 05, 12, 13 |
 
 ## Smaller choices made while drafting
 
@@ -127,6 +127,9 @@ All proposed. Say so if any is wrong.
 | T54 | `fewArrive` (doc 18): the larvae hatched with the player thin out across the Drift, one at a time and always off-screen, as the shoal can (D42). About a third reach the haze. Two or three settle with the player at landfall. Nothing says why. Confirmed by the author on 2026-11-16, with rule 2 changed to match | Most young shrimp never grow up. The player sees it only as fewer, which keeps it true without a wound or a word |
 | T55 | When `gutLine` is built, every shrimp's gut shows its hunger, so Écume's mark changes from a darker gut line to two dark dots at the base of her tail fan. Until then she keeps the darker gut line | A mark that hunger can change is not a mark |
 | T56 | The narration line for a smaller shoal (D42), approved on 2026-11-16: "Fewer than before." In French "Moins nombreuses qu'avant.", feminine, as the narration speaks to the player | French needs a gender here, and the narration already uses the feminine |
+| T57 | Explore mode, for the author. `?explore=<area>` opens Play in that area at once, with no title and no story. `&at=x,y` starts the shrimp there, in the data file's numbers (doc 11). It works on the published game, for every area that has data. The author asked for it on 2026-11-16, to walk the map and give feedback while the story is built | The places can be judged as soon as they exist, and the numbers are the ones in doc 11 |
+| T58 | Hiding walks the shrimp in at its own pace: walking, then swimming once the walk passes 0.8 s. From the far edge of reach it takes about 1.6 s, from closer about 1 s. Doc 10 says at most 0.6 s, which from 1.5 BL away needs about 5 BL/s, faster than a swim. To settle at the step 3 play test | A dash at that speed looks like a tail flip, which already means escape |
+| T59 | Ground patches lie at depth 0.5, under the scattered leaves and twigs at depth 1. Doc 15 put them at 1 | Leaves fall on the sand, not under it |
 
 ## Still needed from the author
 
@@ -138,8 +141,7 @@ Answered on 2026-11-16, and now in the tables above: the pond life's farm, shape
 
 Still open:
 
-1. T49, food in the pond life. Asked again on 2026-11-16 in plainer words. Default as written.
-2. D44: what "catch lives" will mean, and when. Default: nothing changes until it is designed.
-3. D47: how the voices are made. See doc 05.
-4. Doc 07, card 1: the author wants to keep "or to another shrimp". It needs a source before the card is built (rule 4).
-5. D35 follows from D39: the pond wall in the wild, and the farm in the pond life. With a lined pond (T50), whether such a farm can sit on this coast with an outlet to the channel is to check.
+1. T49, food in the pond life. The author on 2026-11-16: "put the pellets". Asked: are they shown and never eaten, or eaten with an exception to rule 1? Default: shown, never eaten.
+2. D44: how other shrimp are caught on screen, later. Rule 2 stands until then.
+3. T50: the lined pond stays behind the channel bank (the author, 2026-11-16). Whether such a farm is usual on this coast is still to check.
+4. T58: how fast hiding walks in. Default: its own pace, about 1 to 1.6 s, until the author plays it.

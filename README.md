@@ -6,7 +6,7 @@ A calm browser game in which you live the life of a whiteleg shrimp: drifting to
 
 A personal project, made to help people see shrimp as animals that feel. The game never preaches. It lets you be one for a while.
 
-**Status:** steps 0 to 2 of the [roadmap](docs/08-roadmap.md) are built. You can move a code-drawn shrimp around a patch of sand: walk, swim, dart with a tail flip. Every key can be changed in Controls. The rest of the game is written down in detail in documents 10 to 16, ready to build: food, feelings, other shrimp and the story come next. Documents 17 and 18 propose a much larger world and more to learn by playing. Document 19 says how to change anything without breaking the rest. The pictures for the first chapter, the mangrove, and part of the lagoon are painted: open `atelier.html` beside the game to see them.
+**Status:** steps 0 to 3 of the [roadmap](docs/08-roadmap.md) are built. You can move a code-drawn shrimp through the mangrove: walk, swim, dart with a tail flip, and hide under the roots. Every key can be changed in Controls. Add `?explore=lagoon` to the address to walk the lagoon too. The rest of the game is written down in detail in documents 10 to 16, ready to build: food, feelings, other shrimp and the story come next. Documents 17 and 18 propose a much larger world and more to learn by playing. Document 19 says how to change anything without breaking the rest. The pictures for the first chapter, the mangrove, and part of the lagoon are painted: open `atelier.html` beside the game to see them.
 
 ## The documents
 

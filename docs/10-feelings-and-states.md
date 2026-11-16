@@ -331,7 +331,7 @@ One at a time. An activity sits on top of the motion mode.
 | `sensing` | Sense is held, or toggled on | Coasts to rest within 0.3 s. Antennae sweep wide and slow. View dims slightly. Ribbons appear over 0.4 s | Turning in place, tail flip, pause, journal | Sense released. A tail flip also ends it |
 | `grazing` | Interact is held within 0.6 BL of a food patch | Steps to the patch edge in 0.3 s. Head down, front legs picking | Release, any movement, tail flip | Released, moved, patch cleared, full, or fear reaches 0.5 |
 | `examining` | Interact is pressed within 1.5 BL of an undiscovered object | Antennae touch it for 1 s | Movement cancels | 1 s passes: discovery |
-| `hiding` | Hide is held within 1.5 BL of cover | Walks under it by itself in at most 0.6 s and tucks in. The cover fades to 40% | Release, tail flip | Hide released, or a tail flip, which throws it out of cover |
+| `hiding` | Hide is held within 1.5 BL of cover | Walks under it by itself and tucks in (about 1 to 1.6 s, T58). The cover fades to 40% | Release, tail flip | Hide released, or a tail flip, which throws it out of cover |
 | `burrowing` | Hide is held on sand, from chapter 2, not near cover | Digs in over 1.2 s. Eyes and antennae stay out | Release | Hide released: out in 0.5 s |
 | `greeting` | Greet is pressed within 2 BL of another shrimp | Turns to face it. Antennae reach and tap twice, 0.9 s | Nothing for 0.9 s | Done. Bond gain if allowed |
 | `calling` | Greet is held 0.6 s with no shrimp within 2 BL | Antennae wave in wide arcs | Release | Released. Companions within 14 BL start to come |

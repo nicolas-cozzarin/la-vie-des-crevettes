@@ -4,15 +4,23 @@ import { PAINTERS } from '../../src/art/painters';
 import { AREA_IDS, FOOD_KINDS } from '../../src/core/world/kinds';
 import { lagoon } from '../../src/data/areas/lagoon';
 import { mangrove } from '../../src/data/areas/mangrove';
+import { AREAS, areaFor, isPlayableArea } from '../../src/data/areas/index';
+import { mirrorArea } from '../../src/data/areas/mirror';
 import type { AreaDef, WallDef, Zone } from '../../src/data/areas/types';
 
 /**
  * Every file in src/data/areas is tested, including files added later, so
  * there is no list here to keep up to date. A file holds one area, exported
- * under the file's name, and the area's id is that name too.
+ * under the file's name, and the area's id is that name too. The types, the
+ * list of playable areas and the mirror are the only other files there.
  */
 const modules = import.meta.glob<Record<string, unknown>>(
-  ['../../src/data/areas/*.ts', '!../../src/data/areas/types.ts'],
+  [
+    '../../src/data/areas/*.ts',
+    '!../../src/data/areas/types.ts',
+    '!../../src/data/areas/index.ts',
+    '!../../src/data/areas/mirror.ts',
+  ],
   { eager: true },
 );
 
@@ -107,7 +115,13 @@ function wallEnds(area: AreaDef, wall: WallDef): { x: number; y: number; at: num
     });
 }
 
-describe.each(Object.entries(areas))('area %s', (_name, area) => {
+/** Each area as written, and turned round as it is when the coast is (D40, doc 19). */
+const asPlayed: [string, AreaDef][] = Object.entries(areas).flatMap(([name, area]) => [
+  [name, area],
+  [`${name}, mirrored`, mirrorArea(area)],
+]);
+
+describe.each(asPlayed)('area %s', (_name, area) => {
   const bl = area.bodyLengthPx ?? 110;
 
   it('asks only for images that have a painter', () => {
@@ -214,6 +228,62 @@ describe.each(Object.entries(areas))('area %s', (_name, area) => {
 
   it('leads only to places that exist', () => {
     for (const exit of area.exits ?? []) expect(AREA_IDS).toContain(exit.to);
+  });
+});
+
+describe('the playable areas', () => {
+  it('are areas with a file', () => {
+    for (const [id, area] of Object.entries(AREAS)) {
+      expect(areas[id], id).toBe(area);
+      expect(isPlayableArea(id)).toBe(true);
+    }
+    expect(isPlayableArea('toString')).toBe(false);
+    expect(isPlayableArea('nowhere')).toBe(false);
+  });
+
+  it('are played as written while the coast is not turned round', () => {
+    expect(areaFor('mangrove')).toBe(mangrove);
+  });
+});
+
+describe('the mirror', () => {
+  it.each(Object.entries(areas))('turned twice gives %s back', (_name, area) => {
+    const twice = mirrorArea(mirrorArea(area));
+    const points = (each: AreaDef) => [
+      each.spawn,
+      ...each.obstacles,
+      ...(each.cover ?? []),
+      ...(each.food ?? []),
+      ...(each.landmarks ?? []),
+      ...(each.creatures ?? []),
+      ...(each.shrimp ?? []),
+    ];
+    const before = points(area);
+    const after = points(twice);
+    expect(after.length).toBe(before.length);
+    before.forEach((point, index) => {
+      expect(after[index]?.x).toBeCloseTo(point.x);
+      expect(after[index]?.y).toBeCloseTo(point.y);
+    });
+    expect(twice.walls).toEqual(area.walls);
+    (area.zones ?? []).forEach((zone, index) => {
+      expect(twice.zones?.[index]?.zone.x).toBeCloseTo(zone.zone.x);
+    });
+  });
+
+  it('puts the left side on the right', () => {
+    const turned = mirrorArea(mangrove);
+    expect(turned.spawn.x).toBeCloseTo(mangrove.size.w - mangrove.spawn.x);
+    expect(turned.spawn.y).toBe(mangrove.spawn.y);
+    const sides = (each: AreaDef) => (each.walls ?? []).map((wall) => wall.side);
+    expect(sides(turned)).toEqual(
+      sides(mangrove).map((side) => (side === 'left' ? 'right' : side === 'right' ? 'left' : side)),
+    );
+    const exit = (mangrove.exits ?? [])[0];
+    const turnedExit = (turned.exits ?? [])[0];
+    if (exit && turnedExit) {
+      expect(turnedExit.zone.x + turnedExit.zone.w).toBeCloseTo(mangrove.size.w - exit.zone.x);
+    }
   });
 });
 

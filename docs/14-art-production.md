@@ -294,7 +294,7 @@ This table is the checklist for the art. Update it in the same commit as a paint
 | `food.mangroveLeaf` | 520 by 300 | Built |
 | `food.algaeFilm` | 320 | Built |
 | `thing.seedPod.standing` | 96 | Built |
-| `thing.seedPod.lying` | 420 by 96 | Built |
+| `thing.seedPod.lying` | 420 by 96 | Built. The cap is on the left, the thick end and the tip on the right |
 | `thing.sunkenBranch` | 1800 by 520 | Built. The left end is sunk, the right end is lifted |
 | `thing.breathingRoot` | 64 | Built. Added. One peg. A field is many of them, each a small round obstacle |
 | `light.dapple` | 1024, tile | Built |

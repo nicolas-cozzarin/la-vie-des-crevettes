@@ -27,6 +27,20 @@ async function startPlay(page: Page): Promise<void> {
   await page.waitForFunction(() => window.__lvdc?.player() !== null);
 }
 
+/**
+ * Runs in the page, passed whole: whether the shrimp is now 250 px behind
+ * where it was, along the way it faced.
+ */
+function thrownBack(from: { x: number; y: number; heading: number }): boolean {
+  const now = window.__lvdc?.player();
+  if (!now) return false;
+  const back = -(
+    (now.x - from.x) * Math.cos(from.heading) +
+    (now.y - from.y) * Math.sin(from.heading)
+  );
+  return back > 250;
+}
+
 async function player(page: Page) {
   const snapshot = await page.evaluate(() => window.__lvdc?.player() ?? null);
   if (!snapshot) throw new Error('There is no shrimp: the play scene is not running.');
@@ -69,14 +83,16 @@ test.describe('play', () => {
     await openTitle(page);
     await startPlay(page);
 
-    // The shrimp starts facing up the screen, so backward is down.
     const start = await player(page);
     await page.keyboard.press('Space');
-    await page.waitForFunction((y) => (window.__lvdc?.player()?.y ?? 0) > y + 250, start.y);
+    await page.waitForFunction(thrownBack, start);
 
+    // Straight back: the heading is kept and the shrimp does not slide sideways.
     const end = await player(page);
     expect(end.heading).toBeCloseTo(start.heading, 3);
-    expect(Math.abs(end.x - start.x)).toBeLessThan(1);
+    const along = { x: Math.cos(start.heading), y: Math.sin(start.heading) };
+    const side = (end.x - start.x) * -along.y + (end.y - start.y) * along.x;
+    expect(Math.abs(side)).toBeLessThan(1);
   });
 
   test('Escape opens the pause menu and closes it again', async ({ page }) => {
@@ -98,6 +114,55 @@ test.describe('play', () => {
       const scenes = window.__lvdc?.scenes() ?? [];
       return scenes.includes('Play') && !scenes.includes('Pause');
     });
+  });
+});
+
+test.describe('explore', () => {
+  /** Opens an area straight away, as the author does to look around (doc 15). */
+  async function explore(page: Page, query: string): Promise<void> {
+    await page.goto(`./?explore=${query}`);
+    await waitForScene(page, 'Play');
+    await page.waitForFunction(() => window.__lvdc?.player() !== null);
+  }
+
+  test('opens the lagoon with no title and no story', async ({ page }) => {
+    const errors = watchErrors(page);
+    await explore(page, 'lagoon');
+    const start = await player(page);
+    expect(start.area).toBe('lagoon');
+    expect(start.explore).toBe(true);
+    expect(start.zones).toContain('A');
+    expect(errors).toEqual([]);
+  });
+
+  test('starts where it is told', async ({ page }) => {
+    await explore(page, 'mangrove&at=1150,1860');
+    const start = await player(page);
+    expect(start.area).toBe('mangrove');
+    expect(start.x).toBe(1150);
+    expect(start.y).toBe(1860);
+  });
+
+  test('a root stops the shrimp', async ({ page }) => {
+    // A root stands at 1150, 1560, 95 across from its centre.
+    await explore(page, 'mangrove&at=1150,1760');
+    await page.keyboard.down('KeyW');
+    await page.waitForTimeout(2000);
+    await page.keyboard.up('KeyW');
+    const end = await player(page);
+    expect(end.y).toBeLessThan(1720);
+    expect(Math.hypot(end.x - 1150, end.y - 1560)).toBeGreaterThan(95);
+  });
+
+  test('holding Hide by a root tangle walks the shrimp under it, letting go ends it', async ({
+    page,
+  }) => {
+    await explore(page, 'mangrove&at=1150,1860');
+    await page.keyboard.down('ShiftLeft');
+    await page.waitForFunction(() => window.__lvdc?.player()?.activity === 'hiding');
+    await page.waitForFunction(() => window.__lvdc?.player()?.tucked === true);
+    await page.keyboard.up('ShiftLeft');
+    await page.waitForFunction(() => window.__lvdc?.player()?.activity === 'free');
   });
 });
 
@@ -133,10 +198,11 @@ test.describe('controls', () => {
     // Space no longer does anything.
     await page.keyboard.press('Space');
     await page.waitForTimeout(400);
+    expect((await player(page)).x).toBe(start.x);
     expect((await player(page)).y).toBe(start.y);
 
     await page.keyboard.press('KeyG');
-    await page.waitForFunction((y) => (window.__lvdc?.player()?.y ?? 0) > y + 250, start.y);
+    await page.waitForFunction(thrownBack, start);
   });
 
   test('a key already in use swaps with the other action', async ({ page }) => {

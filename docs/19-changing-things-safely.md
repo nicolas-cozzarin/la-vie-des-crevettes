@@ -30,7 +30,8 @@ To undo a change that is already published, open the merged pull request on GitH
 | A line of text | Its row in doc 13 | The same words in `src/locales/en.json` and `fr.json` | `locales.test.ts`: same keys and placeholders in both languages, no `!`. `docs.test.ts`: every text matches doc 13 word for word |
 | A default key | **Ask first**. `src/core/input/bindings.ts` | Doc 03 | `bindings.test.ts` |
 | Where a thing stands in a place | `src/data/areas/<place>.ts` | Doc 11 if it quotes the position | `areas.test.ts`. The atelier's scenes |
-| A new place | A new file `src/data/areas/<id>.ts`, exporting one `AreaDef` named like the file. The id in `AREA_IDS` | Doc 11 or 17, an exit from a neighbouring place | `areas.test.ts` finds the new file by itself |
+| A new place | A new file `src/data/areas/<id>.ts`, exporting one `AreaDef` named like the file. The id in `AREA_IDS` | Doc 11 or 17, an exit from a neighbouring place. Its name in `AREAS` in `src/data/areas/index.ts` once it can be played | `areas.test.ts` finds the new file by itself |
+| What a place looks like in the game | Nothing to change: open `?explore=<area>`, and add `&at=x,y` to start at a point of the data file (T57) | | The browser test opens the lagoon this way |
 | A picture | Its painter in `src/art/painters/<family>.ts` | Its row in the manifest of doc 14. Its row in `src/art/fit.ts` if it is solid, cover, a tile or an edge strip | `art.test.ts`. The atelier |
 | A new picture | A painter in the family's file. `PAINTERS` and the atelier pick it up | A manifest row saying "Built" with its size. A fit row if needed | `art.test.ts` |
 | A painter replaced by a painted file | `public/assets/images/<name>.webp` | A row in `CREDITS.md` if someone else made it. The list in `Preload` | `rules.test.ts`: every file under `public/` is credited |
@@ -47,14 +48,14 @@ To undo a change that is already published, open the merged pull request on GitH
 
 | File | Fails when |
 |------|------------|
-| `tests/content/areas.test.ts` | A place asks for a picture with no painter. Two things share an id. A food is not on the list. A thing stands outside the place, or a shrimp or a food inside rock. The player starts inside something. An edge strip has an open end. An exit leads to a place that does not exist. An area file is not named like its area |
+| `tests/content/areas.test.ts` | A place asks for a picture with no painter. Two things share an id. A food is not on the list. A thing stands outside the place, or a shrimp or a food inside rock. The player starts inside something. An edge strip has an open end. An exit leads to a place that does not exist. An area file is not named like its area. Each of these on every area as written and mirrored. The mirror does not give an area back when turned twice. `AREAS` names an area with no file |
 | `tests/content/art.test.ts` | A painter has no row in doc 14, or its row does not say "Built", or gives another size. A row says "Built" with no painter. A picture is over 2048 px or has a badly formed name. The atelier misses a painter. `fit.ts` names a picture that does not exist, or has numbers that cannot be right |
 | `tests/content/docs.test.ts` | A doc is missing from README or CLAUDE.md. A link leads nowhere. A doc cites a decision that doc 09 does not have, or a source that no source table defines. A text in the game differs from doc 13 |
 | `tests/content/locales.test.ts` | The two languages differ in keys or placeholders. A text is empty or has `!` |
 | `tests/content/rules.test.ts` | The foods are not the six plant foods. A file names an organisation the author asked to keep out. A file in `public/` is not credited. Pictures or rules use `Math.random`. Code outside `src/platform` touches the keyboard or the storage. An asset path starts with `/`. Code asks for a text key that does not exist. A painter imports the engine |
 | `eslint.config.js` | `src/core` imports Phaser, the engine-facing folders, `src/data` or `src/platform` |
 | `tests/unit/*` | A rule of the game changed its result |
-| `tests/e2e/*` | The game does not start, the shrimp does not move, the atelier does not draw |
+| `tests/e2e/*` | The game does not start, the shrimp does not move, the atelier does not draw. A root does not stop the shrimp. Hide does not tuck it in under a tangle. Explore mode does not open an area or start at the point given |
 
 The organisation check holds the names as hashes, so that the test does not write them. Its comment says how they are made.
 
@@ -71,13 +72,16 @@ T24: the coast runs with the sea to the left and the land to the right. The auth
 
 The pictures carry light painted from the upper left. Mirroring a picture would move its light to the upper right, and the whole world would look lit from two sides. So the turn mirrors **positions**, and leaves pictures as they are.
 
-What step 3 builds for it (doc 15):
+Built in step 3 (doc 15):
 
 - `WORLD.mirror` in `src/data/tuning.ts`: `false` today.
 - `mirrorArea(area)` in `src/data/areas/mirror.ts`. It returns a new area, with every `x` turned to `size.w - x`, every zone's `x` to `size.w - x - w`, left and right edge strips swapped, every `rotation` negated, every heading turned to `π - heading`, every current's `vx` negated.
-- The area loader and the atelier pass each area through `mirrorArea` when the setting is on. The data files are never rewritten.
-- A few pictures face a way: the hollow's opening, the sunken branch, the seed pod lying down. When mirrored they are drawn flipped, and only they take light from the other side. Their manifest rows say which way they face.
+- The game takes each area through `areaFor(id)` in `src/data/areas/index.ts`, which mirrors it when the setting is on. The atelier mirrors each view in `renderScene`, with the shrimp and the bird in it, so its named scenes still look at the same things. The data files are never rewritten.
+- A point typed in an address, `?explore=…&at=x,y` in the game or `?view=x,y` in the atelier, is in the data file's numbers, and is mirrored with the rest (`pointFor`).
+- A few pictures face a way: the hollow's opening, the sunken branch, the seed pod lying down. `faces: true` in `src/art/fit.ts`. When mirrored they are drawn flipped, and only they take light from the other side. Their manifest rows say which way they face.
 - `areas.test.ts` runs every check on each area twice, as written and mirrored.
+
+It was tried on 2026-11-16: with the setting on, the game and the atelier show the same mirrored mangrove.
 
 Then the author turns the coast by changing one word, `false` to `true`, and looks at the atelier's scenes.
 

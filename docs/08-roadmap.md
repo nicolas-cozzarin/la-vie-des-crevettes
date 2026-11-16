@@ -17,7 +17,7 @@ Time figures are guesses for one person working with Claude Code. Treat them as 
 
 ## Release 0.1, step by step
 
-Progress on 2026-11-15: steps 0 to 2 are merged and published. The author played them and passed the gate at the end of step 2. The design is written down in depth in docs 10 to 16. The pictures and the data file for the mangrove are made, and `atelier.html` shows how the mangrove should look. Step 3 is next: the area loader that puts them in the game.
+Progress on 2026-11-16: steps 0 to 2 are merged and published. The author played them and passed the gate at the end of step 2. The design is written down in depth in docs 10 to 16. Step 3, the area loader, is built: the mangrove and the lagoon load in the game, the shrimp hides under cover, and `?explore=<area>` opens any area for the author to walk (T57). Step 4 is next.
 
 Before a step, read [15-implementation-guide.md](15-implementation-guide.md): it lists, for each step below, the documents to read, the files to add, what they expose, the tests to write and what usually goes wrong.
 

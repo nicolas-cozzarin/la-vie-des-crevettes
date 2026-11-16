@@ -64,3 +64,34 @@ export const SHADOW = {
   /** Extra offset per unit of height, in BL. */
   perHeight: 0.17,
 };
+
+export const WORLD = {
+  /**
+   * Turn the coast round: sea to the right, land to the left. Positions are
+   * mirrored, pictures are not. See docs/19-changing-things-safely.md (T24).
+   */
+  mirror: false,
+};
+
+export const HIDE = {
+  /** Hide starts when the edge of a cover is within this many BL. */
+  reach: 1.5,
+  /** The shrimp tucks in this far from the cover's centre, as a share of its radius. */
+  tuck: 0.45,
+  /** Closer than this to the tuck point, in BL, it is tucked in. */
+  settled: 0.12,
+  /** Within this many BL of the tuck point it slows to a stop. */
+  slowing: 0.35,
+};
+
+export const COVER = {
+  /** Opacity of a cover while the player is beneath it. */
+  fadedAlpha: 0.4,
+  /** Seconds to fade or come back. */
+  fadeTime: 0.3,
+};
+
+export const WATER_LIGHT = {
+  /** How fast the light patches slide, in design pixels per second. */
+  dappleDrift: { x: 6, y: 3.5 },
+};

@@ -19,7 +19,18 @@ export interface ImageFit {
   cover?: boolean;
   /** Laid over the picture with a blend that only lightens. */
   light?: boolean;
+  /**
+   * The picture faces a way (its opening, its broken end). When the coast is
+   * turned round (`WORLD.mirror`), it is drawn flipped. See docs/19.
+   */
+  faces?: boolean;
 }
+
+/**
+ * Painters are drawn at 1.4 image pixels for each design pixel, the size
+ * they show on a 1080p screen once the camera's zoom is applied.
+ */
+export const IMAGE_SCALE = 1.4;
 
 const FIT: Readonly<Record<string, ImageFit>> = {
   'ground.sand': { tile: 'both' },
@@ -44,7 +55,9 @@ const FIT: Readonly<Record<string, ImageFit>> = {
   'mangrove.bank': { tile: 'x', solid: 0.6 },
   'mangrove.tangle.a': { fill: 0.9, cover: true },
   'mangrove.tangle.b': { fill: 0.9, cover: true },
-  'mangrove.hollow': { fill: 0.9, cover: true },
+  'mangrove.hollow': { fill: 0.9, cover: true, faces: true },
+  'thing.sunkenBranch': { faces: true },
+  'thing.seedPod.lying': { faces: true },
   'mangrove.leaf.floating.a': { cover: true },
   'mangrove.leaf.floating.b': { cover: true },
   'thing.seedPod.standing': { fill: 0.5 },

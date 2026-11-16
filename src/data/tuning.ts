@@ -267,3 +267,87 @@ export const SENSE = {
   width: 0.3,
   sway: 0.25,
 };
+
+/** Greeting and calling. See doc 10, "Activities". */
+export const GREET = {
+  /** BL. Greet starts when another shrimp is this close. */
+  reach: 2,
+  /** Seconds the antennae reach and tap twice. */
+  seconds: 0.9,
+  /** Seconds Greet is held, with nobody within reach, before calling starts. */
+  callHold: 0.6,
+  /** BL. Companions this close start to come when called. */
+  callReach: 14,
+  /** Seconds a greeting with a bonded companion takes off wariness. */
+  easesWary: 10,
+};
+
+/** The bond with each other shrimp. See doc 02, "Bonds". */
+export const BOND = {
+  greet: 0.05,
+  greetEvery: 30,
+  grazeNear: 0.03,
+  grazeSeconds: 10,
+  /** BL. */
+  grazeReach: 3,
+  shareCover: 0.08,
+  shareEvery: 60,
+  flee: 0.1,
+  molt: 0.15,
+  stages: { familiar: 0.25, companion: 0.5, close: 0.8 },
+};
+
+/** Other shrimp: how they choose, and how they treat the player. See doc 10, "Other shrimp". */
+export const NPC = {
+  decideEvery: 0.5,
+  keep: 0.15,
+  flee: { base: 0.3, perBoldness: 0.4, darts: 3, swim: 2 },
+  hide: { fear: 0.3, reach: 1.5, calm: 0.15, holdFactor: 1.5, holdScale: 3 },
+  freeze: { score: 0.9, afterAlarm: 1 },
+  graze: { stop: 0.2, range: 8 },
+  greet: { base: 3, perSociability: 5, every: 30, touch: 1.2, giveUp: 8 },
+  follow: { called: 0.9, near: 1.5, far: 3, seconds: 20, shoalFactor: 0.5, shoalSpan: 6 },
+  groom: { factor: 0.5, min: 3, max: 6 },
+  rest: { factor: 0.6, lagoonDay: 0.4, min: 3, span: 9 },
+  wander: { base: 0.3, perActivity: 0.3, reach: 6, home: 8, giveUp: 10, waryCover: 3 },
+  /** A Stranger keeps this far from the player, in BL, and backs off this far when rushed. */
+  stranger: { keep: 1.2, backOff: 3.5, rushed: 2 },
+  /** BL. A tail flip this close startles a Stranger. */
+  startleReach: 1.5,
+  /** Hunger when an area opens: a random value between these. */
+  hunger: { min: 0.2, max: 0.55 },
+  /** A walk is a run of steps, then a pause. Seconds; the pause grows as activity falls. */
+  walk: { on: 0.7, off: 0.2, offIdle: 0.6, strength: 0.75 },
+  /** Afraid: short bursts, then stillness. */
+  afraidWalk: { on: 0.35, off: 0.8 },
+  /** Seconds of no progress before a walk is given up. */
+  stuck: 1.5,
+  /** BL beyond the view's edge where another shrimp is still drawn and stepped in full. */
+  awake: 4,
+  /** Seconds between steps for a shrimp far outside the view. */
+  farStep: 0.25,
+};
+
+/** How other shrimp find their way. */
+export const STEER = {
+  look: 1.2,
+  tryStep: Math.PI / 9,
+  arrive: 0.35,
+};
+
+/** Fright passing through a group. See doc 10, "Alarm". */
+export const ALARM = {
+  reach: 5,
+  delayMin: 0.15,
+  delayMax: 0.4,
+  every: 5,
+};
+
+/** The shoal's pulls, from chapter 2. See doc 10, "The shoal". */
+export const SHOAL = {
+  middle: 4,
+  apart: 0.8,
+  toMiddle: 0.6,
+  away: 0.8,
+  along: 0.2,
+};

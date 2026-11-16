@@ -1,5 +1,13 @@
 import { imageFit } from '../art/fit';
 import { BIRD_NECK_START, CRAB_CLAW_JOINT } from '../art/painters/creatures';
+import {
+  HUNTER_TAIL_JOINT,
+  HUNTER_TAIL_OWN_JOINT,
+  PISTOL_CLAW_JOINT,
+  PISTOL_CLAW_OWN_JOINT,
+  TURTLE_JOINTS,
+  TURTLE_PART_JOINTS,
+} from '../art/painters/lagoonAnimals';
 import { seededRandom } from '../core/random';
 import type { AreaDef, CoverDef, CreatureDef, WallDef } from '../data/areas/types';
 import { paintImage } from './images';
@@ -33,7 +41,21 @@ export interface SceneView {
   bird?: { x: number; y: number; heading: number; strikeAt?: { x: number; y: number } };
   /** Draw the zone rectangles and their letters, for a map. */
   showZones?: boolean;
+  /** Where the area has a day cycle: the time shown. Left out, day. */
+  time?: 'day' | 'dusk' | 'night';
+  /** At night, points the glowing plankton brightens around: the wake of whatever moved. */
+  wake?: { x: number; y: number }[];
+  /** Places in `shrimp` of the ones dug into the sand, eyes and antennae out. */
+  burrowed?: number[];
 }
+
+/** Animals drawn in mid-water, above the shrimp, with their shadows on the bed. */
+const MID_WATER = new Set(['smallFish']);
+/** Large animals that swim over the seagrass: drawn above the cover, their shadows below it. */
+const OVER_COVER = new Set(['turtle', 'huntingFish']);
+
+/** The turtle's shell, from the head end to the tail, in its image's pixels. It is 6 BL. */
+const TURTLE_SHELL_LENGTH = 784;
 
 type Ctx = CanvasRenderingContext2D;
 
@@ -173,7 +195,252 @@ function drawCreature(ctx: Ctx, creature: CreatureDef, bl: number): void {
       softShadow(ctx, one.x + 0.2 * bl, one.y + 0.27 * bl, 0.62 * bl, 0.16 * bl, 0.3, one.turn);
     }
     for (const one of fish) drawCentred(ctx, 'fish.small', one.x, one.y, 0.7 * bl, one.turn);
+  } else if (creature.kind === 'turtle') {
+    drawTurtle(ctx, creature.x, creature.y, heading, bl);
+  } else if (creature.kind === 'huntingFish') {
+    drawHunter(ctx, creature.x, creature.y, heading, bl);
+  } else if (creature.kind === 'pistolAndGoby') {
+    drawPistolAndGoby(ctx, creature.x, creature.y, heading, bl);
   }
+}
+
+/**
+ * The shadow of an animal over the seagrass, on the bed half a body length
+ * off: the turtle's as large as a root tangle, the fish's a long spindle.
+ */
+function swimmerShadow(ctx: Ctx, creature: CreatureDef, bl: number): void {
+  const heading = creature.heading ?? 0;
+  const x = creature.x + 0.3 * bl;
+  const y = creature.y + 0.4 * bl;
+  if (creature.kind === 'turtle') softShadow(ctx, x, y, 8.4 * bl, 6.4 * bl, 0.42, heading);
+  else softShadow(ctx, x - Math.cos(heading) * 0.2 * bl, y, 4.4 * bl, 0.95 * bl, 0.42, heading);
+}
+
+/** The turtle from its parts, gliding, flippers half way through a stroke. */
+function drawTurtle(ctx: Ctx, x: number, y: number, heading: number, bl: number): void {
+  const shell = paintImage('turtle.shell');
+  const scale = (6 * bl) / TURTLE_SHELL_LENGTH;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(heading);
+  ctx.scale(scale, scale);
+  ctx.translate(-shell.width / 2, -shell.height / 2);
+  const part = (
+    name: string,
+    at: { x: number; y: number },
+    own: { x: number; y: number },
+    turn: number,
+  ) => {
+    const image = paintImage(name);
+    ctx.save();
+    ctx.translate(at.x, at.y);
+    ctx.rotate(turn);
+    ctx.drawImage(image, -own.x, -own.y);
+    ctx.restore();
+  };
+  // The parts lie under the shell. The lower side mirrors the upper across the middle.
+  for (const side of [-1, 1]) {
+    ctx.save();
+    if (side > 0) {
+      ctx.translate(0, shell.height);
+      ctx.scale(1, -1);
+    }
+    part('turtle.flipper.rear', TURTLE_JOINTS.rearFlipper, TURTLE_PART_JOINTS.rearFlipper, -2.5);
+    part('turtle.flipper.front', TURTLE_JOINTS.frontFlipper, TURTLE_PART_JOINTS.frontFlipper, -2.4);
+    ctx.restore();
+  }
+  part('turtle.head', TURTLE_JOINTS.head, TURTLE_PART_JOINTS.head, 0.08);
+  ctx.drawImage(shell, 0, 0);
+  ctx.restore();
+}
+
+/** The hunting fish on patrol, its tail a little to one side. */
+function drawHunter(ctx: Ctx, x: number, y: number, heading: number, bl: number): void {
+  const body = paintImage('fish.hunter.body');
+  const tail = paintImage('fish.hunter.tail');
+  const tip = HUNTER_TAIL_JOINT.x - HUNTER_TAIL_OWN_JOINT.x;
+  const scale = (4.5 * bl) / (body.width - tip);
+  const middle = (body.width + tip) / 2;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(heading);
+  ctx.scale(scale, scale);
+  ctx.translate(-middle, -body.height / 2);
+  ctx.save();
+  ctx.translate(HUNTER_TAIL_JOINT.x, HUNTER_TAIL_JOINT.y);
+  ctx.rotate(0.18);
+  ctx.drawImage(tail, -HUNTER_TAIL_OWN_JOINT.x, -HUNTER_TAIL_OWN_JOINT.y);
+  ctx.restore();
+  ctx.drawImage(body, 0, 0);
+  ctx.restore();
+}
+
+/**
+ * The goby lying in the burrow's mouth, head out, and the pistol shrimp
+ * beside it pushing a load of sand out, one antenna on the goby's tail.
+ * The point is the burrow's mouth. The heading is where the goby looks.
+ */
+function drawPistolAndGoby(ctx: Ctx, x: number, y: number, heading: number, bl: number): void {
+  const fx = Math.cos(heading);
+  const fy = Math.sin(heading);
+  // Across the heading, to the goby's right.
+  const rx = -fy;
+  const ry = fx;
+  // The goby's tail end is in the dark of the hole.
+  const gobyWidth = 0.78 * bl;
+  const gx = x + fx * 0.3 * bl;
+  const gy = y + fy * 0.3 * bl;
+  softShadow(ctx, gx + 3, gy + 4, gobyWidth, gobyWidth * 0.3, 0.35, heading);
+  drawCentred(ctx, 'goby', gx, gy, gobyWidth, heading);
+  const hole = ctx.createRadialGradient(x, y, 0, x, y, 0.16 * bl);
+  hole.addColorStop(0, 'rgba(24,20,14,0.75)');
+  hole.addColorStop(1, 'rgba(24,20,14,0)');
+  ctx.fillStyle = hole;
+  ctx.fillRect(x - 0.2 * bl, y - 0.2 * bl, 0.4 * bl, 0.4 * bl);
+  // The pistol shrimp, half out, turned a little away from the goby.
+  const turn = heading + 0.55;
+  const px = x + rx * 0.28 * bl + fx * 0.12 * bl;
+  const py = y + ry * 0.28 * bl + fy * 0.12 * bl;
+  const body = paintImage('pistol.body');
+  const claw = paintImage('pistol.claw');
+  const scale = (0.55 * bl) / body.width;
+  // The load of sand it pushes, just ahead of its claws: wet from below, so darker.
+  const lx = px + Math.cos(turn) * 0.44 * bl;
+  const ly = py + Math.sin(turn) * 0.44 * bl;
+  softShadow(ctx, lx + 3, ly + 4, 0.4 * bl, 0.28 * bl, 0.4, turn);
+  const load = ctx.createRadialGradient(lx, ly, 0, lx, ly, 0.17 * bl);
+  load.addColorStop(0, 'rgba(198,178,134,0.95)');
+  load.addColorStop(0.65, 'rgba(204,186,142,0.75)');
+  load.addColorStop(1, 'rgba(204,186,142,0)');
+  ctx.fillStyle = load;
+  ctx.fillRect(lx - 0.2 * bl, ly - 0.2 * bl, 0.4 * bl, 0.4 * bl);
+  const grains = seededRandom(Math.round(x + y));
+  for (let index = 0; index < 16; index++) {
+    const angle = grains() * Math.PI * 2;
+    const distance = Math.sqrt(grains()) * 0.12 * bl;
+    ctx.fillStyle = grains() < 0.5 ? 'rgba(130,112,78,0.6)' : 'rgba(246,238,214,0.7)';
+    ctx.beginPath();
+    ctx.arc(
+      lx + Math.cos(angle) * distance,
+      ly + Math.sin(angle) * distance,
+      0.012 * bl,
+      0,
+      Math.PI * 2,
+    );
+    ctx.fill();
+  }
+  softShadow(ctx, px + 3, py + 4, 0.56 * bl, 0.3 * bl, 0.35, turn);
+  ctx.save();
+  ctx.translate(px, py);
+  ctx.rotate(turn);
+  ctx.scale(scale, scale);
+  ctx.translate(-body.width / 2, -body.height / 2);
+  ctx.drawImage(body, 0, 0);
+  ctx.translate(PISTOL_CLAW_JOINT.x, PISTOL_CLAW_JOINT.y);
+  ctx.rotate(0.12);
+  ctx.drawImage(claw, -PISTOL_CLAW_OWN_JOINT.x, -PISTOL_CLAW_OWN_JOINT.y);
+  ctx.restore();
+  // One antenna out from its head and back to the goby's tail, just out of the hole.
+  const hx = px + Math.cos(turn) * 0.24 * bl;
+  const hy = py + Math.sin(turn) * 0.24 * bl;
+  const tx = x + fx * 0.06 * bl;
+  const ty = y + fy * 0.06 * bl;
+  const cx = hx - rx * 0.32 * bl + fx * 0.12 * bl;
+  const cy = hy - ry * 0.32 * bl + fy * 0.12 * bl;
+  ctx.save();
+  ctx.strokeStyle = 'rgba(150,128,96,0.85)';
+  ctx.lineWidth = 1.1;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(hx, hy);
+  ctx.quadraticCurveTo(cx, cy, tx, ty);
+  ctx.stroke();
+  ctx.restore();
+}
+
+/**
+ * Sand over a shrimp dug in: the body and legs hidden from the tail fan to
+ * just behind the eyes. The eyes and antennae stay out.
+ */
+function drawSandOver(ctx: Ctx, area: AreaDef, shrimp: StillShrimp, view: SceneView): void {
+  const bl = shrimp.look?.bodyLengthPx ?? area.bodyLengthPx ?? 110;
+  const reach = 1.1 * bl;
+  const left = shrimp.x - reach;
+  const top = shrimp.y - reach;
+  const layer = document.createElement('canvas');
+  layer.width = Math.ceil(2 * reach * view.scale);
+  layer.height = layer.width;
+  const lctx = layer.getContext('2d') as Ctx;
+  lctx.scale(view.scale, view.scale);
+  lctx.translate(-left, -top);
+  lctx.fillStyle = tilePattern(lctx, area.ground);
+  lctx.fillRect(left, top, 2 * reach, 2 * reach);
+  // A little darker where it was turned over, wet from below.
+  lctx.fillStyle = 'rgba(120,100,62,0.12)';
+  lctx.fillRect(left, top, 2 * reach, 2 * reach);
+  lctx.globalCompositeOperation = 'destination-in';
+  lctx.filter = `blur(${0.035 * bl * view.scale}px)`;
+  lctx.translate(shrimp.x, shrimp.y);
+  lctx.rotate(shrimp.heading);
+  lctx.fillStyle = '#000';
+  lctx.beginPath();
+  lctx.roundRect(-0.78 * bl, -0.22 * bl, 1.02 * bl, 0.44 * bl, 0.2 * bl);
+  lctx.fill();
+  const fx = Math.cos(shrimp.heading);
+  const fy = Math.sin(shrimp.heading);
+  softShadow(
+    ctx,
+    shrimp.x - fx * 0.27 * bl + 2,
+    shrimp.y - fy * 0.27 * bl + 3,
+    1.2 * bl,
+    0.55 * bl,
+    0.16,
+    shrimp.heading,
+  );
+  ctx.drawImage(layer, left, top, 2 * reach, 2 * reach);
+}
+
+/** Dusk and night are laid over everything with a multiply blend. Colours from doc 04. */
+const DUSK = '#F0B27A';
+const DUSK_STRENGTH = 0.55;
+const NIGHT = '#1B2350';
+const NIGHT_STRENGTH = 0.86;
+/** Plankton points for each square body length in the shallows. Elsewhere a third as many. */
+const PLANKTON_PER_BL2 = 2;
+
+/**
+ * Glowing plankton at night: faint points everywhere, thickest in the
+ * bright shallows, and bright for a body length and a half around the wake.
+ */
+function drawPlankton(ctx: Ctx, view: SceneView, bl: number): void {
+  const shallows = (view.area.zones ?? []).find((zone) => zone.id === 'F')?.zone;
+  const random = seededRandom(view.area.size.w + view.area.size.h);
+  const count = Math.round((view.area.size.w * view.area.size.h * PLANKTON_PER_BL2) / (bl * bl));
+  ctx.save();
+  ctx.globalCompositeOperation = 'screen';
+  for (let index = 0; index < count; index++) {
+    const x = random() * view.area.size.w;
+    const y = random() * view.area.size.h;
+    const keep = random();
+    const size = 0.1 + random() * 0.12;
+    const thick =
+      shallows &&
+      x > shallows.x &&
+      x < shallows.x + shallows.w &&
+      y > shallows.y &&
+      y < shallows.y + shallows.h;
+    if (keep > (thick ? 1 : 0.35) || !(x > view.x - bl && x < view.x + view.w + bl)) continue;
+    if (!(y > view.y - bl && y < view.y + view.h + bl)) continue;
+    const near = Math.min(
+      Infinity,
+      ...(view.wake ?? []).map((point) => Math.hypot(x - point.x, y - point.y)),
+    );
+    const lit = Math.max(0, 1 - near / (1.5 * bl));
+    ctx.globalAlpha = 0.22 + 0.78 * lit;
+    const width = size * bl * (1 + 1.6 * lit);
+    ctx.drawImage(paintImage('fx.glow'), x - width / 2, y - width / 2, width, width);
+  }
+  ctx.restore();
 }
 
 export function renderScene(view: SceneView): HTMLCanvasElement {
@@ -245,7 +512,8 @@ export function renderScene(view: SceneView): HTMLCanvasElement {
 
   // 4. Things that lie on the bed: food and landmarks.
   for (const food of area.food ?? []) {
-    if (!inView(food.x, food.y, food.size)) continue;
+    // Fuzz is on the blades of a clump: it is drawn with the clump, in the cover.
+    if (food.kind === 'seagrassFuzz' || !inView(food.x, food.y, food.size)) continue;
     drawCentred(ctx, `food.${food.kind}`, food.x, food.y, food.size, food.rotation ?? 0);
   }
   for (const landmark of area.landmarks ?? []) {
@@ -285,17 +553,25 @@ export function renderScene(view: SceneView): HTMLCanvasElement {
   }
 
   // 6. Animals on the bed, then the shrimp.
+  const swimmers = (area.creatures ?? []).filter(
+    (creature) => OVER_COVER.has(creature.kind) && inView(creature.x, creature.y, 6 * bl),
+  );
   for (const creature of area.creatures ?? []) {
-    if (creature.kind === 'smallFish' || !inView(creature.x, creature.y, 300)) continue;
+    const swims = MID_WATER.has(creature.kind) || OVER_COVER.has(creature.kind);
+    if (swims || !inView(creature.x, creature.y, 300)) continue;
     drawCreature(ctx, creature, bl);
   }
-  for (const shrimp of view.shrimp ?? []) drawStillShrimp(ctx, shrimp);
+  (view.shrimp ?? []).forEach((shrimp, index) => {
+    drawStillShrimp(ctx, shrimp);
+    if (view.burrowed?.includes(index)) drawSandOver(ctx, area, shrimp, view);
+  });
 
-  // 7. Mid-water.
+  // 7. Mid-water, and the shadows of what swims over the cover.
   for (const creature of area.creatures ?? []) {
-    if (creature.kind !== 'smallFish' || !inView(creature.x, creature.y, 500)) continue;
+    if (!MID_WATER.has(creature.kind) || !inView(creature.x, creature.y, 500)) continue;
     drawCreature(ctx, creature, bl);
   }
+  for (const creature of swimmers) swimmerShadow(ctx, creature, bl);
 
   // 8. Cover, above the shrimp. A floating leaf throws its shadow on the bed below.
   for (const landmark of area.landmarks ?? []) {
@@ -325,17 +601,35 @@ export function renderScene(view: SceneView): HTMLCanvasElement {
       );
     }
     drawCentred(ctx, cover.image, cover.x, cover.y, width, cover.rotation ?? 0, alpha);
+    for (const food of area.food ?? []) {
+      if (food.kind !== 'seagrassFuzz' || food.x !== cover.x || food.y !== cover.y) continue;
+      drawCentred(ctx, 'food.seagrassFuzz', food.x, food.y, food.size, food.rotation ?? 0, alpha);
+    }
   }
 
-  // 9. Light from above.
-  if (area.light?.dapple) {
+  // 8b. Large animals over the seagrass.
+  for (const creature of swimmers) drawCreature(ctx, creature, bl);
+
+  // 9. The time of day, then light from above: weaker at dusk, gone at night.
+  const time = area.dayCycle ? (view.time ?? 'day') : 'day';
+  if (time !== 'day') {
+    ctx.save();
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.globalAlpha = time === 'dusk' ? DUSK_STRENGTH : NIGHT_STRENGTH;
+    ctx.fillStyle = time === 'dusk' ? DUSK : NIGHT;
+    ctx.fillRect(view.x, view.y, view.w, view.h);
+    ctx.restore();
+  }
+  if (area.light?.dapple && time !== 'night') {
     ctx.save();
     ctx.globalCompositeOperation = 'screen';
-    ctx.globalAlpha = area.light.dappleStrength ?? 1;
+    ctx.globalAlpha = (area.light.dappleStrength ?? 1) * (time === 'dusk' ? 0.4 : 1);
     ctx.fillStyle = tilePattern(ctx, area.light.dapple);
     ctx.fillRect(view.x, view.y, view.w, view.h);
     ctx.restore();
   }
+
+  if (time === 'night') drawPlankton(ctx, view, bl);
 
   // 10. The bird: a shadow on the water, two feet on the mud, a ring where it will strike.
   if (view.bird) {
@@ -386,15 +680,16 @@ export function renderScene(view: SceneView): HTMLCanvasElement {
 
   if (view.showZones) {
     ctx.save();
-    ctx.font = `600 ${90}px Georgia, serif`;
+    // Letters and lines the same size on the page whatever the scale.
+    ctx.font = `600 ${Math.round(27 / view.scale)}px Georgia, serif`;
     ctx.textBaseline = 'top';
     for (const zone of area.zones ?? []) {
       ctx.strokeStyle = 'rgba(246,241,228,0.6)';
-      ctx.lineWidth = 6;
-      ctx.setLineDash([24, 18]);
+      ctx.lineWidth = 1.8 / view.scale;
+      ctx.setLineDash([7.2 / view.scale, 5.4 / view.scale]);
       ctx.strokeRect(zone.zone.x, zone.zone.y, zone.zone.w, zone.zone.h);
       ctx.fillStyle = 'rgba(246,241,228,0.9)';
-      ctx.fillText(zone.id, zone.zone.x + 24, zone.zone.y + 18);
+      ctx.fillText(zone.id, zone.zone.x + 7 / view.scale, zone.zone.y + 5 / view.scale);
     }
     ctx.restore();
   }

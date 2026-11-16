@@ -212,7 +212,7 @@ export const lagoon: AreaDef = {
       id: 'seaStar',
       image: 'seaStar',
       x: 1380,
-      y: 1560,
+      y: 1090,
       width: 186,
       rotation: 0.3,
       layer: 'ground',

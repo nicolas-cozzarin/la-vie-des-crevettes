@@ -34,6 +34,8 @@ export const DEPTH = {
   bedAnimals: 20,
   midWater: 30,
   cover: 40,
+  /** The turtle and the hunting fish swim over the seagrass. Their shadows stay at midWater. */
+  overCover: 45,
   surfaceLight: 50,
   mood: 60,
   interface: 100,

@@ -320,7 +320,9 @@ Documents: 03 (settings), 07 (About), 06 (counter).
 
 ## Later releases
 
-Release 0.2 onward reuses everything above. What each adds is in doc 08. The lagoon, channel, shadow and open sea are mapped in doc 11, and their threats are specified in doc 10. Their area data files are still to be written, from those maps.
+Release 0.2 onward reuses everything above. What each adds is in doc 08. The lagoon, channel, shadow and open sea are mapped in doc 11, and their threats are specified in doc 10.
+
+The lagoon's data file is written: `src/data/areas/lagoon.ts`, with nine views of it in the atelier at `?show=lagoonscenes`. Its new drawing rules are in doc 14, "From data to picture": seagrass fuzz, the turtle, the hunting fish, the pistol shrimp and goby, a burrowed shrimp, dusk, night and plankton. The turtle and the hunting fish are drawn at `DEPTH.overCover`, above the seagrass, and their shadows at `DEPTH.midWater` (T48). The channel, shadow and open sea data files are still to be written.
 
 ## When stuck
 

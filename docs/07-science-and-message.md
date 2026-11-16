@@ -68,13 +68,9 @@ Evidence is stronger for some decapods, such as crabs, than for shrimp, which ha
 
 Draft texts in both languages. Each unlocks from the event listed.
 
-**1. Scent / L'odorat.** Unlocks: first use of Sense. Source: CHEMO2020 for the trail to food. The author wants to keep the second half (2026-11-16). No study shows a trail to another shrimp. GUTIERREZ2024 (doc 18) shows males knowing a female by touch, so this wording is proposed in place of the lines below:
-- EN, proposed: A shrimp's antennae are covered in sensors that taste the water. They lead it to food in the dark, and in a 2024 study they let males know a female by the taste of her shell.
-- FR, proposed: Les antennes d'une crevette sont couvertes de capteurs qui goûtent l'eau. Elles la guident vers sa nourriture dans le noir, et dans une étude de 2024, elles permettaient aux mâles de reconnaître une femelle au goût de sa carapace.
-
-As drafted before:
-- EN: A shrimp's antennae are covered in sensors that taste the water. It can follow a trail to food, or to another shrimp, in the dark.
-- FR: Les antennes d'une crevette sont couvertes de capteurs qui goûtent l'eau. Elle peut suivre une piste jusqu'à sa nourriture, ou jusqu'à une autre crevette, dans le noir.
+**1. Scent / L'odorat.** Unlocks: first use of Sense. Sources: CHEMO2020 for food, GUTIERREZ2024 (doc 18) for the second half. The author chose this wording on 2026-11-16: no study shows a trail to another shrimp, and GUTIERREZ2024 shows males knowing a female by touch.
+- EN: A shrimp's antennae are covered in sensors that taste the water. They lead it to food in the dark, and in a 2024 study they let males know a female by the taste of her shell.
+- FR: Les antennes d'une crevette sont couvertes de capteurs qui goûtent l'eau. Elles la guident vers sa nourriture dans le noir, et dans une étude de 2024, elles permettaient aux mâles de reconnaître une femelle au goût de sa carapace.
 
 **2. The tail flip / Le coup de queue.** Unlocks: third tail flip. Source: ARNOTT1998 for the flip, in the brown shrimp. To check: "faster than most hunters can follow" and "tiring" each need a source, or the wording changes.
 - EN: One snap of the tail throws a shrimp backward faster than most hunters can follow. It is tiring, so it is kept for emergencies.

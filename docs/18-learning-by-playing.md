@@ -128,7 +128,7 @@ Twenty-nine items, counting the sting. **Ready**: the source was read and no rul
 
 ### One item apart: the sting
 
-Decided by the author on 2026-11-16: built, if it is a fact (D46). Rule 2 of `CLAUDE.md` now allows it: it hurts for a few seconds and leaves no wound.
+Decided by the author on 2026-11-16: built, with the journal naming the animal each step was seen in (D46). Rule 2 of `CLAUDE.md` now allows it: it hurts for a few seconds and leaves no wound.
 
 The idea is to let the player live the one experiment the journal already quotes. In the 2008 study a prawn touched on one antenna by an irritant did not just flinch. It rubbed and groomed that antenna for a long time, and far less under a local anaesthetic (BARR2008). That gap between a flinch and what follows is what researchers mean when they say pain is more than a reflex.
 
@@ -571,5 +571,4 @@ Added to the playtest questions of doc 08:
 
 Answered by the author on 2026-11-16: the farm is a lined pond (T50), its shape and entry as written (T51, T52), the sting if it is a fact (D46), `pulse` and `gutLine` yes (T55), thirty cards, `fewArrive` (T54), `card.wildVirus`, and the cards of "Among humans" for now.
 
-1. T49, food in the pond: only what grows there, feed never shown. Asked again in plainer words. Default: yes.
-2. The sting's steps rest on three animals, none of them a whiteleg shrimp. Build it so? Default: yes.
+1. T49, food in the pond. The author on 2026-11-16: "put the pellets". Shown and never eaten, or eaten with an exception to rule 1? Default: shown, never eaten.

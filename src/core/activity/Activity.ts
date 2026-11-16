@@ -1,11 +1,24 @@
 import { distanceToCover, nearestCover, tuckPoint, type CoverSpot } from '../world/cover';
 
 /**
- * What the body is busy with, on top of how it moves. One at a time. This
- * step has `free` and `hiding`; the rest of doc 10's table joins later.
- * See docs/10-feelings-and-states.md, "Activities".
+ * What the body is busy with, on top of how it moves. One at a time. Every
+ * name of doc 10's table is listed so that the feelings can read it, but the
+ * state machine below runs only `free` and `hiding` so far; the rest join in
+ * later steps. See docs/10-feelings-and-states.md, "Activities".
  */
-export type ActivityName = 'free' | 'hiding';
+export type ActivityName =
+  | 'free'
+  | 'sensing'
+  | 'grazing'
+  | 'examining'
+  | 'hiding'
+  | 'burrowing'
+  | 'greeting'
+  | 'calling'
+  | 'resting'
+  | 'molting'
+  | 'cornered'
+  | 'drifting';
 
 export interface HideTuning {
   /** BL. Hide starts when a cover's edge is this close. */

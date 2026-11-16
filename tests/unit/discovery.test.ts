@@ -1,0 +1,61 @@
+import { describe, expect, it } from 'vitest';
+import { curiosityPull, DiscoveryTracker, type Discoverable } from '../../src/core/world/discovery';
+import { CURIOSITY } from '../../src/data/tuning';
+
+const BL = 100;
+const TUNING = { range: 8, weights: CURIOSITY.weights, find: CURIOSITY.find };
+const crab: Discoverable = { id: 'creature.fiddlerCrab', kind: 'creature', x: 0, y: 0 };
+const pod: Discoverable = { id: 'thing.seedPod', kind: 'thing', x: 1000, y: 0 };
+const hollow: Discoverable = { id: 'place.hollow', kind: 'thing', x: 0, y: 1000, under: 200 };
+
+describe('curiosity pull', () => {
+  it('reaches 0.6 at 3.2 BL from a creature with a range of 8', () => {
+    expect(curiosityPull(320, 0, [crab], new Set(), TUNING, BL).value).toBeCloseTo(0.6);
+  });
+
+  it('is 0 beyond the range and for what is known', () => {
+    expect(curiosityPull(900, 0, [crab], new Set(), TUNING, BL).value).toBe(0);
+    expect(curiosityPull(100, 0, [crab], new Set([crab.id]), TUNING, BL).value).toBe(0);
+  });
+
+  it('names the thing that pulls hardest', () => {
+    expect(curiosityPull(700, 0, [crab, pod], new Set(), TUNING, BL).target).toBe(pod);
+  });
+});
+
+describe('the discovery tracker', () => {
+  it('finds a creature after 2 s within 2.5 BL', () => {
+    const tracker = new DiscoveryTracker(TUNING, BL);
+    for (let index = 0; index < 59; index++)
+      expect(tracker.step(1 / 30, 200, 0, [crab])).toEqual([]);
+    expect(tracker.step(1 / 30, 200, 0, [crab])).toEqual([crab.id]);
+    expect(tracker.known.has(crab.id)).toBe(true);
+    expect(tracker.step(1 / 30, 200, 0, [crab])).toEqual([]);
+  });
+
+  it('starts again when the shrimp moves away', () => {
+    const tracker = new DiscoveryTracker(TUNING, BL);
+    for (let index = 0; index < 50; index++) tracker.step(1 / 30, 200, 0, [crab]);
+    tracker.step(1 / 30, 400, 0, [crab]);
+    for (let index = 0; index < 50; index++) tracker.step(1 / 30, 200, 0, [crab]);
+    expect(tracker.known.has(crab.id)).toBe(false);
+  });
+
+  it('finds a thing after 1 s within 1.5 BL', () => {
+    const tracker = new DiscoveryTracker(TUNING, BL);
+    for (let index = 0; index < 29; index++) tracker.step(1 / 30, 1100, 0, [pod]);
+    expect(tracker.step(1 / 30, 1100, 0, [pod])).toEqual([pod.id]);
+  });
+
+  it('finds a place under cover at once', () => {
+    const tracker = new DiscoveryTracker(TUNING, BL);
+    expect(tracker.step(1 / 30, 0, 1150, [hollow])).toEqual([hollow.id]);
+  });
+
+  it('keeps what was known before', () => {
+    const tracker = new DiscoveryTracker(TUNING, BL, [crab.id]);
+    expect(tracker.pull(100, 0, [crab]).value).toBe(0);
+    expect(tracker.add(crab.id)).toBe(false);
+    expect(tracker.add('place.D')).toBe(true);
+  });
+});

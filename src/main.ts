@@ -37,4 +37,5 @@ window.__lvdc = {
   lang: () => i18n.lang,
   bindings: () => app.settings.bindings,
   player: () => debugState.player?.() ?? null,
+  feelings: () => debugState.feelings?.() ?? null,
 };

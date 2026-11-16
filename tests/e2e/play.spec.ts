@@ -117,14 +117,20 @@ test.describe('play', () => {
   });
 });
 
-test.describe('explore', () => {
-  /** Opens an area straight away, as the author does to look around (doc 15). */
-  async function explore(page: Page, query: string): Promise<void> {
-    await page.goto(`./?explore=${query}`);
-    await waitForScene(page, 'Play');
-    await page.waitForFunction(() => window.__lvdc?.player() !== null);
-  }
+/** Opens an area straight away, as the author does to look around (doc 15). */
+async function explore(page: Page, query: string): Promise<void> {
+  await page.goto(`./?explore=${query}`);
+  await waitForScene(page, 'Play');
+  await page.waitForFunction(() => window.__lvdc?.player() !== null);
+}
 
+async function feelings(page: Page) {
+  const snapshot = await page.evaluate(() => window.__lvdc?.feelings() ?? null);
+  if (!snapshot) throw new Error('There are no feelings: the play scene is not running.');
+  return snapshot;
+}
+
+test.describe('explore', () => {
   test('opens the lagoon with no title and no story', async ({ page }) => {
     const errors = watchErrors(page);
     await explore(page, 'lagoon');
@@ -249,5 +255,55 @@ test.describe('controls', () => {
     await startPlay(page);
     await page.keyboard.press('Escape');
     await waitForScene(page, 'Pause');
+  });
+});
+
+test.describe('feelings', () => {
+  test('hunger rises while the shrimp walks', async ({ page }) => {
+    const errors = watchErrors(page);
+    await explore(page, 'mangrove&at=1150,1860');
+    const start = await feelings(page);
+    expect(start.mood).toBe('calm');
+    await page.keyboard.down('KeyA');
+    await page.waitForFunction(
+      (hunger) => (window.__lvdc?.feelings()?.values.hunger ?? 0) > hunger + 0.003,
+      start.values.hunger,
+    );
+    await page.keyboard.up('KeyA');
+    expect(errors).toEqual([]);
+  });
+
+  test('a creature not yet met makes the shrimp curious, and staying near finds it', async ({
+    page,
+  }) => {
+    // A snail rests at 1385, 1608, about 3 BL from this start.
+    await explore(page, 'mangrove&at=1150,1860');
+    await page.waitForFunction(() => {
+      const now = window.__lvdc?.feelings();
+      return now?.mood === 'curious' && now.curiousAbout === 'creature.snail';
+    });
+    await explore(page, 'mangrove&at=1385,1760');
+    await page.waitForFunction(() =>
+      window.__lvdc?.feelings()?.discovered.includes('creature.snail'),
+    );
+  });
+
+  test('with ?debug, F9 forces each mood in turn, then lets the feelings decide', async ({
+    page,
+  }) => {
+    await explore(page, 'mangrove&debug');
+    for (const mood of ['calm', 'hungry', 'content', 'curious', 'social', 'afraid']) {
+      await page.keyboard.press('F9');
+      expect((await feelings(page)).forced).toBe(mood);
+      expect((await feelings(page)).mood).toBe(mood);
+    }
+    await page.keyboard.press('F9');
+    expect((await feelings(page)).forced).toBeNull();
+  });
+
+  test('without ?debug, F9 does nothing', async ({ page }) => {
+    await explore(page, 'mangrove');
+    await page.keyboard.press('F9');
+    expect((await feelings(page)).forced).toBeNull();
   });
 });

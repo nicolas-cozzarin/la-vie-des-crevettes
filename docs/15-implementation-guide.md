@@ -16,14 +16,15 @@ The design is settled in docs 01 to 14. This document adds no rules of play. If 
 
 ## What exists
 
-After steps 0 to 3 and the art and design work of 2026-11-14 to 16.
+After steps 0 to 4 and the art and design work of 2026-11-14 to 16.
 
 | Path | What it is |
 |------|------------|
-| `src/main.ts` | Game config, scene list, the `window.__lvdc` hook for browser tests. `__lvdc.player()` gives the shrimp's place, mode, area, activity and zones |
+| `src/main.ts` | Game config, scene list, the `window.__lvdc` hook for browser tests. `__lvdc.player()` gives the shrimp's place, mode, area, activity and zones. `__lvdc.feelings()` gives the five values, the mood, the forced mood, the conditions, wariness left, what has been found and what the shrimp is curious about |
 | `src/app.ts` | Settings, storage and keyboard, shared by all scenes as `app` |
 | `src/config.ts` | Design size, colours, fonts, `DEPTH` layers |
-| `src/core/events.ts` | `EventBus`, typed. No bus is created yet: step 4 creates the first |
+| `src/core/events.ts` | `EventBus`, typed. Play creates one bus of `GameEvents` and sends the mood, condition, tail flip and discovery events on it |
+| `src/core/gameEvents.ts` | `GameEvents`, the list below |
 | `src/core/input/` | Actions, bindings, presets, key labels, `ActionState` |
 | `src/core/movement/ShrimpMotion.ts` | Walk, swim, dart, glide, tiring, height. Takes `{ x, y, dart }` and a `Mover` |
 | `src/core/movement/collision.ts` | `moveCircle` against circles, rectangles and bounds |
@@ -33,25 +34,29 @@ After steps 0 to 3 and the art and design work of 2026-11-14 to 16.
 | `src/core/save/` | Settings with versions. `KeyValueStore` |
 | `src/core/i18n/`, `src/i18n.ts`, `src/locales/` | `t('key', params)` |
 | `src/core/random.ts` | `seededRandom` |
-| `src/data/tuning.ts` | `MOTION`, `FRAME`, `CAMERA`, `SHADOW`, `WORLD`, `HIDE`, `COVER`, `WATER_LIGHT` |
-| `src/core/world/kinds.ts` | `FOOD_KINDS`, the closed list of foods, and `AREA_IDS` |
-| `src/core/feelings/mood.ts` | `MOODS` and the `Mood` type. Step 4 adds `pickMood` to this file |
+| `src/data/tuning.ts` | `MOTION`, `FRAME`, `CAMERA`, `SHADOW`, `WORLD`, `HIDE`, `COVER`, `WATER_LIGHT`, and for the feelings `HUNGER`, `FEAR`, `COMFORT`, `CURIOSITY`, `COMPANY`, `WARY` (together `FEELINGS`), `MOOD`, `MOOD_SCREEN` |
+| `src/core/world/kinds.ts` | `FOOD_KINDS`, the closed list of foods, `AREA_IDS` and `LIFE_STAGES` |
+| `src/core/world/discovery.ts` | `curiosityPull` and `DiscoveryTracker`: what pulls curiosity, and when a thing is found |
+| `src/core/feelings/mood.ts` | `MOODS`, the `Mood` type and `MoodPicker`: enter and leave levels, the two timers (T60) |
+| `src/core/feelings/types.ts` | `Feelings`, `CONDITIONS`, `STIMULUS_KINDS`, `FeelingsContext`, `QUIET_CONTEXT`, the tuning types |
+| `src/core/feelings/FeelingsModel.ts` | The five values, stimuli, the step, conditions, the mood, and `force` for the debug key |
 | `src/data/areas/types.ts` | `AreaDef` in full: ground patches, edge strips, obstacles, blocks, cover, food, landmarks, creatures, other shrimp, currents, zones, triggers, exits, light |
 | `src/data/areas/mangrove.ts`, `lagoon.ts` | Chapters 1 and 2 as data. Play opens the mangrove |
-| `src/data/areas/index.ts` | `AREAS`, the areas that can be played, `areaFor(id)` and `pointFor` (the coast's mirror) |
+| `src/data/areas/index.ts` | `AREAS`, the areas that can be played, `areaFor(id)`, `pointFor` (the coast's mirror) and `STAGE_IN`, the life stage of each area (T61) |
 | `src/data/areas/mirror.ts` | `mirrorArea`, doc 19 |
 | `src/data/areas/sandFlat.ts` | The test area of step 2. The game no longer loads it |
 | `src/art/painters/` | Every painter, by family. `index.ts` lists them all as `PAINTERS` |
 | `src/art/TextureFactory.ts` | `ensureTexture(scene, name)` |
 | `src/art/fit.ts` | `imageFit(name)`: which part of a picture is solid, which pictures are tiles, cover or light |
-| `src/art/expressions.ts` | `RigExpression`, `RigLook`, `MOOD_EXPRESSIONS`. `ShrimpRig` does not take them yet |
+| `src/art/expressions.ts` | `RigExpression`, `RigLook`, `STAGE_LOOKS`, `MOOD_EXPRESSIONS`, and `withConditions`, which adds the conditions to a mood's expression |
 | `src/art/stills.ts` | Still pictures of the animals on a 2D canvas. The atelier and the area loader share it |
 | `src/atelier/`, `atelier.html` | The page that shows the art. `scene.ts` draws an area from its data, by the same rules as the area loader. `stillShrimp.ts` draws a shrimp at rest from an expression |
 | `src/systems/AreaLoader.ts` | Builds a place from an `AreaDef` in Phaser. Returns `obstacles`, `covers`, `zones`, `placeGround` and `update` (cover fade, drifting leaves) |
 | `src/systems/WaterLight.ts` | The dapple and the murk |
-| `src/entities/ShrimpRig.ts` | The shrimp drawn from parts |
-| `src/scenes/` | Boot, Title, Play, Hud, Pause, Controls. Play takes `{ area, explore, at }` |
-| `src/platform/` | The only code that touches the browser's keyboard, storage and address. `address.ts` reads `?explore=` and `&at=` |
+| `src/systems/MoodPresenter.ts` | The mood on the screen: a colour matrix on the play camera, the zoom, the lean of the view, and the HUD's edges and word (T62) |
+| `src/entities/ShrimpRig.ts` | The shrimp drawn from parts. Takes a look, and on each frame an expression, a target to look at and the startle |
+| `src/scenes/` | Boot, Title, Play, Hud, Pause, Controls. Play takes `{ area, explore, at }`, steps the feelings in its loop and finds things. Hud draws the edges, fear's edges and the mood's name |
+| `src/platform/` | The only code that touches the browser's keyboard, storage and address. `address.ts` reads `?explore=`, `&at=` and `?debug`. `KeyboardSource.onDebugKey` hears F9 (T63) |
 | `src/ui/` | Buttons, menu list, text styles |
 | `tests/unit/`, `tests/content/`, `tests/e2e/` | Vitest and Playwright. `tests/content/areas.test.ts` checks every area file: images have painters, things are inside the area and not inside each other, strip ends are closed |
 
@@ -173,6 +178,10 @@ Goes wrong, found while building it: a headless browser draws with SwiftShader, 
 Goes wrong: cover drawn below the shrimp. Depth is `DEPTH.cover`, above `bedAnimals`. An edge strip turned the wrong way round, with its dark mass toward the inside: check each of the four sides against the map scene. A bare band at the side of the screen near the area's edge: the murk was sized to the view. Tile seams when the ground tile is scaled by a non-integer. Hundreds of scatter images each with its own tint: fine, but do not give each its own filter.
 
 ## Step 4. Feelings
+
+Built on 2026-11-16. What follows is how it was planned. What changed on the way is in T60 to T65: a `MoodPicker` object instead of `pickMood`, a fuller context, antennae by life stage, how the colour and the edges are made, the F9 key, and what curiosity pulls toward before food and saving exist.
+
+Not built yet, and left to the step that brings what it needs: the food ribbons at 30% when hungry (step 5), the pale rim on the curious target (step 5, when animals move), other shrimp brighter when social (step 6), the stopped sway when afraid and the stutter of an afraid walk (step 7), the wary pause every few steps (step 7), the narration that names each mood the first time (step 8), the setting "Name feelings on screen" in a menu (step 11). The setting works already if it is stored.
 
 Document: 10, all of it. 14 for the expressions.
 

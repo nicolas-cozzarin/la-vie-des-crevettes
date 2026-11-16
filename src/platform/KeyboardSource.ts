@@ -5,6 +5,13 @@ import { menuKeyFor, type MenuKey } from '../core/input/menuKeys';
 type MenuHandler = (key: MenuKey) => void;
 type CaptureHandler = (code: string) => void;
 
+/**
+ * The debug key. It is not a game action, so it is not in the bindings and
+ * cannot be rebound. It does something only while a handler listens, which
+ * the play scene does only with `?debug` (doc 15, step 4).
+ */
+const DEBUG_KEY = 'F9';
+
 export interface KeyboardSourceOptions {
   /** The bindings in use right now. */
   bindings: () => Bindings;
@@ -19,6 +26,7 @@ export interface KeyboardSourceOptions {
 export class KeyboardSource {
   private readonly menuHandlers = new Set<MenuHandler>();
   private readonly blurHandlers = new Set<() => void>();
+  private readonly debugHandlers = new Set<() => void>();
   private captureHandler: CaptureHandler | null = null;
   private attached = false;
 
@@ -57,6 +65,12 @@ export class KeyboardSource {
     return () => this.blurHandlers.delete(handler);
   }
 
+  /** Hear the debug key. Returns a function that stops listening. */
+  onDebugKey(handler: () => void): () => void {
+    this.debugHandlers.add(handler);
+    return () => this.debugHandlers.delete(handler);
+  }
+
   /**
    * Take the next key press, whatever it is, instead of treating it as a menu
    * key or an action. Used by the rebinding screen. Returns a function that
@@ -85,6 +99,12 @@ export class KeyboardSource {
       const handler = this.captureHandler;
       this.captureHandler = null;
       handler(code);
+      return;
+    }
+
+    if (code === DEBUG_KEY && this.debugHandlers.size > 0) {
+      event.preventDefault();
+      if (!event.repeat) for (const handler of [...this.debugHandlers]) handler();
       return;
     }
 

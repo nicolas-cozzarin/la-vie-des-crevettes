@@ -95,3 +95,137 @@ export const WATER_LIGHT = {
   /** How fast the light patches slide, in design pixels per second. */
   dappleDrift: { x: 6, y: 3.5 },
 };
+
+/** Hunger. See docs/10-feelings-and-states.md, "Hunger". */
+export const HUNGER = {
+  /** Per second while walking: empty to full in 4 minutes. */
+  walkRate: 1 / 240,
+  restFactor: 0.5,
+  /** While hidden, burrowed or resting. */
+  stillFactor: 0.3,
+  swimFactor: 1.2,
+  larvaRate: 1 / 120,
+  tailFlip: 0.006,
+  peckish: 0.5,
+  veryHungry: 0.9,
+  /** Hunger when a chapter starts. The first hunger comes about 20 s after walking off. */
+  start: { drift: 0.65, mangrove: 0.62, other: 0.5 },
+};
+
+/** Fear. See docs/10-feelings-and-states.md, "Fear". */
+export const FEAR = {
+  gains: {
+    shadow: 0.3,
+    predatorSeen: 0.5,
+    missNearby: 0.1,
+    alarm: 0.2,
+    startle: 0.2,
+    engine: 0.2,
+    netGrid: 0.15,
+  },
+  cap: 0.6,
+  cornered: 0.9,
+  corneredHold: 3,
+  softFactor: 2,
+  waryFactor: 1.5,
+  falls: { open: 0.05, companion: 0.1, restingClose: 0.15, hidden: 0.2, hiddenNearThreat: 0.1 },
+  chase: 0.8,
+  near: 0.5,
+  startleGain: 0.15,
+  startleTime: 0.35,
+  freezeFear: 0.3,
+  freezeAfter: 1,
+};
+
+/** Comfort follows a target made from the other feelings. */
+export const COMFORT = {
+  base: 0.35,
+  fed: 0.25,
+  sheltered: 0.15,
+  company: 0.15,
+  settled: 0.1,
+  fear: 0.6,
+  /** Seconds to rise and to fall. Fright empties it fast, ease returns slowly. */
+  rise: 8,
+  fall: 2,
+  discovery: 0.1,
+};
+
+/** Curiosity, and how things are found. */
+export const CURIOSITY = {
+  rise: 1,
+  fall: 3,
+  /** At this much fear or more, nothing pulls. */
+  fearBlocks: 0.5,
+  /** BL. The Sense range, which is also how far curiosity reaches. */
+  range: { juvenile: 8, subAdult: 11, adult: 14 },
+  weights: { creature: 1, thing: 1, food: 0.8 },
+  /** BL and seconds to find each kind of thing. */
+  find: {
+    creature: { distance: 2.5, seconds: 2 },
+    thing: { distance: 1.5, seconds: 1 },
+  },
+};
+
+/** Company. Weights by bond stage of every shrimp within `radius` BL. */
+export const COMPANY = {
+  radius: 4,
+  weights: { stranger: 0.3, familiar: 0.45, companion: 0.7, close: 1 },
+  rise: 2,
+  fall: 20,
+};
+
+/** Wariness after a fright. Seconds. */
+export const WARY = {
+  afterFright: 20,
+  afterCornered: 40,
+  afterStartle: 10,
+  /** Seconds hidden that end it early. */
+  restEnds: 10,
+};
+
+/** Which mood leads, and how fast it changes. See doc 10, "Mood". */
+export const MOOD = {
+  afraid: { enter: 0.5, leave: 0.4 },
+  hungry: { enter: 0.7, leave: 0.55 },
+  curious: { enter: 0.6, leave: 0.45 },
+  social: { enter: 0.6, leave: 0.45 },
+  contentAfter: 5,
+  newHolds: 0.4,
+  oldHolds: 1.5,
+  /** Seconds the body takes to change: into afraid, and otherwise. */
+  bodyAfraid: 0.3,
+  body: 0.6,
+  /** The screen never changes faster than this. */
+  screen: 0.5,
+};
+
+/** The feelings tuning in one object, as `FeelingsModel` takes it. */
+export const FEELINGS = {
+  hunger: HUNGER,
+  fear: FEAR,
+  comfort: COMFORT,
+  curiosity: CURIOSITY,
+  company: COMPANY,
+  wary: WARY,
+};
+
+/** How the screen shows the player's mood. See doc 10, "Screen". */
+export const MOOD_SCREEN = {
+  /** Share of colour taken away. */
+  desaturate: { hungry: 0.1, afraid: 0.25 },
+  /** A wash of colour, and how strong. */
+  warm: { color: 0xf2d58a, amount: 0.08 },
+  cool: { color: 0x9fb6c9, amount: 0.1 },
+  /** Extra zoom when afraid. Off with reduced motion. */
+  afraidZoom: 0.08,
+  /** Share of the way the view leans toward what the shrimp is curious about. */
+  curiousLean: 0.05,
+  /** Strength of the dark edges: afraid, and the share left while wary. */
+  afraidEdges: 1,
+  waryEdges: 1 / 3,
+  /** Content lightens the usual edges by this share. */
+  contentLighter: 0.35,
+  /** Seconds a mood's name stays on screen, with "Name feelings on screen". */
+  nameSeconds: 2.5,
+};

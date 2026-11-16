@@ -169,10 +169,12 @@ In the journal, in neutral wording:
 - The 2008 antenna study.
 - The 2021 review and the 2022 UK law.
 - Learning to avoid harm.
-- The number farmed each year, as one optional card.
+- Among humans: farming and fishing, as neutral facts with sources, each unlocked by a moment of play (D39, doc 18). The number farmed each year is one of them.
+
+Shown in play, never explained (D39): the pond's wall in the channel, and after the story a life in a farm pond.
 
 Left out of the game:
-- Farming and slaughter practices.
+- Slaughter is never shown. The pond life ends before it, with a cut to white. A journal card may say how it is done, in neutral words, once its source is read.
 - Shops, brands, campaigns and organisations.
 - Slogans, appeals and anything in the imperative.
 

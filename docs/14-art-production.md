@@ -355,6 +355,26 @@ This table is the checklist for the art. Update it in the same commit as a paint
 | `sea.ledge` | 760 by 420 | To paint |
 | `channel.seaFan` | 360 by 300 | Built. Added. Its foot, where it holds the rock, is at the left middle. It sways about that point |
 | `fx.egg` | 16 | To paint |
+| `pond.wall` | 1024 by 360, repeats sideways | To paint. D39. Packed earth, straight, grass tufts on the crest, cracked mud at the foot |
+| `pond.outlet` | 420 by 300 | To paint. D39. A concrete gate stained green-brown, its opening closed by a mesh |
+| `pond.plume` | 1024 by 512 | To paint. D39. A soft green-brown stain, densest at the left edge where it leaves the gate |
+
+### The pond life (D39)
+
+Release 1.1. Realistic and bare, without gloss and without horror (D41). The shrimp, the larva and the shoal are drawn by the rig.
+
+| Name | Size | Status |
+|------|------|--------|
+| `farm.tank.floor` | 1024, tile | To paint. Off-white, scuffed, faint rings of dried scale |
+| `farm.tank.wall` | 1024 by 300, repeats sideways | To paint. Smooth, white to pale grey where it curves up out of the light |
+| `farm.bag` | 1024 by 576 | To paint. Clear creased plastic seen from inside, dim light through it, bubbles along one edge. Laid over the view |
+| `farm.pond.clay` | 1024, tile | To paint. Soft grey-brown clay with a thin film, tracks and dents |
+| `farm.pond.sludge` | 512 | To paint. A black, soft-edged patch with a dull sheen |
+| `farm.pond.bank` | 1024 by 400, repeats sideways | To paint. Packed earth from inside the pond, straight, slumped in places |
+| `farm.pond.gate` | 640 by 420 | To paint. Concrete sluice with wooden boards in grooves and a mesh behind them |
+| `farm.pond.murk` | 512 by 288 | To paint. Opaque green, clear only within 3 BL of the centre. Drawn at twice the size of the view |
+| `fx.mesh` | 256, tile | To paint. The shadow of a net's mesh, soft |
+| `fx.surface` | 1024, tile | To paint. The underside of the surface coming close: bright creases, moving |
 
 ### Interface and icons
 

@@ -329,7 +329,7 @@ x:  0      500        2500         4500        6500         8500       10500   1
 | A. The gathering | 10500 to 12000 | Rippled sand. The shoal collecting | "The water wants to leave. So do you." Story step: follow the tide with the shoal |
 | B. First run | 8500 to 10500 | Sand with long ripple marks. Clumps of seaweed riding the current | Challenge: eat seaweed without stopping |
 | C. The narrows | 6500 to 8500 | Rock walls close in to 1200 px. Fast water. Crevices in both walls | The fish, first time |
-| D. The pool | 4500 to 6500 | Wide, slow. Rocks with algae film. Other shoals passing | A rest. Regroup. Challenge: keep all three companions close for a minute |
+| D. The pool | 4500 to 6500 | Wide, slow. Rocks with algae film. Other shoals passing. Along its top edge, the wall of a farm pond with its gate (D39) | A rest. Regroup. Challenge: keep all three companions close for a minute. The pond, seen through the gate's mesh: doc 18, level 3 |
 | E. Boulder field | 2500 to 4500 | Large boulders to weave between. Crevices | The fish, second time |
 | F. The bar | 500 to 2500 | A shallow sand bar. Bands of moonlight sliding across it | The way out |
 
@@ -344,6 +344,10 @@ x:  0      500        2500         4500        6500         8500       10500   1
 | `fx.streak` | Effect | | Specks drawn out into short lines | Shows how fast the water runs |
 | `shrimp.traveller` | Creature | 1 BL | Other shrimp, strangers, in small groups | Pass through, all heading left |
 | `channel.seaFan` | Decor, *added* | 2 BL | A flat branching fan, rust-red, growing from the rock walls | Sways |
+| `pond.wall` | Edge strip, D39 | 2000 px, the top edge of zone D | A straight bank of packed earth, the only straight line in the wild. Grass tufts along its crest, cracked mud at its foot | Solid |
+| `pond.outlet` | Obstacle, D39 | 3 BL | A concrete sluice gate in the wall, stained green-brown, its opening closed by a mesh | Solid. Water pours out of it |
+| `pond.plume` | Effect, D39 | 10 BL | A stain of greener, murkier water spreading from the gate, bent by the current | Sense shows only the white ribbon of the unknown inside it. The shrimp will not eat there |
+| `pond.crowd` | Effect, D39 | The gate's width | Through the mesh: pale shapes of shrimp, close together, moving along the inside of the wall | One comes to the mesh when the player does |
 
 ## Chapter 4. The shadow
 
@@ -440,6 +444,8 @@ The Discoveries page of the journal holds these. An entry appears as an outline 
 | `thing.glowingPlankton` | Glowing plankton | In it for 3 s at night | Lagoon | Draft in doc 07 |
 | `thing.crackle` | The crackle | In zone D for 3 s | Lagoon | Draft in doc 07 |
 | `thing.eggs` | The next ones | Spawning | Open sea | Card 9 covers it |
+| `place.wall` | The wall | Passing the pond's gate | Channel | A drawing and a name. No text (D39) |
+| `place.tank`, `place.bag`, `place.pond`, `place.gate` | The tank, the bag, the pond, the gate | Living each part | The pond life | Drawings and names. No text (D39, T52) |
 
 Twenty-eight entries from the first design. The ones added below bring it to thirty-nine. The long coast adds many more (doc 17).
 
@@ -460,7 +466,20 @@ The author accepted all of these (D34) and asked for as many more as possible. E
 | `thing.longSound` | A long sound | Open sea | The size of the sea, in one sound |
 | `creature.seaStar`, `channel.seaFan` | Sea star, sea fan | Lagoon, channel | Decoration, and two more things to find |
 
-Still left out of the story's five places: anything man-made other than the hull and the net, since litter would bring a second message into a game that has one. Rays and crabs that would in life eat shrimp were left out at first, since they would have to be shown as harmless. Doc 17 proposes them for the long coast as what they are: hunters, which never catch anyone.
+Still left out of the story's five places: anything man-made other than the hull, the net and the pond's wall (D35, D39), since litter would bring a second message into a game that has one. Rays and crabs that would in life eat shrimp were left out at first, since they would have to be shown as harmless. Doc 17 proposes them for the long coast as what they are: hunters, which never catch anyone.
+
+## After the story: the pond life (D39)
+
+A separate life on a farm, opened from the title screen once the story is finished. Its design, its rules and its sources are in doc 18, level 4. Its places, with their looks:
+
+| Place | Size | Look from above | Palette (doc 04) |
+|-------|------|-----------------|------------------|
+| The tank | 4 m across. At the larva's scale, about 300 BL | A bare white floor, scuffed, with a drain at the centre. A smooth curved wall all round. Hard light from above, the same all the time. Hundreds of postlarvae, all of one age | Hatchery tank |
+| The bag | 3 BL across | Water pressed in by clear plastic, creased, with dim light coming through it. Bubbles at the top edge. Others pressed close | Hatchery tank, dimmed |
+| The pond | About 2 ha. At 124 px a BL, endless on screen; the banks are reached only by swimming far | Opaque green water: the view reaches 3 BL. Soft grey-brown clay with a thin film, tracks and dents in it. Black sludge in the middle. Straight banks of packed earth. A shrimp about every 2 BL | Farm pond |
+| The gate | 3 BL wide | Seen from inside the pond: a concrete sluice with wooden boards stacked in grooves, a mesh behind them. At the draining, the boards are lifted and the bag net's mesh shows as a shadow | Farm pond, at night |
+
+Nothing here is a hiding place. No rock, root, leaf or seagrass. That is the point of the place, and it is never said.
 
 ## Sizes at a glance
 

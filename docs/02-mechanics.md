@@ -188,7 +188,7 @@ Rules:
 - The player should escape about four times out of five without having played before.
 - **Cornered.** If a strike or charge lands: blur, an automatic dart, and the player wakes in the nearest shelter with fear at 0.9. Nothing is lost.
 - At least 60 s between threats. Never two at once. Never during the soft phase of a molt.
-- No predator and no net ever catches any animal on screen. Companions always get away.
+- No predator and no net ever catches any animal on screen. Named companions always get away. Unnamed shrimp of the shoal can go missing off-screen (D42, doc 10).
 - Gentle mode: stages 1 and 2 only.
 
 Startles with no danger: a sudden current, a seed pod dropping into the water, a rain squall on the surface.

@@ -13,6 +13,8 @@ This document says what the game should look like. Two documents go deeper:
 
 A watercolour and gouache illustration seen from straight above, as if looking down through clear or tea-coloured water onto the bed. Soft edges, visible paper grain, few colours per area, slow movement. The animals are drawn as they are. Nothing is cute by exaggeration.
 
+Realistic, not a postcard (D41). The water is rarely clear: silt, specks and drifting bits hang in it. Things are worn: torn leaves, broken shells, bare patches, scum along the edges. Light is uneven. Colours stay true to the place and are never pushed to look pretty. The farm is drawn the same way, without gloss and without horror. Nothing is gory: no wounds, no bodies, no blood.
+
 ## Layers, from the bed up
 
 1. **Bed.** Mud, sand, leaf litter, algae film.
@@ -105,6 +107,10 @@ Starting values, to tune on screen.
 | Channel | Moving, cool | Slate `#2B3A55`, moonlight `#C9D6E8`, rock `#454C59` |
 | The shadow | The channel, drained of colour | Grid shadow `#0E1420` at half strength |
 | Open sea | Deep, quiet | Ultramarine `#0A2E6E` to `#061A40`, particles `#DCE9FF` |
+| Hatchery tank (D39) | Bright, bare, crowded | Tank wall `#E4E9EA`, hard light `#F4F8FA`, water clear with a blue cast `#CFE3EA` |
+| Farm pond (D39) | Opaque, green, endless | Green water `#556B2F`, clay bottom `#6F5E45`, foam `#D8D9C4`. At night `#1A2416` |
+
+The coast's real water is greener and more turbid than a tropical postcard. Tune the lagoon toward it (D41).
 
 ## Water and light
 

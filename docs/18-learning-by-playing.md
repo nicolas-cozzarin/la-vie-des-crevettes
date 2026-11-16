@@ -1,6 +1,6 @@
 # 18. Learning by playing
 
-Status: proposal 0.1, 2026-11-15. Written for decision D38: the player should learn as much as possible about shrimp biology, behaviour and suffering during the story, by playing, with science behind every item. Nothing here is built. Each item says whether it is ready, still to check, or waiting for a yes from the author.
+Status: proposal 0.2, 2026-11-16. D39 is decided (level 4) and so are D41 (tone) and D42 (losses in the shoal). Written for decision D38: the player should learn as much as possible about shrimp biology, behaviour and suffering during the story, by playing, with science behind every item. Nothing here is built. Each item says whether it is ready, still to check, or waiting for a yes from the author.
 
 Read with [07-science-and-message.md](07-science-and-message.md) for the wording rules, [10-feelings-and-states.md](10-feelings-and-states.md) for the rules these items plug into, and [12-goals-and-journal.md](12-goals-and-journal.md) for the journal.
 
@@ -11,7 +11,8 @@ The author, 2026-11-15: "Can you think about ways to add stuff to learn about sh
 What does not move:
 
 - Play never preaches (D3). No text tells the player what to think or do.
-- No animal is eaten. No death and no injury on screen.
+- No animal is eaten. No death and no injury on screen. Unnamed shrimp of the shoal can go missing off-screen (D42).
+- Calm to play, not a calm life (D41). Nothing gory.
 - A fact is stated only in the journal, in the words allowed by doc 07, with a source.
 - Nothing is in a release while its source is marked "to check".
 
@@ -38,7 +39,7 @@ Added to the table in doc 07 if the item they support is accepted. **Read** mean
 
 | Key | Reference | Animal | What it supports | Standing |
 |-----|-----------|--------|------------------|----------|
-| FAO | FAO species fact sheet, *Penaeus vannamei* | Whiteleg shrimp | Nauplii "swim intermittently and are positively phototactic" and do not feed. Later larvae are carried shoreward by tides. Rostrum with 7 to 10 teeth above and 2 to 4 below | Read |
+| FAO | FAO species fact sheet, *Penaeus vannamei*. FAO (2009), text by M. Briggs, in *Cultured aquatic species fact sheets* | Whiteleg shrimp | Nauplii "swim intermittently and are positively phototactic" and do not feed. Later larvae are carried shoreward by tides. Rostrum with 7 to 10 teeth above and 2 to 4 below. On farms, read 2026-11-16: about 21 days from hatching to PL12; PL10 to 12 carried "at reduced temperature either in plastic bags or oxygenated transportation tanks"; stocking 4 to 10 a square metre extensive, 10 to 30 semi-intensive, 60 to 300 intensive; semi-intensive ponds 1 to 5 ha and 1.0 to 1.2 m deep, fed on natural food "supplemented by formulated diets 2–3 times daily", aeration "at best minimal"; harvest by "draining the pond at low tide through a bag net installed in the outlet sluice gate"; then "immediately killed in iced water at 0–4 °C"; one eyestalk of each breeding female "is ablated" | Read |
 | SANTOS2013 | Santos, Freire, Pontes (2013). Shrimp behavior in different substrates in light and dark phases of the day. *Pesquisa Agropecuária Brasileira* 48(8). This is the key SUBSTRATE of doc 07 | Whiteleg shrimp | Burial mainly in the light phase. Swimming mainly in the dark phase. Fine and very fine sand preferred for staying and burying | Read (abstract) |
 | CRIALES2011 | Criales, Robblee, Browder, Cardenas, Jackson (2011). Field observations on selective tidal-stream transport for postlarval and juvenile pink shrimp in Florida Bay. *Journal of Crustacean Biology* 31(1), 26 to 33 | Pink shrimp | Postlarvae rose in the water on the flood tide at night and rested near the bottom on the ebb. Juveniles were near the surface almost only on the ebb | Read (abstract) |
 | SCHAPKER2002 | Schapker, Breithaupt, Shuranova, Burmistrov, Cooper (2002). Heart and ventilatory measures in crayfish during environmental disturbances and social interactions. *Comparative Biochemistry and Physiology A* 131, 397 to 407 | Crayfish | After a disturbance the heart and the breathing may slow for a few beats, then rise above the resting rate. The authors propose both as a measure of what the animal has noticed | Read |
@@ -58,7 +59,7 @@ Added to the table in doc 07 if the item they support is accepted. **Read** mean
 | RENAUD1986 | Renaud (1986). Detecting and avoiding oxygen deficient sea water by brown shrimp, *Penaeus aztecus*, and white shrimp, *Penaeus setiferus*. *Journal of Experimental Marine Biology and Ecology* 98, 283 to 292 | Brown shrimp, white shrimp of the Gulf of Mexico | Shrimp sense water low in oxygen and leave it | Memory |
 | DALL1990 | Dall, Hill, Rothlisberg, Sharples (1990). The biology of the Penaeidae. *Advances in Marine Biology* 27 | The whiteleg shrimp's family | Body parts, molting, senses, burrowing, the eye | Memory. The standard reference: find a copy |
 | RP2023 | Already in doc 07 | | New from it, by way of fishcount.org.uk: about 25 trillion wild shrimp caught in 2020 (range 6.5 to 66 trillion), of which about 19 trillion of one small species | Read (at second hand) |
-| RPW2023 | McKay, Waldhorn, McAuliffe (2023). Welfare considerations for farmed shrimp. Rethink Priorities | Farmed shrimp | The list of what most affects them: disease, water quality (oxygen, temperature, salinity, pH, ammonia), pollutants, stocking density, handling, transport and slaughter, eyestalk ablation | Read (summary) |
+| RPW2023 | McKay, McAuliffe, Waldhorn (2023). Welfare considerations for farmed shrimp. Rethink Priorities. doi.org/10.17605/OSF.IO/YAFQV | Farmed shrimp | The list of what most affects them: disease, water quality (oxygen, temperature, salinity, pH, ammonia), pollutants, stocking density, handling, transport and slaughter, eyestalk ablation. Read 2026-11-16: shrimp "are often exposed to hypoxic conditions" at night; at low oxygen they show "surface-seeking behavior"; crowding "increases vulnerability to aggression and disease"; ponds are "often lined with plastic or concrete" and "often lack shelters"; liners "likely" stop burrowing; ice slurry is the most common way of killing, after the FAO sheets | Read, the sections named |
 | ALBALAT2022 | Albalat, Zacarias, Coates, Neil, Planellas (2022). Welfare in farmed decapod crustaceans, with particular reference to *Penaeus vannamei*. *Frontiers in Marine Science* 9, 886024 | Whiteleg shrimp | Welfare on farms: ablation, disease, density, water, handling | Read in part |
 | ZACARIAS2019 | Zacarias and others (2019). Reproductive performance and offspring quality of non-ablated Pacific white shrimp (*Litopenaeus vannamei*) under intensive commercial scale conditions. *Aquaculture* 503, 460 to 466 | Whiteleg shrimp | Breeding females that keep both eyestalks | Title |
 | GSA2024 | Nicholls (2024). What is the path to viable alternatives to shrimp eyestalk ablation? Global Seafood Alliance | Whiteleg shrimp | What ablation is and why hatcheries do it: one eyestalk is removed so that eggs ripen sooner | Read. A trade article: find the primary source |
@@ -118,7 +119,7 @@ Twenty-nine items, counting the sting. **Ready**: the source was read and no rul
 | Id | The player does and feels | What it teaches | Standing |
 |----|---------------------------|-----------------|----------|
 | `ebbRide` | In the channel a walking shrimp feels a third of the current and a swimming one feels all of it. Walk to hold, swim to ride | Shrimp leave for the sea by rising into the outgoing tide | Ready. CRIALES2011 |
-| `thePond` | See "What people do to shrimp" | | Needs a yes. D39 |
+| `thePond` | See "What people do to shrimp", level 3 | | Decided, D39 |
 | `soundFirst` | The net is heard before it is seen. As built in the design | Noise reaches an animal first | In the game |
 | `followed` | Before the gathering, one adult takes up a place just beneath and behind the player and keeps it | The male follows the female before mating | To check. YANO1988 |
 | `eggs` | As designed | A female releases 100,000 to 250,000 eggs | In the game. FAO |
@@ -142,7 +143,7 @@ If the answer is yes: one anemone in the mangrove's creek mouth and two in the l
 
 ## The journal grows
 
-From five pages to seven, or eight with "Among humans". Tabs become 70 by 96 so that eight fit down the right edge.
+From five pages to eight, with "Among humans" (D39). Tabs become 70 by 96 so that eight fit down the right edge.
 
 | # | Page | Left page | Right page |
 |---|------|-----------|------------|
@@ -151,7 +152,7 @@ From five pages to seven, or eight with "Among humans". Tabs become 70 by 96 so 
 | 3 | Your body, **new** | A drawing of the shrimp from above, 600 px long, in pencil. Each part is inked the first time it is used | The chosen part: its name, one line on what it does, and how it was used |
 | 4 | What shrimp do, **new** | A list of behaviours with a small pencil figure for each. Inked when the player's shrimp does it, or sees another do it within 4 BL | The chosen behaviour: its name, one line, and the card that goes with it if there is one |
 | 5 | What shrimp feel | The cards, in the order unlocked. Below them, in pencil, the questions of cards not yet found | As now |
-| 6 | Among humans, **new, D39** | Its cards. The page does not exist until its first card unlocks | A card: title, one or two sentences, source |
+| 6 | Among humans, **new, D39, decided** | Its cards. The page does not exist until its first card unlocks | A card: title, one or two sentences, source |
 | 7 | Challenges | As now | As now |
 | 8 | Achievements | As now | As now |
 
@@ -239,16 +240,18 @@ With the eleven cards of doc 07 that makes thirty.
 
 ## What people do to shrimp
 
-Decision D39, open. The author works on this subject and asked for the game to teach about suffering as far as it can. Decisions D3, D4 and D35 and the "left out" list of doc 07 were written before that, and say: play never preaches, the net is one short chapter that explains nothing, nothing else man-made appears, and farming and slaughter stay out of the game. Three of those four would have to move for the game to say more. This section lays out four levels, each containing the one before. The first changes nothing.
+Decision D39, decided by the author on 2026-11-16: **level 4**, which holds levels 2 and 3. The same day the author set the tone for the whole game (D41): realistic, calm in how it plays but not a calm life, neither in the wild nor on a farm. Nothing gory, and never so hard that people stop playing. With D42, unnamed shrimp of the shoal can now go missing off-screen.
+
+These were the four levels put to the author. Each contains the one before.
 
 | Level | Name | What the player meets | What it changes |
 |-------|------|-----------------------|-----------------|
 | 1 | Felt | The discomforts of a wild life, each relieved by what a shrimp does: thin water, glare, a far engine, wariness, the soft hours after a molt, and the sting if accepted. Journal cards on pain, stress, sleep and fear in crustaceans | Nothing. All of it is in "True things to play" |
 | 2 | Told | Level 1, and a journal page, "Among humans": the numbers farmed and caught, what trawls bring up, mangrove turned into ponds, eyestalk removal, what a pond's water must hold. Neutral, sourced, unlocked by living the matching moment | Doc 07's "left out" list. T17 becomes one card among several |
 | 3 | Seen | Level 2, and forty seconds in the channel: the shoal passes the wall of a pond. Through the mesh of its outlet are others like them, very many, who cannot follow. Nothing is said about it | D35: the pond wall is a third man-made thing. D4 is untouched |
-| 4 | Lived | Level 3, and a second, separate life of three minutes, opened from the title screen after the story: a shrimp in a pond. It ends at the draining, with a cut to white before anything is shown | The tone. It would be the one place where calm does not return |
+| 4 | Lived | Level 3, and a second, separate life, opened from the title screen after the story: a shrimp on a farm, from the hatchery tank to the draining of the pond. It ends with a cut to white before anything is shown | The tone, as D41 now asks for everywhere |
 
-**Proposed: level 3.** It is the furthest the game can go while every pillar of doc 01 still holds. The player has spent fifteen minutes learning what a shrimp needs by needing it: dark, fine sand, clean water, room, a way out. The pond is the same animal with none of those, seen for a moment from the free side of a mesh. Nothing has to be explained, because the player already knows. Level 4 says the same thing with far more force and at a cost to the game's promise of calm. It is better judged after playtests of level 3, and it can be added later without changing anything else.
+Where each part lands: the page "Among humans" and the pond seen from the channel come with release 0.3. The pond life is its own release, 1.1, after the story is whole (doc 08).
 
 ### Level 2: the page "Among humans"
 
@@ -257,6 +260,7 @@ Rules, on top of those of doc 07:
 - A card says what is done and what was measured. It never says what it is like, and never uses a word of judgment.
 - Each card unlocks on a moment the player has just lived, so the fact arrives beside its feeling.
 - The page is the last in the journal before the challenges. The game never opens it.
+- Every card is a draft until the author says yes to its text (`CLAUDE.md`, "Ask before").
 
 | Id | Unlocks on | Source | English | Français |
 |----|-----------|--------|---------|----------|
@@ -265,9 +269,13 @@ Rules, on top of those of doc 07:
 | `card.withThem` | Finding the shoal again | KELLEHER2005 | Shrimp trawls bring up more than shrimp. In a count made for the United Nations in 2005, 62% of what they caught was thrown back into the sea. | Les chaluts à crevettes ne remontent pas que des crevettes. D'après un bilan dressé en 2005 pour les Nations unies, 62 % de ce qu'ils prenaient était rejeté à la mer. |
 | `card.inPonds` | Passing the pond, or reaching the open sea | RP2023 | At any moment about 230 billion shrimp are alive in farm ponds, by one estimate. | À tout moment, environ 230 milliards de crevettes vivent dans des bassins d'élevage, selon une estimation. |
 | `card.whereMangrove` | Leaving the mangrove | HAMILTON2013 | In eight countries studied, about half of the mangrove has gone. Ponds for aquaculture account for 28% of that loss. | Dans huit pays étudiés, environ la moitié de la mangrove a disparu. Les bassins d'aquaculture comptent pour 28 % de cette perte. |
-| `card.oneEye` | Spawning | GSA2024, ZACARIAS2019, to read | In many hatcheries one eyestalk is removed from each breeding female, because her eggs then ripen sooner. In 2019 a study on a working farm bred females that kept both. | Dans beaucoup d'écloseries, on retire un pédoncule oculaire à chaque femelle reproductrice, car ses œufs mûrissent alors plus vite. En 2019, une étude menée dans un élevage a fait se reproduire des femelles qui gardaient les deux. |
+| `card.oneEye` | Spawning | GSA2024, ZACARIAS2019, RPW2023 | In many hatcheries one eyestalk is removed from each breeding female, because her eggs then ripen sooner. In 2019 a study on a working farm bred females that kept both. | Dans beaucoup d'écloseries, on retire un pédoncule oculaire à chaque femelle reproductrice, car ses œufs mûrissent alors plus vite. En 2019, une étude menée dans un élevage a fait se reproduire des femelles qui gardaient les deux. |
 | `card.pondWater` | Leaving thin water | RPW2023 | A 2023 review of shrimp farming lists what most affects the animals: disease, the oxygen and the ammonia in the water, how many share a pond, handling, transport, and the way they are killed. | Une synthèse de 2023 sur l'élevage des crevettes dresse la liste de ce qui affecte le plus les animaux : les maladies, l'oxygène et l'ammoniac de l'eau, leur nombre par bassin, les manipulations, le transport et la mise à mort. |
-| `card.lastMinutes` | With `card.howMany` | WEINECK2018, to read | Not drafted until the paper is read. It would say how farmed shrimp are most often killed, and what was measured when they are stunned first | |
+| `card.tankToPond` | The bag, in the pond life | FAO | Young shrimp leave the hatchery about three weeks after hatching. They travel to the pond in plastic bags or tanks of cooled water. | Les jeunes crevettes quittent l'écloserie environ trois semaines après l'éclosion. Elles voyagent jusqu'au bassin dans des sacs en plastique ou des cuves d'eau refroidie. |
+| `card.howDense` | The first night in the pond | FAO, RPW2023 | Depending on the farm, from about 4 to more than 300 young shrimp are put in each square metre. | Selon l'élevage, on met de 4 à plus de 300 jeunes crevettes par mètre carré. |
+| `card.nightWater` | The first dawn in the pond | RPW2023 | In farm ponds the water often runs short of oxygen at night, when the algae have no light. Shrimp short of oxygen rise toward the surface. | Dans les bassins d'élevage, l'eau manque souvent d'oxygène la nuit, quand les algues n'ont plus de lumière. Les crevettes qui en manquent montent vers la surface. |
+| `card.noSand` | Trying to hide in the pond | RPW2023 | Many farm ponds are lined with plastic or concrete, where a shrimp probably cannot burrow. Many have no shelter. | Beaucoup de bassins d'élevage sont tapissés de plastique ou de béton, où une crevette ne peut sans doute pas s'enfouir. Beaucoup n'ont aucun abri. |
+| `card.lastMinutes` | The end of the pond life | FAO, RPW2023 | On many farms, shrimp are killed as soon as they leave the pond, in iced water at 0 to 4 °C. | Dans beaucoup d'élevages, les crevettes sont tuées dès leur sortie du bassin, dans de l'eau glacée entre 0 et 4 °C. |
 
 ### Level 3: the pond, seen
 
@@ -275,11 +283,11 @@ Where: the channel, along the top edge of zone D, "the pool", where the tide slo
 
 | Thing | Look from above | Does |
 |-------|-----------------|------|
-| `pond.wall` | A straight bank of packed earth along the edge, 2400 px long. The only straight line in the game | Solid |
-| `pond.outlet` | A round pipe mouth in the wall, 3 BL across, closed by a mesh | Green-brown water comes through it into the channel |
+| `pond.wall` | A straight bank of packed earth along the top edge of zone D, 2000 px long. The only straight line in the wild | Solid |
+| `pond.outlet` | A concrete sluice gate in the wall, 3 BL across, closed by a mesh | Green-brown water comes through it into the channel |
 | `pond.plume` | A stain of murkier, greener water spreading from the outlet, 10 BL long, bent by the current | Inside it Sense shows only the thin white ribbon of the unknown. The shrimp will not eat there |
 | `pond.crowd` | Through the mesh: pale shapes of shrimp, close together, moving along the wall. No sand, no cover | One of them comes to the mesh when the player does |
-| Sound | A slow, even beat of paddles on water, behind the wall | Fades in from 12 BL |
+| Sound | Water pouring through the gate, and behind the wall, at night, a slow even beat of paddles | Fades in from 12 BL |
 
 What happens, with the tide carrying the shoal past:
 
@@ -288,17 +296,77 @@ What happens, with the tide carrying the shoal past:
 3. Narration: "Others, like you. So many."
 4. The tide pulls. The shoal moves on. The one behind the mesh stays at it. Narration: "They do not follow."
 
-Nobody is hurt and nothing is explained. The place gets a journal entry with a drawing and a name, "The wall", and no words, as "The shadow" has. With level 2 the card `card.inPonds` unlocks here.
+Nobody is hurt and nothing is explained. The place gets a journal entry with a drawing and a name, "The wall", and no words, as "The shadow" has. The card `card.inPonds` unlocks here.
 
-To check before building: that ponds stand behind mangrove and lagoon shores on this coast and release water into channels, that their outlets are screened, and that paddle wheels run at night. The three lines above are new text and would go into doc 13.
+Checked on 2026-11-16: the ponds of extensive and semi-intensive farms are drained through a gate on their outlet, at low tide where the tide allows it (FAO). Still to check: that ponds stand behind mangrove and lagoon shores on this coast and let water out into channels, that their outlets are screened, and that paddle wheels run at night on such farms. FAO says aeration in semi-intensive ponds is "at best minimal". The three lines above are new text and wait for a yes before they go into doc 13.
 
 ### Level 4: the other life
 
-Not proposed for now. Recorded so that the idea is not lost.
+D39 decides that it exists. Its shape below is proposed, as T49 to T52 in doc 09. It is built last, as release 1.1, and its text waits for a yes.
 
-A separate entry on the title screen, shown after the story has been finished once. No story steps, no challenges, no narration. A bright tank, then a pond. The keys are the same and most of them find nothing: Hide finds nothing to go under, the floor is too hard to burrow, a tail flip ends at a wall. There is no hunter. The water runs thin before each dawn until the paddles start. After three minutes the level begins to fall, the current draws everyone one way, and the screen goes to white before the outlet. Then the title screen.
+**Why it is here.** By the end of the story the player knows what a shrimp needs because they have needed it: dark, the right sand, clean water, room, others they know, a way out. The pond life is the same animal with almost none of those. It is lived, not told. The keys are the same, and most of what they used to do finds nothing.
 
-It would need its own decision on food (the game shows only algae being eaten, and a pond's feed is not that), and its own playtests.
+**The entry.** On the title screen, after the story has been finished once, a second entry: "Another life". Under it, one line in small type: "A life on a farm. About ten minutes." The pause menu works as in the story. Leaving returns to the title screen. Nothing is saved inside it except the journal cards it unlocks.
+
+**What it is not.** No narration. No story steps, challenges or achievements. No names. Nothing to fail: the player cannot lose, and every key keeps working. No death, no wound and no body is ever shown (rule 2). No feed is shown being eaten (rule 1, T49).
+
+#### The farm (T50)
+
+A semi-intensive pond on this coast, as the FAO sheet describes them: an earthen pond of about 2 ha, 1.0 to 1.2 m deep, stocked at 10 to 30 young shrimp per square metre. The game uses 20. Drawn at the pond life's scale, that is one shrimp about every 2 BL in every direction, as far as the player swims: about twenty on every screen, everywhere. Food is the pond's own, "natural foods enhanced by pond fertilization" (FAO). Harvest is by "draining the pond at low tide through a bag net installed in the outlet sluice gate" (FAO).
+
+#### Four parts
+
+| Part | Length | Where | What is there | What the player can do |
+|------|--------|-------|---------------|------------------------|
+| 1. The tank | 2 min | A hatchery tank seen from above: bare white floor, a curved wall all round, 4 m across | Hard white light that never changes. Hundreds of postlarvae of one age, the player among them, in the last larval shape of the Drift. Clouds of microalgae to eat | Swim, eat, sense. Every direction ends at the same white wall within seconds. Hide finds nothing. At the end the water is drawn down and everyone with it. Dark |
+| 2. The bag | 45 s | Inside a plastic bag of water, about 3 BL across | Dim light through the plastic. The water is cold. The bag sways. Many others pressed close | Almost nothing. The cold slows everything: speed halves, turns are slow. Then light, the bag opens over the pond, and its water pours in with a new taste |
+| 3. The pond | About 6 min: four days and nights of about 90 s each | The pond, drawn at the lagoon's scale, 124 px to a BL | Opaque green water: the view reaches 3 BL. A bottom of soft clay with a film on it. In the middle, black sludge where the water tastes wrong. Straight banks of packed earth. Shrimp everywhere, 2 BL apart, the same in every direction | Graze the film, which is everywhere. Burrow where the clay is soft, but not near the sludge. Rest. Meet strangers, many, none known. By day most lie still. At night they move, and the water thins (below) |
+| 4. The draining | 90 s | The same pond, at night, at low tide | The gate opens. The water starts to move toward it, then to fall. The surface comes down toward the bottom. The crowd closes in until they touch. Ahead, the mesh of the bag net shows as a shadow on the clay | Tail flips against the current hold the shrimp back for a few seconds each time, and each time the water is lower. Before the mesh is reached, the picture fades to white over 1 s. Silence for 3 s. Then the title screen |
+
+What happens in the pond, night by night:
+
+| Night | What happens |
+|-------|--------------|
+| 1 | The first night. Nothing more than the crowd. `card.howDense` unlocks at dusk |
+| 2 | The water thins before dawn (`thinWater`, everywhere at once, with nowhere better to go). Everyone rises toward the surface and drifts to the banks. The player's sides flutter and it will not eat until the sun is up. `card.nightWater` unlocks at dawn |
+| 3 | The player molts, among strangers. Nobody stays close. Strangers bump into the soft shrimp, each bump a startle. Nothing is hurt. The soft hours pass |
+| 4 | Near the gate, the tide outside brings a wild shoal past the mesh. One comes to it. If the player goes too, their antennae touch through the mesh, as in level 3 from the other side. The shoal moves on with the tide. Then the draining begins |
+
+#### Feelings in the pond life
+
+Proposed rules, for doc 10 when this is built:
+
+| Feeling or condition | In the pond life |
+|----------------------|------------------|
+| Hunger | Never more than low. The film is everywhere, and farmed shrimp are fed. No feed is shown |
+| Comfort | Its target is capped at 0.3. No cover works. Burrowing in soft clay adds 0.1 |
+| `crowded`, new | More than 8 shrimp within 2 BL. Comfort target down 0.2. A stranger's bump is a harmless startle. The player's own tail flip stops short at half its length when it meets another shrimp. RPW2023: crowding "increases vulnerability to aggression and disease" |
+| `cold`, new | In the bag. Speed and turning at half. Fear cannot rise above 0.4: there is nothing to flee |
+| Fear | No predators. Fear comes from bumps, the thinning water before dawn, and the draining, when it rises to 0.8 and stays |
+| Company | Always full, of strangers. The warmth that a known companion brings never comes. One stranger tends to stay near, night after night. It has no name |
+| Curiosity | Little is new. The journal gains the farm's places and its cards |
+| Thin water | As `thinWater`, but all of the pond at once, before each dawn from the second night |
+
+**Sound.** The tank: a steady hum and the bubbling of air. The bag: muffled, the slosh of water. The pond: wind on the surface, a far engine now and then, at night the beat of a paddle wheel if one is found to run on such farms. The draining: the rush of water through the gate, growing. No music.
+
+**Journal.** Four places, each a drawing with no words, as "The shadow" has: "The tank", "The bag", "The pond", "The gate". The cards of "Among humans" unlock as listed above.
+
+**Text to approve.** All new, all waiting for a yes before they go into doc 13:
+
+| Key, proposed | English | Français |
+|---------------|---------|----------|
+| `title.otherLife` | Another life | Une autre vie |
+| `title.otherLife.note` | A life on a farm. About ten minutes. | Une vie dans un élevage. Une dizaine de minutes. |
+| `place.tank` | The tank | La cuve |
+| `place.bag` | The bag | Le sac |
+| `place.pond` | The pond | Le bassin |
+| `place.gate` | The gate | La vanne |
+
+**To check before building.** How postlarvae are taken out of a hatchery tank. Whether they are let into the pond slowly, so the water's taste changes by degrees. Whether sludge gathers in the middle of earthen ponds. Whether paddle wheels run at night on semi-intensive farms. Whether draining is done at night. Whether wild shrimp come up to a pond's outlet from outside.
+
+**Pictures.** About ten, in doc 14: a tank floor and its wall, the bag's edge with light through it, a pond clay tile with film, a sludge patch, the pond's bank strip, the gate from inside, the bag net's mesh shadow, a green murk image, and the falling surface. The shrimp, the larva and the shoal exist.
+
+**Playtests.** Do players stop before the end? The aim is fewer than one in ten. Asked afterwards "How was that life?", do they answer with feelings? Asked "Did anything feel like a lesson?", the aim stays at nobody.
 
 ## Rules for the items that add rules
 
@@ -425,7 +493,8 @@ A player who never opens the journal still leaves knowing, in their hands, that 
 | The sting | One sequence | An anemone, a rubbing posture | A sharp note | With its yes |
 | Journal pages "Your body" and "What shrimp do" | Two pages | One large drawing with 15 parts, 29 small figures | None | Step 9 |
 | Level 2 | Cards only | None | None | Release 0.3 |
-| Level 3 | One scripted passage | A wall strip, an outlet, a plume, a crowd seen through mesh | Paddles | Release 0.3 |
+| Level 3 | One scripted passage | A wall strip, an outlet, a plume, a crowd seen through mesh | Water through a gate, paddles | Release 0.3 |
+| Level 4 | A separate life in four parts, two new conditions, the draining | About ten | A hum, a bag, wind, the gate | Release 1.1 |
 
 ## If this is accepted
 
@@ -434,7 +503,7 @@ Each accepted item moves into the documents that already hold its kind, and this
 | Goes to | What |
 |---------|------|
 | Doc 09 | One row per accepted item, numbered after the last T row |
-| Doc 07 | New sources, new cards, the "left out" list if level 2 or more |
+| Doc 07 | New sources, new cards. The "left out" list is done (D39) |
 | Doc 10 | The rules above, the new conditions `asleep`, `rested`, `breathless`, `unsteady` |
 | Doc 11 | Ground kinds, thin water, the pond |
 | Doc 12 | The new journal pages, card ids, the achievement "Field notes" |
@@ -459,13 +528,16 @@ Added to the playtest questions of doc 08:
 | A shrimp that eats its shed shell, as many do | It is an animal product. The game is silent on it |
 | A cleaner shrimp at work | It eats animals |
 | Colour that reddens with stress | The shrimp is never pink |
-| Crowding as a discomfort in the wild | No clear source. See above |
+| Crowding as a discomfort in the wild | No clear source. See above. On farms it is sourced, and the pond life uses it |
+| Feed being eaten in the pond | Rule 1: no animal product is eaten, and what a feed holds is not checked. The pond's own food is shown instead (T49) |
+| Sick or dying shrimp in the pond | Gore, which D41 rules out. Disease stays in the journal |
+| Eyestalk removal shown | It is done to breeding females, not to the shrimp the player lives. It stays a card, `card.oneEye` |
 | Named companions that recognise the player | Not shown for shrimp. Already marked as a design choice in doc 07 |
 | A wound, a lost limb, a caught companion | Rule 2 |
 
 ## Open questions
 
-1. D39: level 1, 2, 3 or 4? Default: 3.
+1. The pond life's food, farm, shape and text: T49 to T52 in doc 09. Defaults as written.
 2. The sting: yes or no? Default: no.
 3. `pulse`: a heartbeat seen through the shell. It is a true thing and it is not a bar, but it is a new kind of sign. Default: yes.
 4. `gutLine`: hunger read on the body. Écume would need another mark, such as two dark dots at the base of her tail fan. Default: yes.

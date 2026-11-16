@@ -333,9 +333,10 @@ test.describe('food and scent', () => {
       (hunger) => (window.__lvdc?.feelings()?.values.hunger ?? 1) < hunger - 0.05,
       start.values.hunger,
     );
-    const eating = await feelings(page);
-    expect(eating.mood).toBe('content');
-    expect(eating.discovered).toContain('food.algaeFilm');
+    // A mood that has just started holds for MOOD.oldHolds, so content can
+    // come a moment after the first bite. Curious often leads on arrival here.
+    await page.waitForFunction(() => window.__lvdc?.feelings()?.mood === 'content');
+    expect((await feelings(page)).discovered).toContain('food.algaeFilm');
     await page.keyboard.up('KeyE');
     await page.waitForFunction(() => window.__lvdc?.player()?.activity === 'free');
   });

@@ -2,6 +2,7 @@ import { imageFit } from '../art/fit';
 import { PAINTERS, PAINTER_GROUPS, type PainterGroup } from '../art/painters';
 import { paintImage } from './images';
 import {
+  LAGOON_SCENES,
   MANGROVE_SCENES,
   MOOD_LIST,
   MOOD_NOTES,
@@ -10,7 +11,10 @@ import {
   lookAt,
   moodCanvas,
   sceneCanvas,
+  type NamedScene,
 } from './scenes';
+import { lagoon } from '../data/areas/lagoon';
+import { mangrove } from '../data/areas/mangrove';
 
 /**
  * The atelier: a page that shows the art without starting the game.
@@ -104,13 +108,13 @@ function shown(canvas: HTMLCanvasElement, cssWidth: number): HTMLCanvasElement {
   return canvas;
 }
 
-function scenes(): HTMLElement {
+function scenes(list: NamedScene[]): HTMLElement {
   const wrap = element('div');
-  for (const scene of MANGROVE_SCENES) {
+  for (const scene of list) {
     const block = element('div', undefined, 'scene');
     block.dataset.scene = scene.id;
     block.append(element('h3', scene.title), element('p', scene.note, 'note'));
-    block.append(shown(sceneCanvas(scene), scene.id === 'map' ? 1200 : 1280));
+    block.append(shown(sceneCanvas(scene), scene.id.endsWith('map') ? 1200 : 1280));
     wrap.append(block);
   }
   return wrap;
@@ -149,7 +153,13 @@ const sections: Section[] = [
     id: 'scenes',
     title: 'Mangrove scenes',
     note: 'Each picture is one screen of the game, drawn from the mangrove data file. Nothing moves here.',
-    build: scenes,
+    build: () => scenes(MANGROVE_SCENES),
+  },
+  {
+    id: 'lagoonscenes',
+    title: 'Lagoon scenes',
+    note: 'Chapter 2, drawn from the lagoon data file. Day, dusk and night. Nothing moves here.',
+    build: () => scenes(LAGOON_SCENES),
   },
   {
     id: 'driftscenes',
@@ -188,12 +198,17 @@ if (!only) all.className = 'here';
 nav.prepend(all);
 
 // ?view=x,y shows one screen of the mangrove at that place, and nothing else.
+// Add &area=lagoon for the lagoon.
 const place = new URLSearchParams(location.search).get('view');
 if (place) {
   const [x = 0, y = 0] = place.split(',').map(Number);
+  const inLagoon = new URLSearchParams(location.search).get('area') === 'lagoon';
   const block = element('div', undefined, 'scene');
   block.dataset.scene = 'view';
-  block.append(element('h3', `The mangrove at ${x}, ${y}`), shown(lookAt(x, y), 1280));
+  block.append(
+    element('h3', `The ${inLagoon ? 'lagoon' : 'mangrove'} at ${x}, ${y}`),
+    shown(lookAt(x, y, inLagoon ? lagoon : mangrove), 1280),
+  );
   main.append(block);
 }
 

@@ -3,6 +3,7 @@ import {
   blob,
   glow,
   hex,
+  litWash,
   mix,
   patches,
   rgba,
@@ -704,6 +705,62 @@ const burrowMouth: Painter = {
   },
 };
 
+/**
+ * A sand mound: a low cone with a dark hole at the top and paler, finer sand
+ * thrown out around it. Something lives below and is never seen.
+ */
+const sandVolcano: Painter = {
+  width: 110,
+  height: 110,
+  paint(ctx, size) {
+    const random = seededRandom(721);
+    const c = size / 2;
+    glow(ctx, c + 6, c + 8, 48, SAND_DARK, 0.3, 0.4);
+    ctx.save();
+    tracePath(ctx, blob(random, c, c, 40, 0.08, 14));
+    softFill(
+      ctx,
+      litWash(ctx, c, c, 40, mix(SAND, SAND_LIGHT, 0.25), mix(SAND, SAND_DARK, 0.12), SAND_WET),
+      SAND_DARK,
+      12,
+      0.25,
+    );
+    ctx.clip();
+    speckle(
+      ctx,
+      random,
+      140,
+      { x: c - 40, y: c - 40, w: 80, h: 80 },
+      [0.4, 1.1],
+      SAND_DARK,
+      [0.2, 0.45],
+    );
+    // Fine sand thrown out of the hole, paler, and a few runnels down the sides.
+    glow(ctx, c, c, 20, SAND_LIGHT, 0.35);
+    ctx.strokeStyle = rgba(SAND_DARK, 0.18);
+    ctx.lineWidth = 1.4;
+    for (let index = 0; index < 7; index++) {
+      const angle = (index / 7) * TAU + random() * 0.5;
+      ctx.beginPath();
+      ctx.moveTo(c + Math.cos(angle) * 12, c + Math.sin(angle) * 12);
+      ctx.lineTo(
+        c + Math.cos(angle) * (28 + random() * 10),
+        c + Math.sin(angle) * (28 + random() * 10),
+      );
+      ctx.stroke();
+    }
+    ctx.restore();
+    const hole = ctx.createRadialGradient(c + 1, c + 1, 0, c + 1, c + 1, 7.5);
+    hole.addColorStop(0, rgba(ROCK_SHADE, 0.9));
+    hole.addColorStop(0.6, rgba(mix(ROCK_SHADE, SAND_DARK, 0.5), 0.7));
+    hole.addColorStop(1, rgba(SAND_DARK, 0));
+    ctx.fillStyle = hole;
+    ctx.beginPath();
+    ctx.arc(c + 1, c + 1, 7.5, 0, TAU);
+    ctx.fill();
+  },
+};
+
 export const lagoonPainters: Record<string, Painter> = {
   'lagoon.seagrass.a': seagrass(CLUMPS.a[0], CLUMPS.a[1]),
   'lagoon.seagrass.b': seagrass(CLUMPS.b[0], CLUMPS.b[1]),
@@ -717,6 +774,7 @@ export const lagoonPainters: Record<string, Painter> = {
   'burrow.mouth': burrowMouth,
   'light.caustics': caustics,
   'fx.glow': glowPoint,
+  'thing.sandVolcano': sandVolcano,
 };
 
 void SAND;

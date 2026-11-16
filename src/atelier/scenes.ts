@@ -1,7 +1,9 @@
 import { MOOD_EXPRESSIONS, type RigLook } from '../art/expressions';
 import { MOODS, type Mood } from '../core/feelings/mood';
 import { seededRandom } from '../core/random';
+import { lagoon } from '../data/areas/lagoon';
 import { mangrove } from '../data/areas/mangrove';
+import type { AreaDef } from '../data/areas/types';
 import { paintImage } from './images';
 import { renderScene, type SceneView } from './scene';
 import { drawStillShrimp, type StillShrimp } from './stillShrimp';
@@ -164,20 +166,164 @@ export const MANGROVE_SCENES: NamedScene[] = [
   },
 ];
 
+/**
+ * In the lagoon the shrimp is older and the world is drawn smaller around it:
+ * one body length is 124 pixels. The companions keep their differences.
+ */
+const L_PLAYER: Partial<RigLook> = { bodyLengthPx: 124 };
+const L_BRISE: Partial<RigLook> = { bodyLengthPx: 130, leftAntennaFactor: 0.67 };
+const L_ECUME: Partial<RigLook> = { bodyLengthPx: 106 };
+const L_YOUNG: Partial<RigLook> = { bodyLengthPx: 110 };
+
+/** The shoal on its ground, zone E, as the data file places it. */
+function shoal(mood: Mood): StillShrimp[] {
+  return (lagoon.shrimp ?? []).map((one, index) =>
+    still(mood, one.x, one.y, one.heading ?? 0, {
+      look: one.who === 'brise' ? L_BRISE : one.who === 'ecume' ? L_ECUME : L_YOUNG,
+      sweep: index % 2 === 0 ? 0.4 : -0.3,
+    }),
+  );
+}
+
+/** Views of the lagoon, each the size of the game's screen. */
+export const LAGOON_SCENES: NamedScene[] = [
+  {
+    id: 'lagoon-arrival',
+    title: 'Out of the creek',
+    note: 'Zone A, in full daylight. Muddy sand where the creek opens, two leaves washed out of the mangrove, and the bright net of caustics over everything.',
+    view: {
+      area: lagoon,
+      ...around(7310, 2600),
+      shrimp: [still('calm', 7480, 2640, Math.PI, { look: L_PLAYER })],
+      murkAt: { x: 7480, y: 2640 },
+    },
+  },
+  {
+    id: 'lagoon-flat',
+    title: 'Dug in on the flat',
+    note: 'Zone B. Bare rippled sand, golden film and two sand mounds. The player has dug in for the day: only the eyes and antennae show.',
+    view: {
+      area: lagoon,
+      ...around(5480, 2860),
+      shrimp: [still('calm', 5560, 2980, 2.6, { look: L_PLAYER })],
+      burrowed: [0],
+      murkAt: { x: 5560, y: 2980 },
+    },
+  },
+  {
+    id: 'lagoon-meadow',
+    title: 'The turtle in the meadow',
+    note: 'Zone C. Clumps of seagrass, some with fuzz on the older blades. The turtle glides between them and stops at a clump to crop it. Its shadow is as large as a root tangle.',
+    view: {
+      area: lagoon,
+      ...around(4400, 900),
+      shrimp: [still('curious', 4150, 1240, -1.2, { look: L_PLAYER, target: { x: 4400, y: 900 } })],
+      murkAt: { x: 4150, y: 1240 },
+    },
+  },
+  {
+    id: 'lagoon-shoal',
+    title: 'The shoal at dusk',
+    note: 'Zone E. At dusk the shoal comes out of the sand to graze. Brise has the shorter left antenna. Écume is smaller. The player is social: antennae reaching toward Brise.',
+    view: {
+      area: lagoon,
+      ...around(3920, 2760),
+      shrimp: [
+        ...shoal('content'),
+        still('social', 3880, 2620, -2.0, { look: L_PLAYER, target: { x: 3700, y: 2450 } }),
+      ],
+      time: 'dusk',
+      murkAt: { x: 3880, y: 2620 },
+    },
+  },
+  {
+    id: 'lagoon-burrow',
+    title: 'The goby and the pistol shrimp',
+    note: "Zone D. The goby lies in the mouth of the burrow, head out. The pistol shrimp pushes a load of sand out, one antenna on the goby's tail. A slow walk to 2.5 BL is accepted.",
+    view: {
+      area: lagoon,
+      ...around(3600, 4120),
+      shrimp: [
+        still('curious', 3520, 4300, -Math.PI / 2, {
+          look: L_PLAYER,
+          target: { x: 3520, y: 3990 },
+        }),
+      ],
+      murkAt: { x: 3520, y: 4300 },
+    },
+  },
+  {
+    id: 'lagoon-night',
+    title: 'Plankton in the shallows at night',
+    note: 'Zone F. Faint points of light everywhere, thickest here. They brighten in the wake of the shrimp for a second and a half. No caustics at night.',
+    view: {
+      area: lagoon,
+      ...around(6420, 4340),
+      shrimp: [still('content', 6440, 4420, Math.PI + 0.3, { look: L_PLAYER })],
+      time: 'night',
+      wake: [
+        { x: 6560, y: 4450 },
+        { x: 6690, y: 4470 },
+        { x: 6820, y: 4460 },
+        { x: 6950, y: 4430 },
+      ],
+      murkAt: { x: 6440, y: 4420 },
+    },
+  },
+  {
+    id: 'lagoon-pass',
+    title: 'The hunting fish in the pass',
+    note: 'Zone G. The fish comes up the pass at dawn: a long dark spindle in mid-water, its shadow on the sand. The player is afraid and has dug in, which makes it give up after 2 s.',
+    view: {
+      area: lagoon,
+      ...around(1260, 2850),
+      shrimp: [still('afraid', 1700, 2760, 2.8, { look: L_PLAYER })],
+      burrowed: [0],
+      murkAt: { x: 1700, y: 2760 },
+    },
+  },
+  {
+    id: 'lagoon-rocks',
+    title: 'The north-west rocks',
+    note: 'Zone H. Boulders with crevices between them, a quiet corner for the molt. The player rests in a crevice. A sea star lies on the sand, moving too slowly to see.',
+    view: {
+      area: lagoon,
+      ...around(1060, 800),
+      shrimp: [still('calm', 1020, 590, 1.9, { look: L_PLAYER, curve: 0.04 })],
+      murkAt: { x: 1020, y: 590 },
+    },
+  },
+  {
+    id: 'lagoon-map',
+    title: 'The whole lagoon',
+    note: 'All of chapter 2, with its zones. About 64 by 40 body lengths. The creek comes in on the right, the pass leaves on the left.',
+    view: {
+      area: lagoon,
+      x: 0,
+      y: 0,
+      w: 8000,
+      h: 5000,
+      scale: 0.15,
+      shrimp: [...shoal('calm'), still('calm', 7600, 2650, Math.PI, { look: L_PLAYER })],
+      showZones: true,
+    },
+  },
+];
+
 export function sceneCanvas(scene: NamedScene): HTMLCanvasElement {
   return renderScene(scene.view);
 }
 
 /**
- * One screen of the mangrove centred as near (cx, cy) as the game's camera
- * could be: the view never leaves the area. For looking anywhere, with
- * atelier.html?view=x,y
+ * One screen of an area centred as near (cx, cy) as the game's camera could
+ * be: the view never leaves the area. For looking anywhere, with
+ * atelier.html?view=x,y, and &area=lagoon for the lagoon.
  */
-export function lookAt(cx: number, cy: number): HTMLCanvasElement {
-  const x = Math.min(Math.max(cx - VIEW_W / 2, 0), mangrove.size.w - VIEW_W);
-  const y = Math.min(Math.max(cy - VIEW_H / 2, 0), mangrove.size.h - VIEW_H);
+export function lookAt(cx: number, cy: number, area: AreaDef = mangrove): HTMLCanvasElement {
+  const x = Math.min(Math.max(cx - VIEW_W / 2, 0), area.size.w - VIEW_W);
+  const y = Math.min(Math.max(cy - VIEW_H / 2, 0), area.size.h - VIEW_H);
   return renderScene({
-    area: mangrove,
+    area,
     x,
     y,
     w: VIEW_W,

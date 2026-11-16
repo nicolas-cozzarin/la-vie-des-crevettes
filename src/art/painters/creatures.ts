@@ -650,6 +650,188 @@ const birdSplash: Painter = {
   },
 };
 
+const BARNACLE = hex('#B9B4A6');
+const BARNACLE_PALE: Rgb = [226, 222, 208];
+const BARNACLE_DARK: Rgb = [92, 86, 74];
+const HERMIT: Rgb = [92, 84, 58];
+const HERMIT_PALE: Rgb = [196, 184, 140];
+const HERMIT_DARK: Rgb = [46, 40, 28];
+
+/**
+ * One barnacle seen from above: a low cone of pale plates with ridges, and a
+ * dark slit at the top where its feathered hand comes out.
+ */
+export function paintBarnacle(
+  ctx: CanvasRenderingContext2D,
+  random: () => number,
+  x: number,
+  y: number,
+  radius: number,
+): void {
+  ctx.save();
+  tracePath(ctx, blob(random, x, y, radius, 0.12, 9));
+  softFill(
+    ctx,
+    litWash(ctx, x, y, radius, BARNACLE_PALE, BARNACLE, BARNACLE_DARK),
+    BARNACLE_DARK,
+    Math.max(2, radius * 0.3),
+    0.5,
+  );
+  ctx.clip();
+  // Ridges running down the cone from the top.
+  ctx.strokeStyle = rgba(BARNACLE_DARK, 0.3);
+  ctx.lineWidth = Math.max(0.6, radius * 0.07);
+  for (let index = 0; index < 8; index++) {
+    const angle = (index / 8) * TAU + random() * 0.3;
+    ctx.beginPath();
+    ctx.moveTo(x + Math.cos(angle) * radius * 0.45, y + Math.sin(angle) * radius * 0.45);
+    ctx.lineTo(x + Math.cos(angle) * radius * 1.05, y + Math.sin(angle) * radius * 1.05);
+    ctx.stroke();
+  }
+  ctx.restore();
+  // The opening: a dark diamond with the two pairs of lid plates meeting in a line.
+  const open = radius * 0.42;
+  ctx.save();
+  ctx.translate(x + radius * 0.04, y + radius * 0.04);
+  ctx.rotate(random() * 0.8 - 0.4);
+  ctx.beginPath();
+  ctx.moveTo(-open, 0);
+  ctx.quadraticCurveTo(0, -open * 0.75, open, 0);
+  ctx.quadraticCurveTo(0, open * 0.75, -open, 0);
+  ctx.closePath();
+  ctx.fillStyle = rgba(BARNACLE_DARK, 0.75);
+  ctx.fill();
+  ctx.strokeStyle = rgba(BARNACLE_PALE, 0.7);
+  ctx.lineWidth = Math.max(0.6, radius * 0.08);
+  ctx.beginPath();
+  ctx.moveTo(-open * 0.8, 0);
+  ctx.lineTo(open * 0.8, 0);
+  ctx.moveTo(0, -open * 0.45);
+  ctx.lineTo(0, open * 0.45);
+  ctx.stroke();
+  ctx.restore();
+}
+
+/** One barnacle alone. Its feathered hand is a line drawn by the game. */
+const barnacle: Painter = {
+  width: 48,
+  height: 48,
+  paint(ctx, width, height) {
+    paintBarnacle(ctx, seededRandom(561), width / 2, height / 2, 15);
+  },
+};
+
+/**
+ * What a hermit crab shows of itself: the front of its body, two small claws
+ * and the walking legs, coming out of the shell's mouth. Laid over the front
+ * of `snail.shell`, with `HERMIT_LEGS_JOINT` on `HERMIT_SHELL_MOUTH`.
+ */
+const hermitLegs: Painter = {
+  width: 130,
+  height: 110,
+  paint(ctx, width, height) {
+    const random = seededRandom(571);
+    const mid = height / 2;
+    // Walking legs: two pairs, each in three jointed parts, banded pale.
+    for (const side of [-1, 1]) {
+      for (const [index, reach] of [
+        [0, 0.72],
+        [1, 0.62],
+      ] as const) {
+        const root = { x: 30 + index * 8, y: mid + side * 10 };
+        const knee = { x: root.x + 18 * reach, y: root.y + side * 26 * reach };
+        const ankle = { x: knee.x + 22 * reach, y: knee.y + side * 12 * reach };
+        const tip = { x: ankle.x + 18 * reach, y: ankle.y + side * 2 };
+        crabLeg(ctx, [root, knee, ankle, tip], 7.5);
+        ctx.strokeStyle = rgba(HERMIT_PALE, 0.55);
+        ctx.lineWidth = 1.4;
+        for (const [a, b] of [
+          [root, knee],
+          [knee, ankle],
+        ] as const) {
+          ctx.beginPath();
+          ctx.moveTo(a.x + (b.x - a.x) * 0.2, a.y + (b.y - a.y) * 0.2);
+          ctx.lineTo(a.x + (b.x - a.x) * 0.8, a.y + (b.y - a.y) * 0.8);
+          ctx.stroke();
+        }
+      }
+    }
+    // Two small claws held in front, nearly the same size.
+    for (const side of [-1, 1]) {
+      const claw = sampleCurve(
+        [
+          { x: 36, y: mid + side * 7 },
+          { x: 52, y: mid + side * 11 },
+          { x: 66, y: mid + side * 8 },
+          { x: 74, y: mid + side * 3 },
+        ],
+        14,
+      );
+      band(ctx, claw, (t) => 11 - 6 * t, HERMIT, HERMIT_PALE, HERMIT_DARK);
+    }
+    // The front of the body, between the claws.
+    ctx.save();
+    tracePath(ctx, blob(random, 30, mid, 13, 0.08, 9, 0.9));
+    softFill(ctx, litWash(ctx, 30, mid, 13, HERMIT_PALE, HERMIT, HERMIT_DARK), HERMIT_DARK, 3, 0.5);
+    ctx.restore();
+    // Eyes on short stalks, and two short feelers.
+    ctx.lineCap = 'round';
+    for (const side of [-1, 1]) {
+      ctx.strokeStyle = rgba(HERMIT_PALE, 0.9);
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.moveTo(40, mid + side * 3);
+      ctx.lineTo(50, mid + side * 5);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(24,22,20,0.92)';
+      ctx.beginPath();
+      ctx.arc(51.5, mid + side * 5.4, 2.4, 0, TAU);
+      ctx.fill();
+      ctx.strokeStyle = rgba([196, 120, 72], 0.65);
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(44, mid + side * 1.5);
+      ctx.quadraticCurveTo(70, mid + side * 2, 92, mid + side * 14);
+      ctx.stroke();
+    }
+    void width;
+  },
+};
+
+/** Where the legs' joint sits on `snail.shell`: the mouth of the shell. */
+export const HERMIT_SHELL_MOUTH = { x: 122, y: 45 };
+/** The legs' own joint: where the body leaves the shell. */
+export const HERMIT_LEGS_JOINT = { x: 18, y: 55 };
+
+/**
+ * Mud balls left by a feeding fiddler crab: small pale pellets in rough lines
+ * running out from the burrow, which is at the centre and left clear.
+ */
+const crabPellets: Painter = {
+  width: 160,
+  height: 160,
+  paint(ctx, width, height) {
+    const random = seededRandom(581);
+    const cx = width / 2;
+    const cy = height / 2;
+    for (let line = 0; line < 7; line++) {
+      const angle = (line / 7) * TAU + random() * 0.5;
+      const count = 4 + Math.floor(random() * 5);
+      for (let index = 0; index < count; index++) {
+        const distance = 26 + index * 7 + random() * 4;
+        const x = cx + Math.cos(angle + (random() - 0.5) * 0.18) * distance;
+        const y = cy + Math.sin(angle + (random() - 0.5) * 0.18) * distance;
+        const r = 2.6 + random() * 2;
+        glow(ctx, x + r * 0.5, y + r * 0.6, r * 1.6, MUD_DARK, 0.4);
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, TAU);
+        ctx.fillStyle = litWash(ctx, x, y, r, [196, 174, 140], MUD_LIGHT, [104, 84, 60]);
+        ctx.fill();
+      }
+    }
+  },
+};
+
 export const creaturePainters: Record<string, Painter> = {
   'crab.body': crabBody,
   'crab.claw': crabClaw,
@@ -661,6 +843,9 @@ export const creaturePainters: Record<string, Painter> = {
   'bird.foot': birdFoot,
   'bird.beak': birdBeak,
   'bird.splash': birdSplash,
+  barnacle,
+  'hermit.legs': hermitLegs,
+  'thing.crabPellets': crabPellets,
 };
 
 void mix;

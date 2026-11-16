@@ -14,11 +14,18 @@ test('the atelier paints every picture and every scene without errors', async ({
   await page.waitForSelector('body[data-ready="true"]', { timeout: 150_000 });
 
   expect(errors).toEqual([]);
-  // Ten mangrove scenes and four of the Drift, at least. Each has its picture.
+  // Ten mangrove scenes, four of the Drift and nine of the lagoon, at least. Each has its picture.
   const scenes = await page.locator('.scene').count();
-  expect(scenes).toBeGreaterThanOrEqual(14);
+  expect(scenes).toBeGreaterThanOrEqual(23);
+  await expect(page.locator('.scene[data-scene="lagoon-map"]')).toBeAttached();
   expect(await page.locator('.scene canvas').count()).toBe(scenes);
-  for (const name of ['shrimp.carapace', 'mangrove.root.a', 'larva.mid', 'crab.claw']) {
+  for (const name of [
+    'shrimp.carapace',
+    'mangrove.root.a',
+    'larva.mid',
+    'crab.claw',
+    'turtle.shell',
+  ]) {
     await expect(page.locator(`figure[data-name="${name}"]`).first()).toBeAttached();
   }
 });
@@ -27,4 +34,11 @@ test('the atelier shows one place when asked', async ({ page }) => {
   await page.goto('./atelier.html?view=620,2000');
   await page.waitForSelector('body[data-ready="true"]');
   expect(await page.locator('.scene canvas').count()).toBe(1);
+});
+
+test('the atelier shows one place in the lagoon when asked', async ({ page }) => {
+  await page.goto('./atelier.html?view=7600,2650&area=lagoon');
+  await page.waitForSelector('body[data-ready="true"]');
+  expect(await page.locator('.scene canvas').count()).toBe(1);
+  await expect(page.locator('.scene h3')).toHaveText('The lagoon at 7600, 2650');
 });

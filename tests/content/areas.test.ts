@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { imageFit } from '../../src/art/fit';
 import { PAINTERS } from '../../src/art/painters';
 import { AREA_IDS, FOOD_KINDS } from '../../src/core/world/kinds';
+import { lagoon } from '../../src/data/areas/lagoon';
 import { mangrove } from '../../src/data/areas/mangrove';
 import type { AreaDef, WallDef, Zone } from '../../src/data/areas/types';
 
@@ -239,6 +240,81 @@ describe('the mangrove', () => {
           ),
         );
         expect(nearest, `${px}, ${py}`).toBeLessThanOrEqual(5 * 110);
+      }
+    }
+  });
+});
+
+/** Open length along a line across the area, in steps of 10 px. */
+function openAlong(area: AreaDef, points: { x: number; y: number }[], clear: number): number {
+  return points.filter((point) => !blocked(area, point.x, point.y, clear)).length * 10;
+}
+
+function zoneOf(area: AreaDef, id: string): Zone {
+  const zone = (area.zones ?? []).find((each) => each.id === id);
+  expect(zone, `zone ${id}`).toBeDefined();
+  return (zone as { zone: Zone }).zone;
+}
+
+function inZone(zone: Zone, x: number, y: number): boolean {
+  return x >= zone.x && y >= zone.y && x <= zone.x + zone.w && y <= zone.y + zone.h;
+}
+
+describe('the lagoon', () => {
+  const bl = lagoon.bodyLengthPx ?? 110;
+  const column = (x: number, from: number, to: number) =>
+    Array.from({ length: Math.floor((to - from) / 10) + 1 }, (_, index) => ({
+      x,
+      y: from + index * 10,
+    }));
+
+  it('puts each creature and companion in the zone doc 11 gives it', () => {
+    const where: Record<string, string> = {
+      turtle: 'C',
+      pistolAndGoby: 'D',
+      huntingFish: 'G',
+      brise: 'E',
+      ecume: 'E',
+      seaStar: 'H',
+      'burrow.pistol': 'D',
+    };
+    const things = [
+      ...(lagoon.creatures ?? []),
+      ...(lagoon.shrimp ?? []),
+      ...(lagoon.landmarks ?? []),
+    ];
+    for (const [id, zoneId] of Object.entries(where)) {
+      const thing = things.find((each) => each.id === id);
+      expect(thing, id).toBeDefined();
+      if (!thing) continue;
+      expect(inZone(zoneOf(lagoon, zoneId), thing.x, thing.y), `${id} in ${zoneId}`).toBe(true);
+    }
+  });
+
+  it('leaves the way in from the mangrove open', () => {
+    const open = openAlong(lagoon, column(lagoon.size.w - 300, 1800, 3500), bl * 0.25);
+    expect(open).toBeGreaterThan(6 * bl);
+  });
+
+  it('leaves the pass to the channel open', () => {
+    const exit = (lagoon.exits ?? []).find((each) => each.to === 'channel');
+    expect(exit).toBeDefined();
+    if (!exit) return;
+    const x = exit.zone.x + exit.zone.w + 200;
+    const open = openAlong(lagoon, column(x, exit.zone.y, exit.zone.y + exit.zone.h), bl * 0.25);
+    expect(open).toBeGreaterThan(6 * bl);
+  });
+
+  it('has seagrass within five body lengths of every point of the meadow', () => {
+    const { x, y, w, h } = zoneOf(lagoon, 'C');
+    const grass = (lagoon.cover ?? []).filter((cover) => cover.kind === 'seagrass');
+    expect(grass.length).toBeGreaterThan(0);
+    for (let px = x; px <= x + w; px += 100) {
+      for (let py = y; py <= y + h; py += 100) {
+        const nearest = Math.min(
+          ...grass.map((cover) => Math.max(0, Math.hypot(px - cover.x, py - cover.y) - cover.r)),
+        );
+        expect(nearest, `${px}, ${py}`).toBeLessThanOrEqual(5 * bl);
       }
     }
   });

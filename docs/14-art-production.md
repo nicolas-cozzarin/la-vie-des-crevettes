@@ -17,7 +17,7 @@ ensureTexture(scene, 'mangrove.root.a')
 |------|-------|
 | `src/art/TextureFactory.ts` | `ensureTexture`, for the game |
 | `src/art/painters/index.ts` | `PAINTERS`: every painter by image name. `PAINTER_GROUPS`: the same, by family |
-| `src/art/painters/*.ts` | One file per family: `shrimp`, `world`, `drift`, `mangrove`, `lagoon`, `creatures`, `effects`. `icons` to come |
+| `src/art/painters/*.ts` | One file per family: `shrimp`, `world`, `drift`, `mangrove`, `lagoon`, `creatures` (the mangrove's animals), `lagoonAnimals`, `channel`, `effects`. `icons` to come |
 | `src/art/paint.ts` | Shared helpers: colours, washes, `blob`, `speckle`, `patches`, `glow`, `softFill`, `band` for a root or a branch, `traceLeaf`, `wrapped` for tiles, `onLayer` for a part that must fade |
 | `src/art/fit.ts` | `imageFit(name)`: how the solid part of a picture sits inside the picture. See "From data to picture" |
 | `src/art/expressions.ts` | `RigExpression`, `RigLook`, and `MOOD_EXPRESSIONS`, the table below as code |
@@ -80,8 +80,9 @@ From the bed up. The numbers are `DEPTH` in `src/config.ts`.
 | 0 | Bed | Ground tiles, ground patches, scatter |
 | 10 | Ground objects | In this order: food patches, landmarks, burrows, then edge strips, then obstacles. An obstacle may stand over the end of an edge strip |
 | 20 | Bed animals | Shrimp, crabs, snails. Their shadows just beneath them |
-| 30 | Mid-water | Fish, the turtle, drifting things. Their shadows on the bed, offset |
-| 40 | Cover | Tangles, floating leaves, overhangs, seagrass tips |
+| 30 | Mid-water | Small fish, drifting things. Their shadows on the bed, offset. Also the shadows of the turtle and the hunting fish |
+| 40 | Cover | Tangles, floating leaves, overhangs, seagrass clumps, with the fuzz on a clump drawn just above it |
+| 45 | Over the cover | The turtle and the hunting fish, which swim over the seagrass (T48) |
 | 50 | Surface light | Dapple, caustics, moon bands, ripples, the bird's shadow, the hull and the grid |
 | 60 | Mood | Murk, edge darkening, tints. The bird's feet and shadow lie under the murk |
 | 100 | Interface | Narration, prompts, small lines |
@@ -231,13 +232,13 @@ Simple rigs, each a few images moved by code. No drawn frames.
 |--------|-------|-------|
 | Fiddler crab | `crab.body` with legs and small claw, `crab.claw`, `crab.burrow` beside it | The claw swings out and back at its joint, `CRAB_CLAW_JOINT` in `painters/creatures.ts`. The body shuffles sideways |
 | Snail | `snail.shell`, two feeler lines | The feelers shorten when alarmed |
-| Hermit crab | `snail.shell`, `hermit.legs` | The legs slide in under the shell |
+| Hermit crab | `snail.shell`, `hermit.legs` | The legs slide in under the shell. `HERMIT_LEGS_JOINT` on the legs sits on `HERMIT_SHELL_MOUTH` on the shell, in `painters/creatures.ts` |
 | Barnacle | `barnacle`, a feathered line | The line sweeps out and in |
 | Small fish | `fish.small` | Whole image, with a slight side-to-side turn |
-| Hunting fish | `fish.hunter.body`, `fish.hunter.tail` | The tail swings at its joint, slow or fast |
-| Turtle | `turtle.shell`, `turtle.head`, `turtle.flipper.front` twice, `turtle.flipper.rear` twice | Flippers swing at the shoulder. The head turns and dips |
+| Hunting fish | `fish.hunter.body`, `fish.hunter.tail` | The tail swings at its joint, slow or fast. The tail's joint `HUNTER_TAIL_OWN_JOINT` is pinned at `HUNTER_TAIL_JOINT` on the body, in `painters/lagoonAnimals.ts` |
+| Turtle | `turtle.shell`, `turtle.head`, `turtle.flipper.front` twice, `turtle.flipper.rear` twice | Flippers swing at the shoulder. The head turns and dips. The parts lie under the shell. `TURTLE_JOINTS` gives where each is pinned on the shell, `TURTLE_PART_JOINTS` each part's own joint. The lower flippers are the upper ones mirrored across the shell's middle |
 | Goby | `goby` | Tail flick |
-| Pistol shrimp | `pistol.body`, `pistol.claw` | Slides out of the burrow pushing sand, slides back |
+| Pistol shrimp | `pistol.body`, `pistol.claw` | Slides out of the burrow pushing sand, slides back. The big claw's joint `PISTOL_CLAW_OWN_JOINT` is pinned at `PISTOL_CLAW_JOINT` on the body. Antennae are lines drawn by code: one rests on the goby's tail |
 | Wading bird | `bird.shadow.body`, `bird.shadow.head`, `bird.foot` twice, `bird.beak`, `bird.splash` | See doc 10. The neck's shadow turns about `BIRD_NECK_START` in `painters/creatures.ts` |
 
 ## The manifest
@@ -270,8 +271,8 @@ This table is the checklist for the art. Update it in the same commit as a paint
 |------|------|--------|
 | `larva.early`, `larva.mid`, `larva.late` | 200 by 120 | Built. Each faces right. The body is about half the image long, so a larva is drawn twice as wide as its length |
 | `food.microalgae.a`, `.b`, `.c` | 64 | Built: a bead, a chain of beads, a disc |
-| `drift.copepod` | 96 | To paint. Added |
-| `drift.bell` | 256 | To paint. Added |
+| `drift.copepod` | 96 | Built. Added. Faces right, feelers out sideways |
+| `drift.bell` | 256 | Built. Added. The bell is 184 across, the threads reach the edge |
 | `drift.shaft` | 300 by 900 | Built. Laid on with the SCREEN blend |
 | `drift.rootShadow` | 640 by 200 | Built |
 
@@ -282,7 +283,7 @@ This table is the checklist for the art. Update it in the same commit as a paint
 | `mangrove.mud` | 1024, tile | Built |
 | `mangrove.sandmud` | 1024, tile | Built |
 | `mangrove.root.a` to `.f` | 320 | Built. Six limbs, each coming down a different way |
-| `mangrove.root.barnacled` | 320 | To paint. Added |
+| `mangrove.root.barnacled` | 320 | Built. Added. A seventh root, its limb coming down from the upper right, with barnacles above the mud |
 | `mangrove.clump` | 640 | Built |
 | `mangrove.wall` | 1024 by 420, repeats sideways | Built |
 | `mangrove.bank` | 1024 by 420, repeats sideways | Built |
@@ -295,16 +296,16 @@ This table is the checklist for the art. Update it in the same commit as a paint
 | `thing.seedPod.standing` | 96 | Built |
 | `thing.seedPod.lying` | 420 by 96 | Built |
 | `thing.sunkenBranch` | 1800 by 520 | Built. The left end is sunk, the right end is lifted |
-| `thing.breathingRoot` | 64 | To paint. Added |
+| `thing.breathingRoot` | 64 | Built. Added. One peg. A field is many of them, each a small round obstacle |
 | `light.dapple` | 1024, tile | Built |
 | `mangrove.murk` | 512 by 288 | Built. Drawn at twice the size of the view |
 | `crab.body` | 220 by 190 | Built |
 | `crab.claw` | 170 by 90 | Built. Joint at (16, 45) |
 | `crab.burrow` | 128 | Built |
-| `thing.crabPellets` | 160 | To paint. Added |
+| `thing.crabPellets` | 160 | Built. Added. The centre is left clear for the burrow |
 | `snail.shell` | 160 by 90 | Built |
-| `hermit.legs` | 130 by 110 | To paint. Added |
-| `barnacle` | 48 | To paint. Added |
+| `hermit.legs` | 130 by 110 | Built. Added. Laid over the front of `snail.shell` |
+| `barnacle` | 48 | Built. Added. `paintBarnacle` in `painters/creatures.ts` draws one at any size |
 | `fish.small` | 110 by 44 | Built |
 | `bird.shadow.body` | 1024 by 720 | Built |
 | `bird.shadow.head` | 470 by 220 | Built |
@@ -326,16 +327,17 @@ This table is the checklist for the art. Update it in the same commit as a paint
 | `burrow.mouth` | 140 | Built |
 | `light.caustics` | 1024, tile | Built |
 | `fx.glow` | 32 | Built |
-| `thing.sandVolcano` | 110 | To paint. Added |
-| `turtle.shell` | 860 by 720 | To paint |
-| `turtle.head` | 220 by 180 | To paint |
-| `turtle.flipper.front` | 480 by 210 | To paint |
-| `turtle.flipper.rear` | 250 by 170 | To paint |
-| `fish.hunter.body` | 600 by 170 | To paint |
-| `fish.hunter.tail` | 170 by 170 | To paint |
-| `goby` | 130 by 60 | To paint |
-| `pistol.body` | 100 by 60 | To paint |
-| `pistol.claw` | 70 by 44 | To paint |
+| `thing.sandVolcano` | 110 | Built. Added |
+| `seaStar` | 260 | Built. Added. The cushion sea star of zone H. It has no front |
+| `turtle.shell` | 860 by 720 | Built. Head end to the right. Five middle plates, four side plates on each side, a rim of small ones, pale streaks fanning across each |
+| `turtle.head` | 220 by 180 | Built. The neck comes from the left edge |
+| `turtle.flipper.front` | 480 by 210 | Built. Joint at the left, tip curving back |
+| `turtle.flipper.rear` | 250 by 170 | Built |
+| `fish.hunter.body` | 600 by 170 | Built. The tail root at the left, the snout at the right |
+| `fish.hunter.tail` | 170 by 170 | Built. Its joint is at the right |
+| `goby` | 130 by 60 | Built |
+| `pistol.body` | 100 by 60 | Built. The small claw is part of it |
+| `pistol.claw` | 70 by 44 | Built. Joint at the left |
 
 ### Channel, shadow, open sea
 
@@ -351,6 +353,7 @@ This table is the checklist for the art. Update it in the same commit as a paint
 | `shadow.grid` | 512, tile | To paint |
 | `fx.silt` | 256 | To paint |
 | `sea.ledge` | 760 by 420 | To paint |
+| `channel.seaFan` | 360 by 300 | Built. Added. Its foot, where it holds the rock, is at the left middle. It sways about that point |
 | `fx.egg` | 16 | To paint |
 
 ### Interface and icons
@@ -376,10 +379,11 @@ A page that shows the art without starting the game. It is how the author looks 
 |---------|---------|-------|
 | Drift scenes | `?show=driftscenes` | Four views of chapter 0, composed by hand because the Drift has no data file yet: the dark, the green, the shafts, the haze. Each shows the larva in the shape it has there |
 | Mangrove scenes | `?show=scenes` | Ten views drawn from `src/data/areas/mangrove.ts`, each the size of the game's screen: arriving, grazing, hidden under a tangle, the bird, meeting Nacre, the crabs, the leaf bed, the hollow, the sunken branch, and a map of the whole area with its zones |
+| Lagoon scenes | `?show=lagoonscenes` | Nine views drawn from `src/data/areas/lagoon.ts`: out of the creek, dug in on the flat, the turtle in the meadow, the shoal at dusk, the goby and the pistol shrimp, plankton at night, the hunting fish in the pass, the north-west rocks, and a map |
 | The six moods | `?show=moods` | The shrimp held still in each posture of the table above |
 | Telling shrimp apart | `?show=companions` | The player, Brise, Nacre and Écume side by side |
-| Sheets | `?show=shrimp`, `world`, `drift`, `mangrove`, `lagoon`, `creatures`, `effects` | Every painter of a family on the ground colour of its area, with its name and size. Tiles are shown repeated. Cover is shown a second time at 40% |
-| Any place | `?view=x,y` | One screen of the mangrove centred as near that point as the game's camera could be |
+| Sheets | `?show=shrimp`, `world`, `drift`, `mangrove`, `lagoon`, `creatures`, `lagoonAnimals`, `channel`, `effects` | Every painter of a family on the ground colour of its area, with its name and size. Tiles are shown repeated. Cover is shown a second time at 40% |
+| Any place | `?view=x,y`, and `&area=lagoon` for the lagoon | One screen of the area centred as near that point as the game's camera could be |
 
 The scenes are pictures of how an area should look. They are not the game: nothing moves. But `src/atelier/scene.ts` draws an area from its data by the rules of the next section, and the game's area loader must follow the same rules, so that the game looks like the scenes.
 
@@ -402,8 +406,15 @@ How the numbers in an area file become pictures on the screen. The reference is 
 | Fiddler crab | `crab.body` 1.1 BL high, turned to its heading. `crab.burrow` 0.62 BL wide, 0.75 BL to its left. `crab.claw` pinned at `CRAB_CLAW_JOINT` |
 | Snail | `snail.shell` 0.8 BL wide, with two feeler lines in front |
 | Small fish | `count` images 0.7 BL wide within an oval 5 BL long and 3 BL across, all turned to the heading within 0.15 radians. Each shadow lies 0.2 BL right and 0.27 BL down |
+| Seagrass fuzz | Food on a clump's blades: `food.seagrassFuzz` at the clump's place, size and turn, drawn right after the clump and faded with it |
+| Turtle | The shell 6 BL from head end to tail, which is 784 of its image's pixels; the parts at the same scale. Each part's own joint is pinned at its place in `TURTLE_JOINTS`, under the shell. Gliding: front flippers turned 2.4 radians back from the head, rear flippers 2.5. The lower side mirrors the upper. Shadow `shadow.soft` 8.4 by 6.4 BL, 0.3 BL right and 0.4 BL down, at depth 30 |
+| Hunting fish | 4.5 BL from tail tip to snout, centred on its point. The tail pinned at `HUNTER_TAIL_JOINT`, turned up to 0.18 radians on patrol. Shadow 4.4 by 0.95 BL, 0.3 BL right and 0.4 BL down, at depth 30 |
+| Pistol shrimp and goby | The point is the burrow's mouth and the heading is where the goby looks. The goby 0.78 BL wide, 0.3 BL out along the heading, its tail end in a dark spot over the hole. The pistol shrimp 0.55 BL wide, 0.28 BL to the goby's right, turned 0.55 radians away, the big claw pinned at `PISTOL_CLAW_JOINT`. A small heap of wet, darker sand 0.44 BL ahead of it. One antenna line from its head to the goby's tail |
+| Burrowed shrimp | The shrimp, then the ground drawn over it in a rounded shape from 0.78 BL behind its centre to 0.24 BL ahead and 0.44 BL across, blurred at the rim and a little darker. The eyes and antennae stay out |
 | Dapple | The tile at 1 / 1.4, laid over the bed, the things and the cover with the SCREEN blend, at `dappleStrength` |
 | Bird | Two `bird.foot` 3.6 BL wide, 2.6 BL apart, each with `fx.ripple`. `bird.shadow.body` 9 BL wide. `bird.shadow.head` 4.25 BL wide, pinned 2.2 BL ahead of the body and turned toward the strike point. `fx.ripple` 2 BL wide at the strike point |
+| Dusk | `#F0B27A` laid over everything with the MULTIPLY blend at 55%. Caustics at 40% of their strength |
+| Night | `#1B2350` with MULTIPLY at 86%. No caustics. Then glowing plankton: `fx.glow` points 0.1 to 0.22 BL wide with the SCREEN blend at 22%, two for each square BL in the bright shallows and a third as many elsewhere. Within 1.5 BL of the wake of anything moving, up to full strength and 2.6 times wider |
 | Murk | The image centred on the shrimp, at twice the size of the view |
 | Over everything | `fx.vignette` stretched to the screen, then `fx.grain` at 7% |
 

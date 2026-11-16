@@ -35,6 +35,10 @@ const TURTLE_DARK: Rgb = [42, 44, 33];
 const TURTLE_LIGHT: Rgb = [150, 148, 112];
 const TURTLE_STREAK: Rgb = [190, 168, 108];
 const TURTLE_SEAM: Rgb = [34, 34, 26];
+/** What grows on an old shell: green and brown film, dark crumbs. */
+const FOULING: Rgb = [84, 110, 50];
+const FOULING_BROWN: Rgb = [124, 100, 58];
+const FOULING_DARK: Rgb = [50, 54, 36];
 const SKIN: Rgb = [84, 86, 66];
 const SKIN_DARK: Rgb = [40, 42, 32];
 const SKIN_PALE: Rgb = [206, 194, 146];
@@ -378,6 +382,47 @@ const turtleShell: Painter = {
     dome.addColorStop(1, rgba(TURTLE_DARK, 0.42));
     ctx.fillStyle = dome;
     ctx.fillRect(0, 0, SHELL_W, SHELL_H);
+
+    // An old shell (D41): a film of algae, thicker toward the rear and the
+    // rim, silt in the seams, and pale scuffs where the plates are worn.
+    const wear = seededRandom(813);
+    for (let index = 0; index < 44; index++) {
+      const along = wear() * 2 - 1;
+      const across = wear() * 2 - 1;
+      const x = cx + along * SHELL_A * 0.95 - Math.max(0, -along) * 40;
+      const y = cy + across * SHELL_B * 0.95;
+      const outer = Math.min(1, Math.hypot(along, across));
+      glow(
+        ctx,
+        x,
+        y,
+        30 + wear() * 70,
+        wear() < 0.6 ? FOULING : FOULING_BROWN,
+        0.14 + outer * 0.18 + Math.max(0, -along) * 0.12,
+      );
+    }
+    speckle(
+      ctx,
+      wear,
+      1600,
+      { x: 0, y: 0, w: SHELL_W, h: SHELL_H },
+      [0.8, 2.6],
+      FOULING_DARK,
+      [0.12, 0.34],
+    );
+    ctx.lineCap = 'round';
+    for (let index = 0; index < 14; index++) {
+      const x = cx + (wear() - 0.5) * SHELL_A * 1.4;
+      const y = cy + (wear() - 0.5) * SHELL_B * 1.4;
+      const angle = wear() * Math.PI;
+      const length = 12 + wear() * 30;
+      ctx.strokeStyle = rgba(TURTLE_LIGHT, 0.12 + wear() * 0.14);
+      ctx.lineWidth = 2 + wear() * 3;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + Math.cos(angle) * length, y + Math.sin(angle) * length);
+      ctx.stroke();
+    }
     ctx.restore();
 
     traceRim(ctx, 0);

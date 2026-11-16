@@ -229,7 +229,7 @@ The toes alone are almost three times the length of the shrimp. The proposed bir
 
 ## Chapter 2. Lagoon
 
-**Mood:** open, bright by day, golden at dusk, still and glowing at night. **Size:** 8000 by 5000, about 64 by 40 BL. **Day cycle:** yes. **Threat:** the hunting fish.
+**Mood:** open, light by day, golden at dusk, still and glowing at night. The water is green-grey and never quite clear (D41). **Size:** 8000 by 5000, about 64 by 40 BL. **Murk:** a thin veil close by, things fade beyond 5 BL and are hard to make out by 11 BL. **Day cycle:** yes. **Threat:** the hunting fish.
 
 The player comes in from the mangrove on the right and leaves for the channel on the left.
 
@@ -270,8 +270,8 @@ Beats: arrive by day, burrow, rest until dusk. At dusk the shoal comes out: graz
 
 | Id | Kind | Size | Look from above | Does |
 |----|------|------|-----------------|------|
-| `ground.sand` | Ground | Tile | Already built. Pale sand with ripple marks | Still |
-| `lagoon.seagrass.a`, `.b`, `.c` | Cover and decor | Clump 3 to 5 BL across | Thin ribbon blades `#2F7D5B`, each 1.5 to 2.5 BL long, all bent the same way by the water, fanning from a patch of darker sand. Paler tips | Sways together in slow waves. Dense clumps are cover |
+| `lagoon.bed` | Ground | Tile | Dull grey-beige sand, never clean (D41): silt in the hollows, golden-brown stains of algae film, faint broken ripple marks, small drifts of dead seagrass bits, shell grit, dark crumbs | Still |
+| `lagoon.seagrass.a`, `.b`, `.c` | Cover and decor | Clump 3 to 5 BL across | Thin ribbon blades `#3E6E4A`, dulled by silt, each 1.5 to 2.5 BL long, all bent the same way by the water, fanning from a patch of darker sand with dead blades lying in it. Young blades have paler tips. About half are old: brown toward the tip and spotted | Sways together in slow waves. Dense clumps are cover |
 | `food.seagrassFuzz` | Food | Overlay on a clump | Soft tan-green fuzz along some blades | 3 s to clear |
 | `food.sandFilm` | Food | 2 to 3 BL across | A thin golden-brown sheen on the sand `#C9A24B`, uneven, with pin-sized bright bubbles | 4 s. Glows a little at dusk, when it is worth more |
 | `rock.a`, `.b`, `.c`, `rock.slab` | Obstacle | 1 to 3 BL | Already built | Solid |
@@ -280,7 +280,8 @@ Beats: arrive by day, burrow, rest until dusk. At dusk the shoal comes out: graz
 | `thing.shedShell` | Landmark, *added* | 1 BL | The empty shell of a shrimp: the whole outline, glassy and pale, slightly crumpled, split behind the head | Rocks in the current and drifts a little |
 | `thing.glowingPlankton` | Effect, discovery | Points | Blue-white points `#7DF9FF` in the water at night, faint until disturbed | Brighten in the wake of anything that moves, for 1.5 s |
 | `thing.crackle` | Sound, discovery | | No image. A steady fine crackle in the lagoon's ambience | Discovered by staying 3 s in zone D, where it is loudest |
-| `light.caustics` | Effect | Tile | A net of bright curved lines | Drifts and warps. Strong by day, gone at night |
+| `light.caustics` | Effect | Tile | A soft net of pale curved lines, blurred by silt, with wide stretches where it almost fades | Drifts and warps. Clear by day, weaker at dusk, gone at night |
+| `lagoon.murk` | Effect | Screen | Green-grey water `#68806C`: a thin veil close by, thickening from 5 BL, heavy by 11 BL | Centred on the shrimp and drawn at twice the size of the view, like `mangrove.murk`. Darkened by dusk and night with everything else |
 | `light.dusk`, `light.night` | Effect | Screen | Gold `#F0B27A`, then indigo `#1B2350` | Day cycle |
 
 ### Lagoon creatures

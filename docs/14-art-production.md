@@ -317,7 +317,9 @@ This table is the checklist for the art. Update it in the same commit as a paint
 
 | Name | Size | Status |
 |------|------|--------|
-| `lagoon.seagrass.a`, `.b`, `.c` | 600 | Built. Three clumps rooted left of centre, blades bent to the right |
+| `lagoon.bed` | 1024, tile | Built. The lagoon's ground: dull sand with silt, film, dead blade bits and shell grit (D41) |
+| `lagoon.murk` | 512 by 288 | Built. Green-grey, a thin veil at the centre, heavy at the rim. Drawn at twice the size of the view |
+| `lagoon.seagrass.a`, `.b`, `.c` | 600 | Built. Three clumps rooted left of centre, blades bent to the right. About half the blades old and brown at the tip |
 | `food.seagrassFuzz` | 600 | Built. The fuzz on clump `a`'s blades, laid over it |
 | `food.sandFilm` | 380 | Built |
 | `rock.overhang` | 560 by 400 | Built. Cover: the gap under it is where the shrimp hides |
@@ -433,9 +435,9 @@ How the numbers in an area file become pictures on the screen. The reference is 
 | Burrowed shrimp | The shrimp, then the ground drawn over it in a rounded shape from 0.78 BL behind its centre to 0.24 BL ahead and 0.44 BL across, blurred at the rim and a little darker. The eyes and antennae stay out |
 | Dapple | The tile at 1 / 1.4, laid over the bed, the things and the cover with the SCREEN blend, at `dappleStrength` |
 | Bird | Two `bird.foot` 3.6 BL wide, 2.6 BL apart, each with `fx.ripple`. `bird.shadow.body` 9 BL wide. `bird.shadow.head` 4.25 BL wide, pinned 2.2 BL ahead of the body and turned toward the strike point. `fx.ripple` 2 BL wide at the strike point |
-| Dusk | `#F0B27A` laid over everything with the MULTIPLY blend at 55%. Caustics at 40% of their strength |
-| Night | `#1B2350` with MULTIPLY at 86%. No caustics. Then glowing plankton: `fx.glow` points 0.1 to 0.22 BL wide with the SCREEN blend at 22%, two for each square BL in the bright shallows and a third as many elsewhere. Within 1.5 BL of the wake of anything moving, up to full strength and 2.6 times wider |
 | Murk | The image centred on the shrimp, at twice the size of the view |
+| Dusk | `#F0B27A` laid over everything, the murk too, with the MULTIPLY blend at 55%. Caustics at 40% of their strength |
+| Night | `#1B2350` with MULTIPLY at 86%, over the murk too. No caustics. Then glowing plankton: `fx.glow` points 0.1 to 0.22 BL wide with the SCREEN blend at 22%, two for each square BL in the bright shallows and a third as many elsewhere. Within 1.5 BL of the wake of anything moving, up to full strength and 2.6 times wider |
 | Over everything | `fx.vignette` stretched to the screen, then `fx.grain` at 7% |
 
 ## Replacing a painter with a painted file

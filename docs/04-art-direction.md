@@ -101,7 +101,7 @@ Starting values, to tune on screen.
 |------|------|--------------|
 | Drift | Vast, weightless | Deep teal `#0B2A3A`, pale green `#BFE6D8`, motes `#9BE564` |
 | Mangrove | Sheltered, warm, murky | Tea water `#8A6B3F`, mud `#5C4630`, roots `#3B2A1E`, leaf green `#6E8B3D`, light `#F2D58A` |
-| Lagoon, day | Open, bright | Sand `#E8D9B0`, water `#6CC5C1`, seagrass `#2F7D5B` |
+| Lagoon, day | Open, light, never quite clear (D41) | Sand `#C2B798`, silt `#807C62`, green-grey water `#68806C`, seagrass `#3E6E4A`, dead blades `#705E3C` |
 | Lagoon, dusk | Golden | `#F0B27A` over the day colours |
 | Lagoon, night | Still, glowing | Indigo `#1B2350`, plankton glow `#7DF9FF` |
 | Channel | Moving, cool | Slate `#2B3A55`, moonlight `#C9D6E8`, rock `#454C59` |
@@ -110,12 +110,12 @@ Starting values, to tune on screen.
 | Hatchery tank (D39) | Bright, bare, crowded | Tank wall `#E4E9EA`, hard light `#F4F8FA`, water clear with a blue cast `#CFE3EA` |
 | Farm pond (D39) | Opaque, green, endless | Green water `#556B2F`, clay bottom `#6F5E45`, foam `#D8D9C4`. At night `#1A2416` |
 
-The coast's real water is greener and more turbid than a tropical postcard. Tune the lagoon toward it (D41).
+The coast's real water is greener and more turbid than a tropical postcard. The lagoon is tuned toward it (D41): dull sand with silt and dead blades, green-grey murk, soft broken caustics, old seagrass browning at the tips, silt and turf on the stones, a worn turtle shell, dirty foam and wrack on the beach.
 
 ## Water and light
 
-- Caustics: a slow moving light pattern on the bed, strongest in the lagoon by day.
-- Murk: in the mangrove, things fade into brown beyond about 8 BL.
+- Caustics: a slow moving light pattern on the bed, strongest in the lagoon by day. Soft and broken: the silt in the water blurs it, and wide stretches have almost none.
+- Murk: in the mangrove, things fade into brown beyond about 8 BL. In the lagoon a thin green-grey veil lies even close by, and things fade beyond about 5 BL.
 - Particles: drifting specks that show the current's direction.
 - Scent ribbons (Sense): thin watercolour strokes that drift and fade, each kind with its own shape.
 - Glowing plankton at night: points that brighten when the shrimp moves through them.

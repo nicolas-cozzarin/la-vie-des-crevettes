@@ -384,9 +384,10 @@ Release 1.1. Realistic and bare, without gloss and without horror (D41). The shr
 | `farm.tank.floor` | 1024, tile | To paint. Off-white, scuffed, faint rings of dried scale |
 | `farm.tank.wall` | 1024 by 300, repeats sideways | To paint. Smooth, white to pale grey where it curves up out of the light |
 | `farm.bag` | 1024 by 576 | To paint. Clear creased plastic seen from inside, dim light through it, bubbles along one edge. Laid over the view |
-| `farm.pond.clay` | 1024, tile | To paint. Soft grey-brown clay with a thin film, tracks and dents |
+| `farm.pond.liner` | 1024, tile | To paint. Black plastic under green water, a thin film over it, creased seams where sheets overlap (T50) |
+| `farm.pond.wheel` | 640 by 360 | To paint. A paddle wheel's blades seen from below the surface, in a blur of bubbles |
 | `farm.pond.sludge` | 512 | To paint. A black, soft-edged patch with a dull sheen |
-| `farm.pond.bank` | 1024 by 400, repeats sideways | To paint. Packed earth from inside the pond, straight, slumped in places |
+| `farm.pond.bank` | 1024 by 400, repeats sideways | To paint. The bank from inside the pond, under black plastic, straight, sagging in places |
 | `farm.pond.gate` | 640 by 420 | To paint. Concrete sluice with wooden boards in grooves and a mesh behind them |
 | `farm.pond.murk` | 512 by 288 | To paint. Opaque green, clear only within 3 BL of the centre. Drawn at twice the size of the view |
 | `fx.mesh` | 256, tile | To paint. The shadow of a net's mesh, soft |

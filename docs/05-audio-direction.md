@@ -109,6 +109,25 @@ Check the licence on each file's own page on the day of download.
 
 Search words that help: ambient, underwater, lofi, calm, drone, pad, kalimba, felt piano, hydrophone, snapping shrimp.
 
+## Voice (D47)
+
+Decided by the author on 2026-11-16: the narration is spoken as well as shown, in English and in French, with the most natural voices available. It must never sound robotic. How the voices are made is open.
+
+| Way | Voices | Licence | When a line changes | Standing |
+|-----|--------|---------|---------------------|----------|
+| An open speech model: Kyutai TTS 1.6B, which speaks English and French | Only voices released as CC0 or CC BY: `voice-donations`, `voice-zero`, `vctk`, `cml-tts/fr`, `alba-mackenna`. Never `expresso` or `ears`, which are non-commercial | Model CC BY 4.0. Each voice credited in `CREDITS.md` | Run again in minutes | Proposed. It is AI-made speech, so it needs the author's yes. Its host could not be reached from the cloud session on 2026-11-16, so it runs on the author's computer, where a graphics card helps |
+| Recorded by people | The author in French, a volunteer in English | CC BY from each reader | Record the line again | The most natural. Slow to change |
+| A paid voice service | | Terms rarely give CC0 or CC BY | | Not proposed: rule 6 of `CLAUDE.md` |
+
+Whichever way is chosen:
+
+- One voice per language for all narration. Low, close, unhurried, as if from inside. Never acted.
+- The text still shows. The line holds until the voice ends, plus 1 s (doc 12).
+- Settings gain a "Voice" volume beside music and effects. At zero, the text shows alone.
+- One file per line, named by its key: `public/assets/audio/voice/en/narr.c1.arrive.ogg`. A missing file leaves the text alone, so a line can be written before it is spoken.
+- 76 lines in each language, about 3 s each: about 1.5 MB per language. The budget below grows to match.
+- A script in `tools/` makes the files from doc 13, so a changed line is spoken again in one step.
+
 ## Credits process
 
 A sound file is not added to the game until it has a row in `CREDITS.md` with: file name, title, author, source link, licence, and what was changed. The build fails if a file under `public/assets/audio/` has no row. See [06-architecture.md](06-architecture.md).

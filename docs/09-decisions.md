@@ -52,14 +52,18 @@ Status: 2026-11-15, with the author's answers of that day. One row per decision.
 | D33 | Title | La vie des crevettes. In English, The Life of Shrimp | Decided | 01 |
 | D34 | New creatures and things | All of them come in: hermit crab, barnacles, mud balls, breathing roots, a glass hopper and a drifting bell in Drift, sand mound, shed shell, a long call at sea, sea star, sea fan. The author wants as many as possible, so that there is a lot to find. More are listed in doc 17. None is eaten or harmed | Decided 2026-11-15 | 11, 17 |
 | D35 | Man-made things | In the wild: the hull and the net (D4), and the pond's wall and outlet seen from the channel (D39). Litter, rare in the mangrove and growing toward the farm (D43). In the pond life: the farm itself, its tanks, bags, pond, aerators and gate | Changed by D39 and D43, 2026-11-16 | 11, 18 |
-| D36 | New goals | Two challenges (walk up to a hermit crab, find a shed shell) and three achievements (Clean antennae, Stone still, Gentle) | Proposed. The hermit crab and the shed shell are in (D34), so the default is yes | 12 |
+| D36 | New goals | Two challenges (walk up to a hermit crab, find a shed shell) and three achievements (Clean antennae, Stone still, Gentle) | Decided 2026-11-16 by the author | 12 |
 | D37 | Size of the world | As large as possible, with as much to explore and find as possible, above all after the story. Proposed form: the long coast, a map of places that grows release by release. See doc 17 | Goal decided 2026-11-15. Form proposed | 17 |
-| D38 | Learning | The player learns as much as possible about shrimp biology, behaviour and suffering during the story, by playing. Each item rests on a source. Play still never preaches (D3). Proposed form: doc 18 | Goal decided 2026-11-15. Form proposed | 18 |
+| D38 | Learning | The player learns as much as possible about shrimp biology, behaviour and suffering during the story, by playing. Each item rests on a source. Play still never preaches (D3). Form: doc 18. The author said yes on 2026-11-16 to its thirty cards, `pulse`, `gutLine`, `fewArrive` and `card.wildVirus`, and "ok for now" to the texts of "Among humans" | Goal decided 2026-11-15. Form decided 2026-11-16 | 18 |
 | D39 | What people do to shrimp | Level 4 of doc 18, which holds levels 2 and 3. A journal page, "Among humans", with neutral sourced facts. The pond's wall and outlet passed in the channel, with others behind the mesh. After the story, a second and separate life in a farm pond, from the hatchery tank to the draining, ending in a cut to white before anything is shown. Play still never preaches (D3) and no animal product is eaten (rule 1). The design is in doc 18 | Decided 2026-11-16 by the author | 07, 11, 18 |
 | D40 | Guardrails | It must be easy to change things later without breaking others. Each kind of change has one place to make it and a test that says what broke. See doc 19. Built: content tests for the art list, the documents, the script and the hard rules, and `npm run check`. The coast's mirror setting comes with step 3 | Decided 2026-11-15 | 19 |
 | D41 | Tone | Realistic. Calm in how it plays, not a calm life: neither the wild nor the farm is shown as idyllic. Hunger, murk, crowding, fear and loss are shown as they are. Nothing gory, and never so hard that people stop playing. Rule 2 of `CLAUDE.md` stands unless D42 changes it | Decided 2026-11-16 by the author | 01, 04, 07, 18 |
 | D42 | Losses in the shoal | Unnamed shrimp of the shoal can go missing off-screen, as happens in life: after the bird, the hunting fish or the net, the shoal is a few smaller. It is never shown and never explained. Named companions always come back. Rules in doc 10, "The shoal" | Decided 2026-11-16 by the author | 01, 10, `CLAUDE.md` |
 | D43 | Litter | Human litter lies in the wild, as on real coasts: rare in the mangrove, more in the lagoon, most along the channel and at the pond's outlet. A bottle, a bag, rope, a sandal, broken foam, and near the farm an empty sack and a length of pipe. Worn and silted, with no print, word or mark. Never mentioned: no text, journal card, narration or sound refers to it. The shrimp never eats from it and is never caught in it. Changes D35. See doc 11, "Litter" | Decided 2026-11-16 by the author | 04, 11, 14, 17 |
+| D44 | Hunters of the long coast | All eight come in: ray, octopus, swimming crab, mantis shrimp, spoonbill, skimmer, fishing bat, paws. For now they never catch anyone, as rule 2 says. The author on 2026-11-16: "we will make them catch lives later on". What that means is not designed yet, and rule 2 stands until it is | Decided 2026-11-16 by the author. Catching: open | 17, `CLAUDE.md` |
+| D45 | Foods of the long coast | Sea lettuce, turf on rock and the film on drifting wood join `FoodKind` when the long coast is built. All three are algae. Nothing else is added | Decided 2026-11-16 by the author | 02, 17 |
+| D46 | The sting | Built, if it is a fact (the author, 2026-11-16). A sea anemone's tentacles sting the shrimp when it brushes them: a jolt, a tail flip, then long grooming of the touched antenna. It hurts for a few seconds and leaves no wound. Each part needs a source before it is built. See doc 18, "One item apart: the sting" | Decided 2026-11-16 by the author, on condition | 18, `CLAUDE.md` |
+| D47 | Spoken narration | The narration is spoken as well as shown, in English and in French, with the most natural voices available, so that it never sounds robotic. The text still shows. How the voices are made is open: see doc 05, "Voice" | Decided 2026-11-16 by the author. Method: open | 05, 12, 13 |
 
 ## Smaller choices made while drafting
 
@@ -83,7 +87,7 @@ All proposed. Say so if any is wrong.
 | T14 | Areas described in data files with hand-placed coordinates | Fast to start. A map editor can come later |
 | T15 | No physics beyond simple circles and rectangles | Enough for a flat top-down plane |
 | T16 | Fonts: Fraunces and Atkinson Hyperlegible | Open licence, legible, cover French |
-| T17 | One optional journal card with the number farmed each year | Information, not appeal. The author to keep or cut |
+| T17 | One optional journal card with the number farmed each year. Kept by the author on 2026-11-16 | Information, not appeal |
 | T18 | Releases in four stages, the first with two chapters | Something public early (D5) |
 | T19 | The view is enlarged 1.4 times, so the juvenile is about 155 px long at 1080p instead of 110 | At 110 px the antennae and posture, which carry the feelings (D17), were too small to read |
 | T20 | Movement and collision are worked out in `src/core/movement/`, not by Phaser's Arcade physics | Same circles and rectangles (T15), but covered by unit tests and free of the engine |
@@ -101,12 +105,12 @@ All proposed. Say so if any is wrong.
 | T32 | A bond is shown in the journal as four small stamps and lines of text, never as a bar | Rule 7 is about feelings, but a bar here would read as one |
 | T33 | Narration lines have two weights. "Must" lines wait their turn. Others are dropped if a line showed in the last 20 s | Keeps narration sparse (D19) without losing the story |
 | T34 | The third taste in the mangrove is a patch of golden film on the sandy mud of the creek mouth. Confirmed by the author on 2026-11-15 | Doc 02 asks for three mangrove foods and lists two |
-| T35 | The player's shrimp has a favourite food, chosen at random for each life | Individuals differ. The next generation is not the same shrimp |
-| T36 | A tail flip within 1.5 BL of a stranger startles it | The player learns that they can frighten someone too |
+| T35 | The player's shrimp has a favourite food, chosen at random for each life. Confirmed by the author on 2026-11-16 | Individuals differ. The next generation is not the same shrimp |
+| T36 | A tail flip within 1.5 BL of a stranger startles it. Confirmed by the author on 2026-11-16 | The player learns that they can frighten someone too |
 | T37 | In the free life a molt comes after 12 meals | Doc 02 says "with time and feeding" and gives no number |
 | T38 | The bird is drawn as a snowy egret (black legs, yellow feet) and the fish as a snook. Confirmed by the author on 2026-11-15. Both still to check for this coast | A real animal to draw from |
 | T39 | The place "The shadow" has a journal entry with a drawing and a name, and no text | D4: nothing is explained |
-| T40 | After the net has passed, a cloud of stirred silt hangs for 20 s. Nothing else is left behind. Every named companion is found again. Of the unnamed ones, one or two may not be (D42) | D4, and rule 2 as changed by D42 |
+| T40 | After the net has passed, a cloud of stirred silt hangs for 20 s. Nothing else is left behind. Every named companion is found again. Of the unnamed ones, one or two may not be (D42). Confirmed by the author on 2026-11-16 | D4, and rule 2 as changed by D42 |
 | T41 | A page, `atelier.html`, shows every picture without starting the game. It is published beside the game and not linked from it | The author can look at the art on the live site. A painter can be checked without playing |
 | T42 | The first 10 s of Drift have no feeding, and the larva changes shape twice on the way | The youngest larvae live on their yolk (FAO). The art direction already asks for two looks |
 | T43 | A mangrove root is painted as a thick limb that comes down and ends in the mud, with fine roots at its end. There are six pictures of it, and the area data turns a picture by half a radian at most | As a round foot it read as a stone. Light is painted into each picture, so turning one far would put its light on the wrong side |
@@ -116,11 +120,13 @@ All proposed. Say so if any is wrong.
 | T47 | The lagoon's edges: a beach along the top; the mangrove's root wall on the right, open from y 1800 to 3500 for the creek; worn reef rock along the bottom to x 5200, then beach; reef rock on the left, open from y 1900 to 3800 for the pass. A rock or a root clump closes each end. There is no way back to the mangrove during the story | Doc 11 draws the zones but not the edges. The map puts the shore at the top and the channel at the left. The story only goes forward, and the long coast (doc 17) opens the way back after it |
 | T48 | How the lagoon is drawn where doc 11 gives no rule: the turtle and the hunting fish are drawn above the seagrass, at a new depth 45, with their shadows under it. Fuzz is drawn on its clump. Dusk is `#F0B27A` and night `#1B2350`, each laid over with a multiply blend, at 55% and 86%. Caustics drop to 40% at dusk and are gone at night. Plankton points are thickest in the shallows and brighten within 1.5 BL of a wake. A burrowed shrimp is covered by sand from its tail fan to just behind its eyes. Numbers in doc 14 | Found while composing the lagoon's scenes: a turtle drawn under the seagrass looked as if it swam beneath the blades, and fuzz drawn under its clump was hidden |
 | T49 | Food in the pond life: only what grows in the pond, the film on the clay and the green water. No feed is shown, and hunger stays low there because farmed shrimp are fed | Rule 1: no animal product is eaten, and what a feed holds is not checked. FAO names natural food as part of what semi-intensive ponds give |
-| T50 | The pond life's farm: a semi-intensive earthen pond on this coast, about 2 ha and 1.1 m deep, 20 young shrimp a square metre, harvested by draining at low tide through a bag net at the outlet gate | True to this coast and to the FAO sheet, and the draining gives the pond life its end without showing what follows |
-| T51 | The pond life's shape: four parts in about ten minutes (the tank, the bag, four days and nights in the pond, the draining). No narration, no steps, no challenges, nothing to fail. It begins and ends with the water drawn down. On the fourth night a wild shoal passes the mesh, the other side of level 3 | Long enough to be a life, short enough that people finish it (D41). The meeting at the mesh ties it to the story without a word |
-| T52 | The pond life's entry on the title screen, "Another life", with one line under it: "A life on a farm. About ten minutes." Its four places in the journal: the tank, the bag, the pond, the gate. All new text, waiting for a yes | The player chooses to go in, knowing what it is and how long it takes. The line names, it does not judge |
-| T53 | Litter is decor on the bed: not cover, not solid, no food within 1 BL of it, no sound of its own. Each piece at its true size for the area, turned no more than 0.6 radians so its light stays from the upper left. Counts: mangrove 2, lagoon 8, channel about 20 with half within 10 BL of the pond's outlet, the shadow 4, open sea 3 floating. None in the first view of an area | Seen, never used. Nothing gives the shrimp a reason to touch it, and the first sight of each place stays its own |
-| T54 | Proposed, `fewArrive` (doc 18): the larvae hatched with the player thin out across the Drift, one at a time and always off-screen, as the shoal can (D42). About a third reach the haze. Two or three settle with the player at landfall. Nothing says why | Most young shrimp never grow up. The player sees it only as fewer, which keeps it true without a wound or a word |
+| T50 | The pond life's farm: an intensive pond lined with plastic, chosen by the author on 2026-11-16 over an earthen pond. Its size, numbers and harvest are in doc 18, "The farm (T50)" | The lined pond is where shrimp are most crowded and have no sand. The draining still gives the pond life its end without showing what follows |
+| T51 | The pond life's shape: four parts in about ten minutes (the tank, the bag, four days and nights in the pond, the draining). No narration, no steps, no challenges, nothing to fail. It begins and ends with the water drawn down. On the fourth night a wild shoal passes the mesh, the other side of level 3. Confirmed by the author on 2026-11-16 | Long enough to be a life, short enough that people finish it (D41). The meeting at the mesh ties it to the story without a word |
+| T52 | The pond life's entry on the title screen, "Another life", with one line under it: "A life on a farm." The author on 2026-11-16: no mention of how long it takes. Its four places in the journal: the tank, the bag, the pond, the gate | The player chooses to go in, knowing what it is. The line names, it does not judge |
+| T53 | Litter is decor on the bed: not cover, not solid, no food within 1 BL of it, no sound of its own. Each piece at its true size for the area, turned no more than 0.6 radians so its light stays from the upper left. Counts: mangrove 2, lagoon 8, channel about 20 with half within 10 BL of the pond's outlet, the shadow 4, open sea 3 floating. None in the first view of an area. Confirmed by the author on 2026-11-16 | Seen, never used. Nothing gives the shrimp a reason to touch it, and the first sight of each place stays its own |
+| T54 | `fewArrive` (doc 18): the larvae hatched with the player thin out across the Drift, one at a time and always off-screen, as the shoal can (D42). About a third reach the haze. Two or three settle with the player at landfall. Nothing says why. Confirmed by the author on 2026-11-16, with rule 2 changed to match | Most young shrimp never grow up. The player sees it only as fewer, which keeps it true without a wound or a word |
+| T55 | When `gutLine` is built, every shrimp's gut shows its hunger, so Écume's mark changes from a darker gut line to two dark dots at the base of her tail fan. Until then she keeps the darker gut line | A mark that hunger can change is not a mark |
+| T56 | The narration line for a smaller shoal (D42), approved on 2026-11-16: "Fewer than before." In French "Moins nombreuses qu'avant.", feminine, as the narration speaks to the player | French needs a gender here, and the narration already uses the feminine |
 
 ## Still needed from the author
 
@@ -128,29 +134,12 @@ Each has a default that stands until the author says otherwise.
 
 Answered on 2026-11-15, and now in the tables above: speech for companions (D13a), the next generation (D11a), the art information (D24), the licence (D27a), the direction of the coast (T24), the new creatures and things (D34), the third taste (T34), the length of wariness (T27), the egret and the snook (T38).
 
-New on 2026-11-16:
+Answered on 2026-11-16, and now in the tables above: the pond life's farm, shape and entry (T50 to T52), litter (T53), the Drift (T54), the sting (D46), the hunters (D44), the foods (D45), the "How many" card (T17), the new goals (D36), the pistol shrimp and goby (D14, kept whatever the check finds), T35, T36, T40, `pulse` and `gutLine` (T55), thirty cards and the cards of "Among humans" (D38), the shoal's narration line (T56), naming each companion once in the narration, spoken narration (D47), the licence (D27a, kept), the French reader (the author).
 
-- D43 decided: litter, growing toward the farm. T53 holds where it lies and how it is drawn.
-- T49 to T52: the pond life's food, farm, shape and entry text. Defaults as written in doc 18.
-- T54: larvae of the Drift thin out off-screen. It touches rule 2 as D42 does. Default: yes.
-- Doc 18: `card.wildVirus` for "Among humans", and `card.footTaste` reworded to match its paper. Doc 07: card 1 loses "or to another shrimp" unless a source is found.
-- Doc 18: six new cards for "Among humans" (`card.tankToPond`, `card.howDense`, `card.nightWater`, `card.noSand`, `card.lastMinutes`, and `card.oneEye` now with a second source) and the ten lines of the pond life. Journal text waits for a yes.
+Still open:
 
-New on 2026-11-15:
-
-1. D39 was answered on 2026-11-16: level 4. D42 too: unnamed shrimp can go missing.
-2. Doc 18: a sting that hurts for a few seconds and leaves no wound, so that the player lives what the 2008 antenna study describes. It touches rule 2 of `CLAUDE.md`, so it waits for a yes. Default: not built.
-3. Doc 17: hunters that would eat a shrimp in life (a ray, an octopus, a swimming crab, a mantis shrimp, a spoonbill, a fishing bat) come in as threats that never catch anyone, each sensing in its own way. Default: yes, since the author asked for as much as possible (D34).
-4. Doc 17: more foods for the long coast. All are algae or plants: sea lettuce, the turf on rocks, the film on a drifting log. `FoodKind` is a closed list, so each needs a yes. Default: not added.
-5. D27a: the licence reads "Copyright (c) 2026 Nicolas". Say so if a family name or another name should be on it.
-
-Still open from before:
-
-6. T17: keep or cut the "How many" card. Default: keep. Doc 18 proposes more cards of this kind if level 2 or above is chosen in D39.
-7. D35 follows from D39 now: the pond wall in the wild, and the farm in the pond life.
-8. D36: the two new challenges and three new achievements? Default: yes.
-9. D14: pistol shrimp sharing a burrow with a goby is best known from other seas. It is to be checked for this coast. Keep it whatever the answer, or replace it if it does not occur here? Default: keep.
-10. T35, T36: a favourite food chosen for each life, and strangers that the player's tail flip can startle? Default: yes to both.
-11. T40: after the net, a cloud of silt and nothing more?
-12. Who reads the French aloud before release (doc 07)?
-13. Doc 13: the narration names each companion once ("You will call her Nacre."). Is that the right way to give names?
+1. T49, food in the pond life. Asked again on 2026-11-16 in plainer words. Default as written.
+2. D44: what "catch lives" will mean, and when. Default: nothing changes until it is designed.
+3. D47: how the voices are made. See doc 05.
+4. Doc 07, card 1: the author wants to keep "or to another shrimp". It needs a source before the card is built (rule 4).
+5. D35 follows from D39: the pond wall in the wild, and the farm in the pond life. With a lined pond (T50), whether such a farm can sit on this coast with an outlet to the channel is to check.

@@ -578,7 +578,7 @@ In life, many young shrimp are taken. The game lets the shoal grow smaller, and 
 | What is seen | Nothing. The shrimp is removed while out of view. No sound, no trace, no body. The player finds out only by counting when the shoal is together again |
 | New members | At the start of chapters 3 and 5, zero to two strangers join the shoal, as shoals mix in life |
 | The save | `stats.missing` counts them. Nothing else changes |
-| Narration | Proposed, new text to approve: once, the first time the regrouped shoal is smaller, a "may" line: "Fewer than before." / "Moins nombreux qu'avant." |
+| Narration | Once, the first time the regrouped shoal is smaller, a "may" line: `narr.fewer`, "Fewer than before." / "Moins nombreuses qu'avant." (T56) |
 
 Tests: a named companion is never removed. A shrimp in view is never removed. The floor of two holds. The draws use the game's seeded random so a run can be replayed.
 

@@ -68,7 +68,11 @@ Evidence is stronger for some decapods, such as crabs, than for shrimp, which ha
 
 Draft texts in both languages. Each unlocks from the event listed.
 
-**1. Scent / L'odorat.** Unlocks: first use of Sense. Source: CHEMO2020 for the trail to food. To check: "or to another shrimp" has no source yet. Without one, that half comes out.
+**1. Scent / L'odorat.** Unlocks: first use of Sense. Source: CHEMO2020 for the trail to food. The author wants to keep the second half (2026-11-16). No study shows a trail to another shrimp. GUTIERREZ2024 (doc 18) shows males knowing a female by touch, so this wording is proposed in place of the lines below:
+- EN, proposed: A shrimp's antennae are covered in sensors that taste the water. They lead it to food in the dark, and in a 2024 study they let males know a female by the taste of her shell.
+- FR, proposed: Les antennes d'une crevette sont couvertes de capteurs qui goûtent l'eau. Elles la guident vers sa nourriture dans le noir, et dans une étude de 2024, elles permettaient aux mâles de reconnaître une femelle au goût de sa carapace.
+
+As drafted before:
 - EN: A shrimp's antennae are covered in sensors that taste the water. It can follow a trail to food, or to another shrimp, in the dark.
 - FR: Les antennes d'une crevette sont couvertes de capteurs qui goûtent l'eau. Elle peut suivre une piste jusqu'à sa nourriture, ou jusqu'à une autre crevette, dans le noir.
 
@@ -195,4 +199,4 @@ Proposed text, reachable from the title screen only:
 
 - Confirm every item marked **to check**, or remove the card.
 - Have someone who knows shrimp biology read the journal once.
-- Have a French speaker read every French line aloud.
+- Have a French speaker read every French line aloud. The author does it (2026-11-16).

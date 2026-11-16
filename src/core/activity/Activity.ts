@@ -1,10 +1,12 @@
+import type { FoodSpot } from '../food/FoodPatch';
 import { distanceToCover, nearestCover, tuckPoint, type CoverSpot } from '../world/cover';
+import type { FoodKind } from '../world/kinds';
 
 /**
  * What the body is busy with, on top of how it moves. One at a time. Every
  * name of doc 10's table is listed so that the feelings can read it, but the
- * state machine below runs only `free` and `hiding` so far; the rest join in
- * later steps. See docs/10-feelings-and-states.md, "Activities".
+ * state machine below runs only `free`, `hiding`, `grazing` and `sensing` so
+ * far; the rest join in later steps. See docs/10-feelings-and-states.md, "Activities".
  */
 export type ActivityName =
   | 'free'
@@ -31,6 +33,20 @@ export interface HideTuning {
   slowing: number;
 }
 
+/** Grazing. BL are from the shrimp's centre. */
+export interface GrazeTuning {
+  /** BL. Grazing starts when the head is this close to a patch's edge. */
+  reach: number;
+  /** BL. Where the mouth is, ahead of the centre. */
+  head: number;
+  /** Below this hunger the shrimp is full and stops. */
+  full: number;
+  /** Seconds a full shrimp may still try a food it has not tasted. */
+  taste: number;
+  /** At this fear or more, grazing and sensing end at once. */
+  fearEnds: number;
+}
+
 export interface ActivityInput {
   /** Seconds since the last update. */
   dt: number;
@@ -42,20 +58,39 @@ export interface ActivityInput {
   tailFlip: boolean;
   /** The player's own direction, each axis from -1 to 1. */
   axis: { x: number; y: number };
+  /** Interact, held. */
+  interact?: boolean;
+  /** Sense, after hold or toggle is applied. */
+  sense?: boolean;
+  heading?: number;
+  hunger?: number;
+  fear?: number;
+  /** Whether a food has been tasted before. */
+  tasted?: (kind: FoodKind) => boolean;
 }
 
 export interface ActivityResult {
-  /** The direction to feed the motion: the player's own, or the walk to cover. */
+  /** The direction to feed the motion: the player's own, or the walk to cover or food. */
   axis: { x: number; y: number };
+  /** Grazing with the mouth on the patch: eat on this step. */
+  eating: boolean;
 }
 
 /** Seconds without progress after which a shrimp under cover stops walking in. */
 const STALL_SECONDS = 0.3;
 
-export class Activity<T extends CoverSpot = CoverSpot> {
+export class Activity<T extends CoverSpot = CoverSpot, F extends FoodSpot = FoodSpot> {
   name: ActivityName = 'free';
   /** The cover being hidden under. */
   cover: T | null = null;
+  /** The patch being grazed. */
+  food: F | null = null;
+  /** Seconds of this graze. */
+  private grazeTime = 0;
+  /** This graze is a full shrimp's taste, which ends after `taste` seconds. */
+  private tasting = false;
+  /** A graze ended with Interact still held: another starts only after a new press. */
+  private interactSpent = false;
   /** Under the cover and settled: the `hidden` condition of doc 10. */
   tucked = false;
   private target = { x: 0, y: 0 };
@@ -66,6 +101,7 @@ export class Activity<T extends CoverSpot = CoverSpot> {
   constructor(
     private readonly tuning: HideTuning,
     private readonly bodyLengthPx: number,
+    private readonly graze: GrazeTuning,
   ) {}
 
   /** Whether Hide would start here: a cover is within reach. */
@@ -73,24 +109,76 @@ export class Activity<T extends CoverSpot = CoverSpot> {
     return nearestCover(x, y, covers, this.tuning.reach * this.bodyLengthPx) !== null;
   }
 
-  update(input: ActivityInput, covers: readonly T[]): ActivityResult {
+  /** A patch that Interact would start grazing here, or null. */
+  grazeable(input: ActivityInput, foods: readonly F[]): F | null {
     const bl = this.bodyLengthPx;
+    const full = (input.hunger ?? 1) < this.graze.full;
+    const mouth = this.mouth(input);
+    let best: F | null = null;
+    let bestGap = this.graze.reach * bl;
+    for (const food of foods) {
+      if (food.amount <= 0) continue;
+      if (full && (input.tasted?.(food.kind) ?? true)) continue;
+      const gap = Math.hypot(food.x - mouth.x, food.y - mouth.y) - food.r;
+      if (gap <= bestGap) {
+        best = food;
+        bestGap = gap;
+      }
+    }
+    return best;
+  }
 
-    // A tail flip always leaves cover. Fear must never lock the escape.
+  update(input: ActivityInput, covers: readonly T[], foods: readonly F[] = []): ActivityResult {
+    const bl = this.bodyLengthPx;
+    const scared = (input.fear ?? 0) >= this.graze.fearEnds;
+    const moving = input.axis.x !== 0 || input.axis.y !== 0;
+    if (!input.interact) this.interactSpent = false;
+
+    // A tail flip always ends what the body is doing. Fear must never lock the escape.
     if (this.name === 'hiding' && (input.tailFlip || !input.hide)) this.stop();
+    if (this.name === 'grazing' && this.food) {
+      const full = (input.hunger ?? 1) < this.graze.full;
+      const tasteOver = this.tasting && this.grazeTime >= this.graze.taste;
+      if (
+        input.tailFlip ||
+        !input.interact ||
+        moving ||
+        scared ||
+        this.food.amount <= 0 ||
+        (full && !this.tasting) ||
+        tasteOver
+      ) {
+        this.stop();
+        this.interactSpent = input.interact === true;
+      }
+    }
+    if (this.name === 'sensing' && (input.tailFlip || !input.sense || scared)) this.stop();
 
-    if (this.name === 'free' && input.hide && !input.tailFlip) {
-      const cover = nearestCover(input.x, input.y, covers, this.tuning.reach * bl);
+    if (this.name === 'free' && !input.tailFlip) {
+      const cover = input.hide
+        ? nearestCover(input.x, input.y, covers, this.tuning.reach * bl)
+        : null;
+      const wantsFood = input.interact === true && !this.interactSpent && !scared;
+      const food = !cover && wantsFood ? this.grazeable(input, foods) : null;
       if (cover) {
         this.name = 'hiding';
         this.cover = cover;
         this.target = tuckPoint(input.x, input.y, cover, this.tuning.tuck);
         this.stalled = 0;
         this.lastDistance = Infinity;
+      } else if (food && !moving) {
+        this.name = 'grazing';
+        this.food = food;
+        this.grazeTime = 0;
+        this.tasting = (input.hunger ?? 1) < this.graze.full;
+      } else if (input.sense && !scared && !input.hide) {
+        this.name = 'sensing';
       }
     }
 
-    if (this.name !== 'hiding' || !this.cover) return { axis: input.axis };
+    if (this.name === 'sensing') return { axis: { x: 0, y: 0 }, eating: false };
+    if (this.name === 'grazing' && this.food) return this.stepGraze(input, this.food);
+    if (this.name !== 'hiding' || !this.cover) return { axis: input.axis, eating: false };
 
     const dx = this.target.x - input.x;
     const dy = this.target.y - input.y;
@@ -101,17 +189,39 @@ export class Activity<T extends CoverSpot = CoverSpot> {
     this.lastDistance = Math.min(this.lastDistance, distance);
     if (distance <= this.tuning.settled * bl || (under && this.stalled > STALL_SECONDS)) {
       this.tucked = under;
-      return { axis: { x: 0, y: 0 } };
+      return { axis: { x: 0, y: 0 }, eating: false };
     }
     this.tucked = false;
     // Movement keys are ignored while hiding: the body walks itself in.
     const strength = Math.min(1, distance / (this.tuning.slowing * bl));
-    return { axis: { x: (dx / distance) * strength, y: (dy / distance) * strength } };
+    return {
+      axis: { x: (dx / distance) * strength, y: (dy / distance) * strength },
+      eating: false,
+    };
+  }
+
+  /** Steps to the patch's edge, then eats while the mouth is on it. */
+  private stepGraze(input: ActivityInput, food: F): ActivityResult {
+    this.grazeTime += input.dt;
+    const mouth = this.mouth(input);
+    const dx = food.x - mouth.x;
+    const dy = food.y - mouth.y;
+    const distance = Math.hypot(dx, dy);
+    if (distance <= food.r || distance < 1e-6) return { axis: { x: 0, y: 0 }, eating: true };
+    return { axis: { x: dx / distance, y: dy / distance }, eating: false };
+  }
+
+  private mouth(input: ActivityInput): { x: number; y: number } {
+    const heading = input.heading ?? 0;
+    const ahead = this.graze.head * this.bodyLengthPx;
+    return { x: input.x + Math.cos(heading) * ahead, y: input.y + Math.sin(heading) * ahead };
   }
 
   private stop(): void {
     this.name = 'free';
     this.cover = null;
+    this.food = null;
     this.tucked = false;
+    this.tasting = false;
   }
 }

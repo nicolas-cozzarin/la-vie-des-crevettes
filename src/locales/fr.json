@@ -71,6 +71,8 @@
   "play.hint.move": "{up} {left} {down} {right} pour te déplacer",
   "play.hint.dart": "{key} pour un coup de queue",
   "play.hint.pause": "{key} pour le menu",
+  "prompt.graze": "Maintiens {key} pour brouter",
+  "prompt.taste": "{key} pour goûter",
 
   "mood.calm": "Calme",
   "mood.hungry": "Affamée",

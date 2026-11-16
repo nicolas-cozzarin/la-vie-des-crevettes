@@ -37,6 +37,8 @@ export const DEPTH = {
   /** The turtle and the hunting fish swim over the seagrass. Their shadows stay at midWater. */
   overCover: 45,
   surfaceLight: 50,
+  /** Scent ribbons lie on the water, over the cover and the light. */
+  scent: 55,
   mood: 60,
   interface: 100,
 } as const;

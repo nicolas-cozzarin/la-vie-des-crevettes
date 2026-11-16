@@ -38,4 +38,5 @@ window.__lvdc = {
   bindings: () => app.settings.bindings,
   player: () => debugState.player?.() ?? null,
   feelings: () => debugState.feelings?.() ?? null,
+  scent: () => debugState.scent?.() ?? null,
 };

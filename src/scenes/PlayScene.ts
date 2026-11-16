@@ -1,17 +1,21 @@
 import Phaser from 'phaser';
 import { app } from '../app';
-import { MOOD_EXPRESSIONS, STAGE_LOOKS, withConditions } from '../art/expressions';
+import { MOOD_EXPRESSIONS, STAGE_LOOKS, withActivity, withConditions } from '../art/expressions';
 import { COLORS, DEPTH, GAME_HEIGHT, GAME_WIDTH } from '../config';
 import { Activity } from '../core/activity/Activity';
 import { EventBus } from '../core/events';
+import { FoodPatch } from '../core/food/FoodPatch';
 import { FeelingsModel, type FeelingsChange } from '../core/feelings/FeelingsModel';
 import { MOODS, type Mood } from '../core/feelings/mood';
 import type { FeelingsContext } from '../core/feelings/types';
 import type { GameEvents } from '../core/gameEvents';
 import { approach } from '../core/movement/angles';
 import { moveCircle, type Bounds } from '../core/movement/collision';
+import { seededRandom } from '../core/random';
+import { RibbonMemory, ribbons, type Ribbon } from '../core/scent/ribbons';
 import { ShrimpMotion, type Mover } from '../core/movement/ShrimpMotion';
 import { DiscoveryTracker, type Discoverable, type Pull } from '../core/world/discovery';
+import { FOOD_KINDS, type FoodKind } from '../core/world/kinds';
 import { ZoneTracker } from '../core/world/zones';
 import {
   areaFor,
@@ -22,13 +26,26 @@ import {
   type PlayableArea,
 } from '../data/areas';
 import type { AreaDef } from '../data/areas/types';
-import { CAMERA, CURIOSITY, FEELINGS, FRAME, HIDE, HUNGER, MOOD, MOTION } from '../data/tuning';
+import { FOODS } from '../data/foods';
+import {
+  CAMERA,
+  CURIOSITY,
+  FEELINGS,
+  FRAME,
+  GRAZE,
+  HIDE,
+  HUNGER,
+  MOOD,
+  MOTION,
+  SENSE,
+} from '../data/tuning';
 import { debugState } from '../debug';
 import { ShrimpRig } from '../entities/ShrimpRig';
 import { t } from '../i18n';
 import { debugRequested } from '../platform/address';
 import { loadArea, type CoverHandle, type LoadedArea } from '../systems/AreaLoader';
 import { MoodPresenter } from '../systems/MoodPresenter';
+import { ScentField } from '../systems/ScentField';
 import { WaterLight } from '../systems/WaterLight';
 import type { HudScene } from './HudScene';
 
@@ -44,9 +61,9 @@ export interface PlayData {
 const PLAYER = 'player';
 
 /**
- * The things of an area the shrimp can come to know: its creatures, and the
- * landmarks and covers that have a journal entry. Foods join in step 5, when
- * they can be tasted.
+ * The things of an area the shrimp can come to know: its creatures, its
+ * foods, and the landmarks and covers that have a journal entry. A food is
+ * found by tasting it.
  */
 function discoverables(area: AreaDef): Discoverable[] {
   const things: Discoverable[] = [];
@@ -57,6 +74,9 @@ function discoverables(area: AreaDef): Discoverable[] {
       x: creature.x,
       y: creature.y,
     });
+  }
+  for (const food of area.food ?? []) {
+    things.push({ id: `food.${food.kind}`, kind: 'food', x: food.x, y: food.y });
   }
   for (const landmark of area.landmarks ?? []) {
     if (landmark.discovery) {
@@ -83,7 +103,7 @@ export class PlayScene extends Phaser.Scene {
   private area!: AreaDef;
   private loaded!: LoadedArea;
   private light!: WaterLight;
-  private activity!: Activity<CoverHandle>;
+  private activity!: Activity<CoverHandle, FoodPatch>;
   private zones!: ZoneTracker;
   private bodyLengthPx = 110;
   private motion!: ShrimpMotion;
@@ -98,6 +118,21 @@ export class PlayScene extends Phaser.Scene {
   private things: Discoverable[] = [];
   private pull: Pull = { value: 0, target: null };
   private presenter!: MoodPresenter;
+
+  private patches: FoodPatch[] = [];
+  private foodImages = new Map<FoodPatch, Phaser.GameObjects.Image>();
+  private scent!: ScentField;
+  private memory!: RibbonMemory;
+  /** Seconds of play, for the ribbon memory. */
+  private clock = 0;
+  /** The patch of the meal under way, once the mouth is on it, and whether it is a first taste. */
+  private meal: { food: FoodPatch; first: boolean } | null = null;
+  private wiggleLeft = 0;
+  /** The player's favourite food, chosen at random for each life (T35). */
+  private favourite: FoodKind = 'algaeFilm';
+  /** How many times each prompt has shown, and the one showing now. */
+  private prompts = new Map<string, number>();
+  private promptNow: string | null = null;
 
   private hud: HudScene | null = null;
 
@@ -127,7 +162,7 @@ export class PlayScene extends Phaser.Scene {
     const stage = STAGE_IN[this.areaId];
     this.rig = new ShrimpRig(this, this.bodyLengthPx, DEPTH.bedAnimals, STAGE_LOOKS[stage]);
     this.rig.update(0, this.motion);
-    this.activity = new Activity<CoverHandle>(HIDE, this.bodyLengthPx);
+    this.activity = new Activity<CoverHandle, FoodPatch>(HIDE, this.bodyLengthPx, GRAZE);
     this.zones = new ZoneTracker(this.loaded.zones);
     this.light = new WaterLight(this, area.light);
 
@@ -144,6 +179,33 @@ export class PlayScene extends Phaser.Scene {
     this.things = discoverables(area);
     this.pull = { value: 0, target: null };
     this.enterZones();
+
+    // Food, and the scent that leads to it.
+    this.patches = [];
+    this.foodImages = new Map();
+    for (const { def, image } of this.loaded.foods) {
+      const patch = new FoodPatch(
+        def.id,
+        def.kind,
+        def.x,
+        def.y,
+        def.size * GRAZE.patchShare,
+        FOODS[def.kind],
+      );
+      this.patches.push(patch);
+      // Fuzz rides on its seagrass, which fades on its own when the shrimp is under it.
+      if (def.kind !== 'seagrassFuzz') this.foodImages.set(patch, image);
+    }
+    this.scent = new ScentField(this, this.bodyLengthPx, DEPTH.scent);
+    this.memory = new RibbonMemory(SENSE.followWindow);
+    this.clock = 0;
+    this.meal = null;
+    this.wiggleLeft = 0;
+    const likes = FOOD_KINDS.filter((kind) => kind !== 'microalgae');
+    this.favourite =
+      likes[Math.floor(seededRandom(Date.now() >>> 0)() * likes.length)] ?? 'algaeFilm';
+    this.prompts = new Map();
+    this.promptNow = null;
 
     const camera = this.cameras.main;
     camera.setBackgroundColor(COLORS.deepTeal);
@@ -172,6 +234,7 @@ export class PlayScene extends Phaser.Scene {
       tucked: this.activity.tucked,
       zones: [...this.zones.current],
     });
+    debugState.scent = () => this.scent.snapshot;
     debugState.feelings = () => ({
       values: { ...this.feelings.values },
       mood: this.feelings.mood,
@@ -193,6 +256,8 @@ export class PlayScene extends Phaser.Scene {
       this.bus.clear();
       debugState.player = null;
       debugState.feelings = null;
+      debugState.scent = null;
+      this.scent.destroy();
       this.rig.destroy();
       this.hud = null;
       this.scene.stop('Hud');
@@ -215,43 +280,155 @@ export class PlayScene extends Phaser.Scene {
     let dart = tailFlip;
     let darted = false;
     let remaining = frame;
+    let eating = false;
     while (remaining > 1e-6) {
       const dt = Math.min(remaining, FRAME.step);
-      // Hiding walks the body in by itself; otherwise the player's own direction.
-      const { axis } = this.activity.update(
-        {
-          dt,
-          x: this.motion.x,
-          y: this.motion.y,
-          hide: actions.isDown('hide'),
-          tailFlip: dart,
-          axis: own,
-        },
+      this.clock += dt;
+      // Hiding and grazing walk the body by themselves; otherwise the player's own direction.
+      const before = this.activity.name;
+      const result = this.activity.update(
+        this.activityInput(dt, own, dart),
         this.loaded.covers,
+        this.patches,
       );
+      const { axis } = result;
+      eating = this.stepMeal(dt, before, result.eating);
+      for (const patch of this.patches) patch.step(dt);
       this.stepFeelings(dt, axis.x !== 0 || axis.y !== 0 || dart);
-      const result = this.motion.step(dt, { x: axis.x, y: axis.y, dart }, this.mover);
-      if (result.darted) {
+      const moved = this.motion.step(dt, { x: axis.x, y: axis.y, dart }, this.mover);
+      if (moved.darted) {
         this.feelings.stimulus('tailFlip');
         this.bus.emit('tailflip', { who: PLAYER });
       }
-      darted = darted || result.darted;
+      darted = darted || moved.darted;
       dart = false;
       remaining -= dt;
     }
 
     this.enterZones();
     this.loaded.update(frame, this.motion.x, this.motion.y);
-    this.rig.update(frame, this.motion, this.feel());
+    for (const [patch, image] of this.foodImages) image.setAlpha(0.15 + 0.85 * patch.amount);
+    this.wiggleLeft = Math.max(0, this.wiggleLeft - frame);
+    this.rig.update(frame, this.motion, this.feel(eating));
+    this.showScent(frame);
+    this.showPrompt(own);
     this.presenter.update(frame, {
       mood: this.feelings.mood,
       waryLeft: this.feelings.waryRemaining,
       x: this.motion.x,
       y: this.motion.y,
       target: this.feelings.mood === 'curious' ? this.pull.target : null,
+      sensing: this.activity.name === 'sensing',
     });
     this.follow(frame);
     this.hud?.track(frame, own.x !== 0 || own.y !== 0, darted);
+  }
+
+  private activityInput(dt: number, own: { x: number; y: number }, dart: boolean) {
+    const actions = app.actions;
+    return {
+      dt,
+      x: this.motion.x,
+      y: this.motion.y,
+      heading: this.motion.heading,
+      hide: actions.isDown('hide'),
+      interact: actions.isDown('interact'),
+      sense: actions.isDown('sense'),
+      tailFlip: dart,
+      axis: own,
+      hunger: this.feelings.values.hunger,
+      fear: this.feelings.values.fear,
+      tasted: (kind: FoodKind) => this.discovery.known.has(`food.${kind}`),
+    };
+  }
+
+  /**
+   * Eating on this step, if the mouth is on the food. The first bite of a meal
+   * is when a food is first tasted and the wiggle comes; the meal ends when
+   * grazing does. Returns whether the shrimp ate.
+   */
+  private stepMeal(dt: number, before: string, eating: boolean): boolean {
+    const food = this.activity.name === 'grazing' ? this.activity.food : null;
+    if (food && eating) {
+      if (!this.meal) {
+        const first = this.discovery.add(`food.${food.kind}`);
+        if (first) this.found(`food.${food.kind}`);
+        if (first || food.kind === this.favourite) this.wiggleLeft = GRAZE.wiggle;
+        if (this.memory.followed(food.id, this.clock)) {
+          this.bus.emit('ribbon:followed', { kind: food.kind, patchId: food.id });
+        }
+        this.meal = { food, first };
+      }
+      this.feelings.eat(food.graze(dt));
+    }
+    if (before === 'grazing' && this.activity.name !== 'grazing' && this.meal) {
+      this.bus.emit('food:eaten', {
+        who: PLAYER,
+        kind: this.meal.food.kind,
+        first: this.meal.first,
+        full: this.feelings.values.hunger < GRAZE.full,
+        patchId: this.meal.food.id,
+      });
+      this.meal = null;
+    }
+    return food !== null && eating;
+  }
+
+  /**
+   * Ribbons: all four kinds while sensing; food alone, faint and close, when
+   * hungry (doc 10, "Hunger").
+   */
+  private showScent(dt: number): void {
+    const { x, y } = this.motion;
+    const bl = this.bodyLengthPx;
+    let shown: { ribbon: Ribbon; alpha: number }[] = [];
+    if (this.activity.name === 'sensing') {
+      const range = this.discovery.range * bl;
+      const unknown = this.things
+        .filter((thing) => thing.kind !== 'food' && !this.discovery.known.has(thing.id))
+        .map((thing, index) => ({ id: `${thing.id}#${index}`, x: thing.x, y: thing.y }));
+      const found = ribbons(
+        x,
+        y,
+        { foods: this.patches, shrimp: [], dangers: [], unknown },
+        range,
+        SENSE,
+      );
+      this.memory.shown(found, this.clock);
+      shown = found.map((ribbon) => ({ ribbon, alpha: ribbon.strength }));
+    } else if (this.feelings.values.hunger >= MOOD.hungry.enter) {
+      const near = ribbons(
+        x,
+        y,
+        { foods: this.patches, shrimp: [], dangers: [], unknown: [] },
+        SENSE.hungryReach * bl,
+        SENSE,
+      );
+      shown = near.map((ribbon) => ({ ribbon, alpha: ribbon.strength * SENSE.hungryStrength }));
+    }
+    this.scent.update(dt, x, y, shown);
+  }
+
+  /** "Hold E to graze" when a graze could start, the first three times (doc 03). */
+  private showPrompt(own: { x: number; y: number }): void {
+    let key: string | null = null;
+    if (this.activity.name === 'free' && own.x === 0 && own.y === 0) {
+      const input = this.activityInput(0, own, false);
+      const food = this.activity.grazeable(input, this.patches);
+      if (food) {
+        const full = this.feelings.values.hunger < GRAZE.full;
+        key = full ? 'prompt.taste' : 'prompt.graze';
+      }
+    }
+    if (key !== this.promptNow) {
+      if (key !== null) {
+        const times = this.prompts.get(key) ?? 0;
+        if (times >= 3) key = null;
+        else this.prompts.set(key, times + 1);
+      }
+      this.promptNow = key;
+      this.hud?.prompt(key === null ? null : t(key, { key: app.actionKey('interact') }));
+    }
   }
 
   /** One step of the feelings, in the same loop as the motion (doc 15, "One clock"). */
@@ -304,27 +481,31 @@ export class PlayScene extends Phaser.Scene {
   }
 
   /** How the body holds itself: the mood, the conditions, and what it looks at. */
-  private feel() {
+  private feel(eating: boolean) {
     const feelings = this.feelings;
     const mood = feelings.mood;
     const has = feelings.has.bind(feelings);
     let target: { x: number; y: number } | null = null;
     if (mood === 'curious') target = this.pull.target;
     else if (has('veryHungry')) target = this.nearestFood();
+    const sensing = this.activity.name === 'sensing';
     return {
-      expression: withConditions(MOOD_EXPRESSIONS[mood], has),
+      expression: withActivity(withConditions(MOOD_EXPRESSIONS[mood], has), sensing),
       afraid: mood === 'afraid',
       target,
       startled: has('startled'),
+      grazing: eating,
+      wiggle: this.wiggleLeft > 0 ? 1 - this.wiggleLeft / GRAZE.wiggle : null,
     };
   }
 
   /** The nearest food within the Sense range, for a very hungry shrimp to lean toward. */
   private nearestFood(): { x: number; y: number } | null {
-    const reach = CURIOSITY.range.juvenile * this.bodyLengthPx;
+    const reach = this.discovery.range * this.bodyLengthPx;
     let best: { x: number; y: number } | null = null;
     let bestDistance = reach;
-    for (const food of this.area.food ?? []) {
+    for (const food of this.patches) {
+      if (food.amount <= 0) continue;
       const distance = Math.hypot(food.x - this.motion.x, food.y - this.motion.y);
       if (distance < bestDistance) {
         best = food;

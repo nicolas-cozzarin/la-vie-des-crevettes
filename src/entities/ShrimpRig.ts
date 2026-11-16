@@ -43,6 +43,10 @@ export interface RigFeel {
   target: { x: number; y: number } | null;
   /** The 0.35 s flinch of doc 10. */
   startled: boolean;
+  /** Grazing with the mouth on the food: the front legs pick (doc 14, "Graze"). */
+  grazing?: boolean;
+  /** 0 to 1 through the first-taste wiggle, or null (doc 14, "First-taste wiggle"). */
+  wiggle?: number | null;
 }
 
 /** The expression as the rig holds it: `fan` always a number, and how firmly it is held. */
@@ -65,6 +69,9 @@ const PLATE_OVERLAP = 1.22;
 const JOINT_LAG = 0.02;
 /** The most one joint bends sideways, in radians. */
 const JOINT_LIMIT = 0.26;
+
+/** Radians. How far the abdomen bends at its tip in the first-taste wiggle. */
+const WIGGLE_BEND = 0.32;
 
 const ANTENNA_POINTS = 14;
 /** Longest time step for the antennae, in seconds. Longer frames are cut up. */
@@ -144,6 +151,11 @@ export class ShrimpRig {
   private rockPhase = 0;
   /** 0 to 1: how far into the flinch the body is. */
   private flinch = 0;
+  /** 0 to 1: how much the front legs pick. */
+  private picking = 0;
+  private pickPhase = 0;
+  /** 0 to 1 through the wiggle, or -1. */
+  private wiggle = -1;
   private target: { x: number; y: number } | null = null;
   private readonly look: RigLook;
 
@@ -211,6 +223,8 @@ export class ShrimpRig {
     else if (pose.mode === 'walk') spreadTarget = 0.36;
     // The mood holds the fan, except in an escape, which always spreads it.
     if (!darting && !gliding) spreadTarget = lerp(spreadTarget, e.fan, e.fanHold);
+    // The tail fan flares through the first-taste wiggle.
+    if (this.wiggle >= 0) spreadTarget = Math.max(spreadTarget, 0.95);
     this.spread += (spreadTarget - this.spread) * approach(dt, 0.12);
 
     this.gait += (speed / (0.4 * this.bodyLengthPx)) * TAU * dt;
@@ -255,6 +269,10 @@ export class ShrimpRig {
     this.target = feel?.target ?? null;
     const startled = feel?.startled === true;
     this.flinch += ((startled ? 1 : 0) - this.flinch) * approach(dt, startled ? 0.04 : 0.12);
+    this.picking += ((feel?.grazing ? 1 : 0) - this.picking) * approach(dt, 0.15);
+    // One pick of both front pairs every half second.
+    this.pickPhase += (TAU / 0.5) * dt;
+    this.wiggle = feel?.wiggle ?? -1;
   }
 
   /** Where the body is drawn: leaning toward what it looks at, flinching, trembling, rocking. */
@@ -291,6 +309,7 @@ export class ShrimpRig {
     const relax = this.placed ? Math.exp(-dt / JOINT_LAG) : 0;
 
     let previous = heading;
+    let tail = heading;
     let x = pose.x;
     let y = pose.y;
     for (let index = 0; index <= SEGMENTS; index++) {
@@ -301,6 +320,10 @@ export class ShrimpRig {
       );
       const angle = previous + lag;
       this.angles[index] = angle;
+      // The first-taste wiggle: the abdomen waves side to side twice.
+      const wave = this.wiggle >= 0 ? WIGGLE_BEND * Math.sin(this.wiggle * 2 * TAU) : 0;
+      const drawn =
+        angle + wave * Math.sin(Math.PI * Math.max(0, this.wiggle)) * (index / SEGMENTS);
       const joint = this.joints[index] as Point;
       joint.x = x;
       joint.y = y;
@@ -310,18 +333,19 @@ export class ShrimpRig {
         const halfWidth = SHRIMP.segmentHalfWidths[index] as number;
         (this.segments[index] as Phaser.GameObjects.Image)
           .setPosition(x, y)
-          .setRotation(angle)
+          .setRotation(drawn)
           .setScale(
             ((scale * length * PLATE_OVERLAP) / PARTS.segment.length) * stretch,
             (scale * halfWidth) / PARTS.segment.halfWidth,
           );
-        x -= Math.cos(angle) * length * bl * stretch;
-        y -= Math.sin(angle) * length * bl * stretch;
+        x -= Math.cos(drawn) * length * bl * stretch;
+        y -= Math.sin(drawn) * length * bl * stretch;
       }
       previous = angle;
+      tail = drawn;
     }
 
-    const fan = (this.angles[SEGMENTS] as number) + this.shown.fanSway * Math.sin(this.swayPhase);
+    const fan = tail + this.shown.fanSway * Math.sin(this.swayPhase);
     this.telson
       .setPosition(x, y)
       .setRotation(fan)
@@ -436,7 +460,16 @@ export class ShrimpRig {
         // Neighbouring legs, and the two legs of a pair, step out of time.
         const phase = this.gait + index * 2.4 + (side > 0 ? Math.PI : 0);
         const swing = Math.sin(phase) * 0.42 * stepping;
-        const forward = lerp((LEG_ANGLES[index] as number) * spreadOut + swing, -1.15, this.tuck);
+        // Grazing: the two front pairs reach down and in, one after the other.
+        const front = index >= LEG_ROOTS.length - 2;
+        const pick = front
+          ? this.picking * Math.max(0, Math.sin(this.pickPhase + (index % 2) * Math.PI)) * 0.7
+          : 0;
+        const forward = lerp(
+          (LEG_ANGLES[index] as number) * spreadOut + swing + pick,
+          -1.15,
+          this.tuck,
+        );
         const direction = heading + side * (Math.PI / 2 - forward);
         const kneeX = rootX + Math.cos(direction) * reach * 0.58;
         const kneeY = rootY + Math.sin(direction) * reach * 0.58;

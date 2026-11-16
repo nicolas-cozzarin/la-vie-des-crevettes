@@ -4,7 +4,8 @@
  * See docs/10-feelings-and-states.md, "Curiosity".
  */
 
-export type DiscoverableKind = 'creature' | 'thing';
+/** A food is found by tasting it, never by coming near. */
+export type DiscoverableKind = 'creature' | 'thing' | 'food';
 
 export interface Discoverable {
   /** The journal entry, such as `creature.fiddlerCrab` or `thing.seedPod`. */
@@ -20,8 +21,8 @@ export interface DiscoveryTuning {
   /** BL. How far curiosity reaches. */
   range: number;
   weights: Record<DiscoverableKind, number>;
-  /** BL and seconds to find each kind. */
-  find: Record<DiscoverableKind, { distance: number; seconds: number }>;
+  /** BL and seconds to find each kind that is found by coming near. */
+  find: Record<Exclude<DiscoverableKind, 'food'>, { distance: number; seconds: number }>;
 }
 
 export interface Pull {
@@ -53,6 +54,7 @@ export function curiosityPull(
 /**
  * Keeps what is known, and finds things: a creature after 2 s within 2.5 BL,
  * a thing after 1 s within 1.5 BL, or at once when the shrimp goes under it.
+ * A food is found by tasting it, through `add`.
  */
 export class DiscoveryTracker {
   private readonly found: Set<string>;
@@ -65,6 +67,11 @@ export class DiscoveryTracker {
     known: Iterable<string> = [],
   ) {
     this.found = new Set(known);
+  }
+
+  /** BL. How far curiosity reaches, which is also the Sense range. */
+  get range(): number {
+    return this.tuning.range;
   }
 
   get known(): ReadonlySet<string> {
@@ -86,7 +93,7 @@ export class DiscoveryTracker {
   step(dt: number, x: number, y: number, things: readonly Discoverable[]): string[] {
     const found: string[] = [];
     for (const thing of things) {
-      if (this.found.has(thing.id)) continue;
+      if (this.found.has(thing.id) || thing.kind === 'food') continue;
       const distance = Math.hypot(thing.x - x, thing.y - y);
       if (thing.under !== undefined) {
         if (distance < thing.under && this.add(thing.id)) found.push(thing.id);

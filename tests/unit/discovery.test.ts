@@ -59,3 +59,21 @@ describe('the discovery tracker', () => {
     expect(tracker.add('place.D')).toBe(true);
   });
 });
+
+describe('foods', () => {
+  it('a food pulls on curiosity but is found only by tasting', () => {
+    const tracker = new DiscoveryTracker(
+      {
+        range: 8,
+        weights: { creature: 1, thing: 1, food: 0.8 },
+        find: { creature: { distance: 2.5, seconds: 2 }, thing: { distance: 1.5, seconds: 1 } },
+      },
+      100,
+    );
+    const films = [{ id: 'food.algaeFilm', kind: 'food' as const, x: 0, y: 0 }];
+    expect(tracker.pull(0, 0, films).value).toBeCloseTo(0.8);
+    expect(tracker.step(5, 0, 0, films)).toEqual([]);
+    expect(tracker.add('food.algaeFilm')).toBe(true);
+    expect(tracker.pull(0, 0, films).value).toBe(0);
+  });
+});

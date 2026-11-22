@@ -1,6 +1,6 @@
 import type { Bindings } from './core/input/bindings';
 import type { Lang } from './core/i18n';
-import type { CreaturesSnapshot, FeelingsSnapshot, PlayerSnapshot } from './debug';
+import type { CreaturesSnapshot, FeelingsSnapshot, PlayerSnapshot, ThreatSnapshot } from './debug';
 import type { ScentSnapshot } from './systems/ScentField';
 import type { ShrimpSnapshot } from './systems/Shoal';
 
@@ -20,6 +20,8 @@ export interface DebugHook {
   shrimp(): ShrimpSnapshot[] | null;
   /** The animals that move, and the strength of the pale rim on the curious target. */
   creatures(): CreaturesSnapshot | null;
+  /** The threat under way: its stage, notice, the strike ring, and whether the player is cornered. */
+  threat(): ThreatSnapshot | null;
 }
 
 declare global {

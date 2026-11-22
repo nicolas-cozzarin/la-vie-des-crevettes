@@ -15,6 +15,8 @@ import { moveCircle, type Bounds } from '../core/movement/collision';
 import { seededRandom } from '../core/random';
 import { RibbonMemory, ribbons, type Ribbon } from '../core/scent/ribbons';
 import { ShrimpMotion, type Mover } from '../core/movement/ShrimpMotion';
+import type { ThreatEvent } from '../core/threat/ThreatDirector';
+import { distanceToCover, isUnder } from '../core/world/cover';
 import { DiscoveryTracker, type Discoverable, type Pull } from '../core/world/discovery';
 import { FOOD_KINDS, type FoodKind } from '../core/world/kinds';
 import { ZoneTracker } from '../core/world/zones';
@@ -51,6 +53,7 @@ import { loadArea, type CoverHandle, type LoadedArea } from '../systems/AreaLoad
 import { Creatures, LIVE_KINDS } from '../systems/Creatures';
 import { MoodPresenter } from '../systems/MoodPresenter';
 import { Rim } from '../systems/Rim';
+import { Threats } from '../systems/Threats';
 import { ScentField } from '../systems/ScentField';
 import { Shoal } from '../systems/Shoal';
 import { WaterLight } from '../systems/WaterLight';
@@ -151,6 +154,8 @@ export class PlayScene extends Phaser.Scene {
   /** The crabs, snails and fish that move, and the pale rim on what the shrimp is curious about. */
   private creatures!: Creatures;
   private rim!: Rim;
+  /** The bird and what it does, and the cornered sequence (step 7). */
+  private threats!: Threats;
 
   private hud: HudScene | null = null;
 
@@ -245,6 +250,16 @@ export class PlayScene extends Phaser.Scene {
     this.lift = 0;
 
     const camera = this.cameras.main;
+    this.threats = new Threats(this, {
+      area,
+      loaded: this.loaded,
+      bodyLengthPx: this.bodyLengthPx,
+      camera,
+      gentle: app.settings.gentleMode,
+      reducedMotion: () => app.settings.reducedMotion,
+      seed: Date.now() >>> 0,
+    });
+    this.shoal.watch(this.threats);
     camera.setBackgroundColor(COLORS.deepTeal);
     this.presenter = new MoodPresenter(camera, {
       hud: () => this.hud,
@@ -274,6 +289,7 @@ export class PlayScene extends Phaser.Scene {
     debugState.scent = () => this.scent.snapshot;
     debugState.shrimp = () => this.shoal.snapshot;
     debugState.creatures = () => ({ animals: this.creatures.snapshot, rim: this.rim.snapshot });
+    debugState.threat = () => this.threats.snapshot;
     debugState.feelings = () => ({
       values: { ...this.feelings.values },
       mood: this.feelings.mood,
@@ -285,7 +301,13 @@ export class PlayScene extends Phaser.Scene {
     });
 
     // `?debug`: a key cycles the forced mood, to look at each one.
-    const stopDebug = debugRequested() ? app.keyboard.onDebugKey(() => this.cycleMood()) : null;
+    // F10 calls the bird at once.
+    const stopDebug = debugRequested()
+      ? app.keyboard.onDebugKey((key) => {
+          if (key === 'mood') this.cycleMood();
+          else this.threats.callBird();
+        })
+      : null;
 
     // If the tab loses focus, the game pauses.
     const stopBlur = app.keyboard.onBlur(() => this.openPause());
@@ -298,6 +320,8 @@ export class PlayScene extends Phaser.Scene {
       debugState.scent = null;
       debugState.shrimp = null;
       debugState.creatures = null;
+      debugState.threat = null;
+      this.threats.destroy();
       this.scent.destroy();
       this.shoal.destroy();
       this.rig.destroy();
@@ -317,9 +341,18 @@ export class PlayScene extends Phaser.Scene {
     // A slow frame is played as several short steps, so the shrimp covers the
     // same ground whatever the frame rate.
     const frame = Math.min(deltaMs / 1000, FRAME.longest);
-    const own = actions.axis();
-    const tailFlip = actions.justPressed('tailFlip');
+    // Cornered: the body moves by itself and the keys do nothing until it wakes.
+    const locked = this.threats.cornered.running;
+    const sequence = this.threats.cornered.update(frame);
+    const own = locked ? { x: 0, y: 0 } : actions.axis();
+    const tailFlip = !locked && actions.justPressed('tailFlip');
     let dart = tailFlip;
+    if (sequence.flip) dart = this.flipAway();
+    if (sequence.place) this.wake();
+    if (sequence.done) {
+      this.feelings.stimulus('cornered');
+      this.bus.emit('cornered', { kind: this.threats.director.kind ?? 'bird' });
+    }
     let darted = false;
     let remaining = frame;
     let eating = false;
@@ -337,7 +370,7 @@ export class PlayScene extends Phaser.Scene {
       // Hiding and grazing walk the body by themselves; otherwise the player's own direction.
       const before = this.activity.name;
       const result = this.activity.update(
-        this.activityInput(dt, own, dart),
+        this.activityInput(dt, own, dart, locked),
         this.loaded.covers,
         this.patches,
       );
@@ -371,11 +404,17 @@ export class PlayScene extends Phaser.Scene {
         this.creatures.flip(this.motion.x, this.motion.y);
       }
       darted = darted || moved.darted;
+      this.answerThreat(this.threats.step(dt, this.threatPlayer(moved.darted)));
+      for (const kind of this.threats.felt(PLAYER, this.motion.x, this.motion.y)) {
+        this.feelings.stimulus(kind);
+      }
       dart = false;
       remaining -= dt;
     }
 
     this.enterZones();
+    this.threats.enter(this.motion.x, this.motion.y);
+    this.threats.draw(frame);
     this.loaded.update(frame, this.motion.x, this.motion.y);
     this.creatures.update(frame, this.motion);
     this.rim.set(this.rimmed());
@@ -387,7 +426,8 @@ export class PlayScene extends Phaser.Scene {
     this.lift += (lift - this.lift) * approach(frame, MOOD.screen);
     this.shoal.draw(frame, this.cameras.main.worldView, this.lift);
     this.showScent(frame);
-    this.showPrompt(own);
+    this.showPrompt(own, locked);
+    this.hud?.hush(this.threats.cornered.darkness);
     this.presenter.update(frame, {
       mood: this.feelings.mood,
       waryLeft: this.feelings.waryRemaining,
@@ -397,25 +437,27 @@ export class PlayScene extends Phaser.Scene {
       sensing: this.activity.name === 'sensing',
     });
     this.follow(frame);
-    this.hud?.track(frame, own.x !== 0 || own.y !== 0, darted);
+    this.hud?.track(frame, own.x !== 0 || own.y !== 0, darted && !locked);
   }
 
-  private activityInput(dt: number, own: { x: number; y: number }, dart: boolean) {
+  private activityInput(dt: number, own: { x: number; y: number }, dart: boolean, locked = false) {
     const actions = app.actions;
+    const held = (action: 'hide' | 'interact' | 'sense' | 'greet') =>
+      !locked && actions.isDown(action);
     return {
       dt,
       x: this.motion.x,
       y: this.motion.y,
       heading: this.motion.heading,
-      hide: actions.isDown('hide'),
-      interact: actions.isDown('interact'),
-      sense: actions.isDown('sense'),
+      hide: held('hide'),
+      interact: held('interact'),
+      sense: held('sense'),
       tailFlip: dart,
       axis: own,
       hunger: this.feelings.values.hunger,
       fear: this.feelings.values.fear,
       tasted: (kind: FoodKind) => this.discovery.known.has(`food.${kind}`),
-      greet: actions.isDown('greet'),
+      greet: held('greet'),
       others: this.shoal.greetable,
     };
   }
@@ -491,10 +533,10 @@ export class PlayScene extends Phaser.Scene {
    * "Hold E to graze" when a graze could start, "F to greet" when another
    * shrimp is close enough, the first three times each (doc 03).
    */
-  private showPrompt(own: { x: number; y: number }): void {
+  private showPrompt(own: { x: number; y: number }, locked: boolean): void {
     let key: string | null = null;
     let action: 'interact' | 'greet' = 'interact';
-    if (this.activity.name === 'free' && own.x === 0 && own.y === 0) {
+    if (!locked && this.activity.name === 'free' && own.x === 0 && own.y === 0) {
       const input = this.activityInput(0, own, false);
       const food = this.activity.grazeable(input, this.patches);
       if (food) {
@@ -540,11 +582,85 @@ export class PlayScene extends Phaser.Scene {
       companionWithin2: this.shoal.companionNear(x, y),
       restingAgainstClose: false,
       curiosityPull: this.pull.value,
-      threat: null,
+      threat: this.threats.view(x, y, true),
       inCurrent: false,
       dayPhase: null,
     };
     this.report(this.feelings.step(dt, context));
+  }
+
+  /** What the threat director needs from the player on this step. */
+  private threatPlayer(darted: boolean) {
+    const { x, y } = this.motion;
+    let coverGap = Infinity;
+    let underCover = false;
+    for (const cover of this.loaded.covers) {
+      coverGap = Math.min(coverGap, distanceToCover(x, y, cover));
+      if (isUnder(x, y, cover)) underCover = true;
+    }
+    return {
+      x,
+      y,
+      vx: this.motion.vx,
+      vy: this.motion.vy,
+      mode: this.motion.mode,
+      hidden: this.activity.tucked,
+      underCover,
+      darted,
+      soft: this.feelings.has('soft'),
+      coverGap: coverGap / this.bodyLengthPx,
+    };
+  }
+
+  /** What the scene does when the threat moves on. */
+  private answerThreat(events: readonly ThreatEvent[]): void {
+    for (const event of events) {
+      if (event.type === 'stage') {
+        this.bus.emit('threat:stage', { kind: event.kind, stage: event.stage });
+        // At the cue, the crabs go down and the schools burst; Nacre notices first.
+        if (event.stage === 'cue') {
+          const shadow = this.threats.director.shadow;
+          this.creatures.cue(shadow.x, shadow.y);
+          if (this.shoal.cueNoticed(this.clock, this.motion.x, this.motion.y)) {
+            this.feelings.stimulus('alarm');
+          }
+        }
+      } else if (event.type === 'strike') {
+        this.bus.emit('threat:strike', {
+          kind: this.threats.director.kind ?? 'bird',
+          hit: event.hit,
+        });
+        if (event.hit) this.threats.cornered.start();
+      } else if (event.type === 'escaped') {
+        this.bus.emit('threat:escaped', {
+          kind: event.kind,
+          clean: event.clean,
+          still: event.still,
+        });
+        this.shoal.escapedTogether(this.motion.x, this.motion.y);
+      }
+    }
+  }
+
+  /** Cornered: the body flips away from the bird. A tail flip goes backward, so it faces the bird first. */
+  private flipAway(): boolean {
+    const danger = this.threats.danger;
+    this.motion.heading = Math.atan2(danger.y - this.motion.y, danger.x - this.motion.x);
+    return true;
+  }
+
+  /** Cornered, in the dark: the shrimp wakes tucked in the nearest safe shelter. */
+  private wake(): void {
+    const shelter = this.threats.shelter({ x: this.motion.x, y: this.motion.y });
+    this.motion.x = shelter.x;
+    this.motion.y = shelter.y;
+    this.motion.vx = 0;
+    this.motion.vy = 0;
+    this.motion.speed = 0;
+    if (shelter.cover) this.activity.tuckInto(shelter.cover, shelter);
+    this.view = { x: shelter.x, y: shelter.y };
+    this.lead = { x: 0, y: 0 };
+    this.aim();
   }
 
   private report(change: FeelingsChange): void {

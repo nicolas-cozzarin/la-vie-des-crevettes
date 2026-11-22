@@ -4,9 +4,9 @@ import type { ActivityName, OtherShrimp } from '../core/activity/Activity';
 import { Bonds, type BondChange } from '../core/bonds/Bonds';
 import type { EventBus } from '../core/events';
 import type { FoodPatch } from '../core/food/FoodPatch';
-import type { BondStage } from '../core/feelings/types';
+import type { BondStage, StimulusKind, ThreatView } from '../core/feelings/types';
 import type { GameEvents } from '../core/gameEvents';
-import { moveCircle, type Bounds, type Obstacle } from '../core/movement/collision';
+import { moveCircle, type Bounds, type Obstacle, type Point } from '../core/movement/collision';
 import type { MotionMode } from '../core/movement/ShrimpMotion';
 import { AlarmNet, type Alarm } from '../core/npc/alarm';
 import { NpcMind, type SeenShrimp } from '../core/npc/NpcMind';
@@ -19,6 +19,16 @@ import { COMPANIONS, UNNAMED, type ShrimpKind } from '../data/shrimp';
 import { ALARM, BOND, COMPANY, GREET, MOTION, NPC, SHOAL, STEER } from '../data/tuning';
 import { NpcShrimp } from '../entities/NpcShrimp';
 import type { CoverHandle } from './AreaLoader';
+
+/** A threat, as the other shrimp feel it (step 7). */
+export interface ShoalThreat {
+  /** A cue is under way: they freeze. */
+  readonly cue: boolean;
+  /** Where the danger is, to flee from. */
+  readonly danger: Point;
+  view(x: number, y: number, isPlayer: boolean): ThreatView | null;
+  felt(id: string, x: number, y: number): StimulusKind[];
+}
 
 /** The player, as the other shrimp need to know it on each step. */
 export interface PlayerView {
@@ -104,6 +114,9 @@ export class Shoal {
   /** Alarms that reached the player, for the scene to give to its feelings. */
   private forPlayer: Alarm[] = [];
   private time = 0;
+  private threat: ShoalThreat | null = null;
+  /** The shrimp that took fright during the threat under way (doc 02, bonds). */
+  private frightened = new Set<string>();
 
   constructor(
     scene: Phaser.Scene,
@@ -246,6 +259,13 @@ export class Shoal {
     player: PlayerView,
     playerSeen: SeenShrimp,
   ): void {
+    const threat = this.threat;
+    if (threat) {
+      for (const kind of threat.felt(npc.id, npc.x, npc.y)) {
+        npc.feelings.stimulus(kind);
+        npc.mind.startled(time, threat.danger.x, threat.danger.y);
+      }
+    }
     const others: SeenShrimp[] = [{ ...playerSeen, stage: this.stage(npc.id) }];
     for (const other of this.members) {
       if (other === npc) continue;
@@ -277,7 +297,7 @@ export class Shoal {
         covers: this.options.covers,
         foods: this.options.foods,
         others,
-        cue: false,
+        cue: this.threat?.cue ?? false,
         called:
           time < this.calledUntil && this.options.bonds.value(npc.id) >= BOND.stages.companion,
         shoal: this.options.together ? this.shoalMembers() : null,
@@ -294,15 +314,55 @@ export class Shoal {
           Math.hypot(player.x - npc.x, player.y - npc.y) <= 2 * npc.bodyLengthPx,
         restingAgainstClose: false,
         curiosityPull: 0,
-        threat: null,
+        threat: this.threat?.view(npc.x, npc.y, false) ?? null,
         inCurrent: false,
         dayPhase: null,
       },
     );
+    if (npc.feelings.mood === 'afraid') this.frightened.add(npc.id);
     if (result.mood?.to === 'afraid' || (result.darted && npc.mind.behaviour === 'flee')) {
       this.alarm.raise(npc.id, npc.x, npc.y, time, this.everyone());
     }
     if (result.greeted) this.greetingDone(npc, result.greeted, time);
+  }
+
+  /** The threats of the place, for the other shrimp to feel. */
+  watch(threat: ShoalThreat): void {
+    this.threat = threat;
+  }
+
+  /**
+   * A threat's cue has begun. Nacre notices it before anyone else (doc 10,
+   * "Alarm"): she takes fright from where she is. Returns whether the player
+   * feels it too, which needs her to be a Companion within 5 BL.
+   */
+  cueNoticed(time: number, x: number, y: number): boolean {
+    this.frightened.clear();
+    const nacre = this.members.find((one) => one.id === 'nacre');
+    if (!nacre) return false;
+    const bl = this.options.bodyLengthPx;
+    nacre.feelings.stimulus('alarm');
+    const danger = this.threat?.danger ?? { x, y };
+    nacre.mind.alarmed(time, danger.x, danger.y);
+    return (
+      this.options.bonds.value(nacre.id) >= BOND.stages.companion &&
+      Math.hypot(nacre.x - x, nacre.y - y) <= ALARM.reach * bl
+    );
+  }
+
+  /**
+   * The threat left and the player got away. Each shrimp that took fright
+   * during it and is now within the company radius of the player shares the
+   * escape: +0.10 (doc 02, "Bonds").
+   */
+  escapedTogether(x: number, y: number): void {
+    const reach = COMPANY.radius * this.options.bodyLengthPx;
+    for (const npc of this.members) {
+      if (!this.frightened.has(npc.id)) continue;
+      if (Math.hypot(npc.x - x, npc.y - y) > reach) continue;
+      this.report(this.options.bonds.add(npc.id, BOND.flee));
+    }
+    this.frightened.clear();
   }
 
   /** The player took fright: the shrimp around feel it a moment later. */

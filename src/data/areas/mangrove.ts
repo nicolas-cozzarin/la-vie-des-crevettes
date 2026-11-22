@@ -23,6 +23,7 @@ export const mangrove: AreaDef = {
   spawn: { x: 620, y: 2000, heading: 0 },
   light: { dapple: 'light.dapple', dappleStrength: 0.75, murk: 'mangrove.murk' },
   dayCycle: false,
+  threats: ['bird'],
   music: 'music.mangrove',
   ambience: 'amb.mangrove',
 

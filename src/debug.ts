@@ -1,6 +1,7 @@
 import type { ActivityName } from './core/activity/Activity';
 import type { Mood } from './core/feelings/mood';
-import type { Condition, Feelings } from './core/feelings/types';
+import type { Condition, Feelings, ThreatStage } from './core/feelings/types';
+import type { ThreatKind } from './core/gameEvents';
 import type { MotionMode } from './core/movement/ShrimpMotion';
 import type { ScentSnapshot } from './systems/ScentField';
 import type { ShrimpSnapshot } from './systems/Shoal';
@@ -44,7 +45,20 @@ export const debugState: {
   scent: (() => ScentSnapshot[]) | null;
   shrimp: (() => ShrimpSnapshot[]) | null;
   creatures: (() => CreaturesSnapshot) | null;
-} = { player: null, feelings: null, scent: null, shrimp: null, creatures: null };
+  threat: (() => ThreatSnapshot) | null;
+} = { player: null, feelings: null, scent: null, shrimp: null, creatures: null, threat: null };
+
+/** What the browser test can ask about the threat under way. */
+export interface ThreatSnapshot {
+  stage: ThreatStage;
+  kind: ThreatKind | null;
+  notice: number;
+  strikes: number;
+  ring: { x: number; y: number } | null;
+  predator: { x: number; y: number } | null;
+  /** The cornered sequence is running. */
+  cornered: boolean;
+}
 
 /** What the browser test can ask about the animals: where each is, and how strong the rim is. */
 export interface CreaturesSnapshot {

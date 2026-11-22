@@ -35,6 +35,8 @@ export class HudScene extends Phaser.Scene {
   private wordPlate!: Phaser.GameObjects.Graphics;
   private promptText!: Phaser.GameObjects.Text;
   private promptPlate!: Phaser.GameObjects.Graphics;
+  /** The hints and the prompt, together, so the dark of being cornered can take them away. */
+  private lines!: Phaser.GameObjects.Container;
   /** The prompt's alpha, eased toward 1 while one is asked for. */
   private promptShown = 0;
   private promptWanted = false;
@@ -90,6 +92,12 @@ export class HudScene extends Phaser.Scene {
       .setAlpha(0);
     this.promptShown = 0;
     this.promptWanted = false;
+    this.lines = this.add.container(0, 0, [
+      this.hintPlate,
+      this.hintText,
+      this.promptPlate,
+      this.promptText,
+    ]);
 
     this.ready = true;
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
@@ -133,6 +141,12 @@ export class HudScene extends Phaser.Scene {
     // A word already showing is replaced where it stands, without going dark first.
     this.wordAge = this.wordAge >= 0 ? this.word.alpha * WORD_FADE : 0;
     this.wordHold = seconds;
+  }
+
+  /** How dark the picture is, from 0 to 1: the hints and the prompt go with it. */
+  hush(dark: number): void {
+    if (!this.ready) return;
+    this.lines.setAlpha(1 - dark);
   }
 
   /**

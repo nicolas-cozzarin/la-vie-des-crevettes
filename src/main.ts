@@ -41,4 +41,5 @@ window.__lvdc = {
   scent: () => debugState.scent?.() ?? null,
   shrimp: () => debugState.shrimp?.() ?? null,
   creatures: () => debugState.creatures?.() ?? null,
+  threat: () => debugState.threat?.() ?? null,
 };

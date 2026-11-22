@@ -158,10 +158,11 @@ export class ThreatDirector {
 
   /**
    * A scripted threat, such as the first bird: it starts as soon as it may.
-   * `force` starts it now even within the gap (the debug key).
+   * `force` starts it now even within the gap (the debug key), and only if
+   * nothing is under way.
    */
   request(kind: ThreatKind, first = false, from: number | null = null, force = false): void {
-    if (!this.options.kinds.includes(kind) && !force) return;
+    if (force ? this.stage !== 'idle' : !this.options.kinds.includes(kind)) return;
     this.queued = { kind, first, from, force };
   }
 
@@ -319,8 +320,9 @@ export class ThreatDirector {
       this.headAim = this.shadow.heading;
       return;
     }
-    // It lands ahead of where its shadow was going, facing the player.
-    const prefer = Math.atan2(this.shadow.y - player.y, this.shadow.x - player.x);
+    // It lands level with the player, on the side its shadow went, facing it.
+    // Level, its feet stay in the view, which is wider than it is tall.
+    const prefer = this.shadow.x >= player.x ? 0 : Math.PI;
     const stand = standPoint(player, prefer, this.world, this.bird);
     const heading = Math.atan2(player.y - stand.y, player.x - stand.x);
     this.legs = new Legs(this.bird, this.world.bl, stand, heading);

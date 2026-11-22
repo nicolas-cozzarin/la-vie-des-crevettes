@@ -441,3 +441,34 @@ export const CORNERED = {
   /** BL. */
   away: 6,
 };
+
+/** The narration line (doc 12, "What shows over play"). Seconds. */
+export const NARRATION = {
+  gap: 20,
+  fadeIn: 0.6,
+  hold: 4,
+  perLetter: 0.06,
+  fadeOut: 0.8,
+};
+
+/** A place's name when it is first entered (doc 13, "Places"). Seconds. */
+export const PLACE_NAME = {
+  fade: 0.6,
+  hold: 3,
+};
+
+/** When the story's lines come (doc 12, "Story steps"; doc 13, "Narration"). Seconds, and BL. */
+export const STORY = {
+  /** After the shrimp is full, the Sense hint and its prompt. */
+  senseHint: 5,
+  /** After the first greeting, once the bird has gone, the molt signal. */
+  moltAfterGreet: 60,
+  /** After the molt hardens, the taste of salt. */
+  saltAfterHard: 10,
+  /** The first calm must last this long to be named. */
+  calmFor: 10,
+  /** Into the first wary time, its line. */
+  waryLine: 8,
+  /** The first shrimp this close is met. BL. */
+  meet: 4,
+};

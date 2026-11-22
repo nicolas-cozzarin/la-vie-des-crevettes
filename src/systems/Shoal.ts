@@ -370,14 +370,20 @@ export class Shoal {
     this.alarm.raise(PLAYER, x, y, time, this.everyone());
   }
 
-  /** A tail flip startles any Stranger within 1.5 BL. Others have learned it is harmless. */
-  playerFlipped(time: number, x: number, y: number): void {
+  /**
+   * A tail flip startles any Stranger within 1.5 BL. Others have learned it
+   * is harmless. Returns whether it startled one.
+   */
+  playerFlipped(time: number, x: number, y: number): boolean {
+    let startled = false;
     for (const npc of this.members) {
       if (this.stage(npc.id) !== 'stranger') continue;
       if (Math.hypot(npc.x - x, npc.y - y) > NPC.startleReach * this.options.bodyLengthPx) continue;
       npc.feelings.stimulus('startle');
       npc.mind.startled(time, x, y);
+      startled = true;
     }
+    return startled;
   }
 
   /** The player's greeting with `id` is done. A shrimp that knows the player greets back. */

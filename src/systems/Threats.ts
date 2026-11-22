@@ -19,6 +19,10 @@ export interface ThreatsOptions {
   gentle: boolean;
   reducedMotion: () => boolean;
   seed: number;
+  /** Whether a trigger may fire yet. The story arms the first bird after Sense. Without it, always. */
+  armed?: (id: string) => boolean;
+  /** How many ambient threats may come. Without a number, any. */
+  ambient?: number;
 }
 
 /**
@@ -50,7 +54,7 @@ export class Threats {
         bl: bodyLengthPx,
       },
       seededRandom(options.seed),
-      { gentle: options.gentle, kinds: area.threats ?? [] },
+      { gentle: options.gentle, kinds: area.threats ?? [], ambient: options.ambient },
     );
     this.bird = new Bird(scene, bodyLengthPx);
     this.cornered = new CorneredSequence(scene, options.camera, CORNERED, options.reducedMotion);
@@ -64,13 +68,18 @@ export class Threats {
     return events;
   }
 
-  /** The player walked to (x, y): a trigger may start a scripted threat. */
+  /**
+   * The player walked to (x, y): a trigger may start a scripted threat. A
+   * trigger armed while the player is already inside it fires at once.
+   */
   enter(x: number, y: number): void {
     const { entered } = this.triggers.update(x, y);
     const defs = this.options.area.triggers ?? [];
-    for (const id of entered) {
+    const armed = this.options.armed ?? (() => true);
+    for (const id of new Set([...entered, ...this.triggers.current])) {
       const def = defs.find((one) => one.id === id);
-      if (!def || (def.once && this.fired.has(id))) continue;
+      if (!def || !armed(id)) continue;
+      if (this.fired.has(id) && (def.once || !entered.includes(id))) continue;
       this.fired.add(id);
       // The first bird is the lesson: it comes from the north-east, and notices half as much.
       if (id === 'bird.first') {

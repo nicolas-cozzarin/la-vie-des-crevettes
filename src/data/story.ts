@@ -1,0 +1,61 @@
+import type { NarrationLine } from '../core/narration/NarrationQueue';
+import type { StoryStep } from '../core/progress/Story';
+
+/** The story steps built so far: chapters 0 and 1 (doc 12, "Story steps"). */
+export const STORY_STEPS: readonly StoryStep[] = [
+  { id: 's0.motes', chapter: 0, when: { kind: 'eaten', food: 'microalgae', count: 5 } },
+  { id: 's0.brown', chapter: 0, when: { kind: 'zone', area: 'drift', zone: 'D' } },
+  { id: 's1.fill', chapter: 1, when: { kind: 'hunger', atMost: 0.15 } },
+  { id: 's1.sense', chapter: 1, when: { kind: 'sense', seconds: 1.5 } },
+  {
+    id: 's1.bird',
+    chapter: 1,
+    when: { kind: 'threat', threat: 'bird', stage: 'release', area: 'mangrove', count: 1 },
+  },
+  { id: 's1.greet', chapter: 1, when: { kind: 'greeting' } },
+  { id: 's1.molt', chapter: 1, when: { kind: 'molt', area: 'mangrove' } },
+];
+
+/**
+ * The narration lines built so far, with their weight (doc 13, "Narration").
+ * A line not listed here never shows. `every` is in seconds.
+ */
+export const NARRATION_LINES: Readonly<Record<string, NarrationLine>> = {
+  'narr.c0.start': { must: true },
+  'narr.c0.yolk': {},
+  'narr.c0.taste': {},
+  'narr.c0.change': {},
+  'narr.c0.others': {},
+  'narr.c0.brown': {},
+  'narr.c0.land': { must: true },
+  'narr.c1.arrive': { must: true },
+  'narr.c1.full': {},
+  'narr.c1.senseHint': { must: true },
+  'narr.c1.sensed': {},
+  'narr.c1.cover': {},
+  'narr.c1.birdGone': { must: true },
+  'narr.c1.wary': {},
+  'narr.c1.meet': { must: true },
+  'narr.c1.greet': {},
+  'narr.c1.nacre': {},
+  'narr.c1.tight': { must: true },
+  'narr.c1.notHere': { must: true, each: true, every: 40 },
+  'narr.c1.molt': {},
+  'narr.c1.soft': {},
+  'narr.c1.hard': {},
+  'narr.c1.salt': { must: true },
+  'narr.c1.closed': { must: true, each: true, every: 40 },
+  'narr.mood.calm': { must: true },
+  'narr.mood.hungry': { must: true },
+  'narr.mood.content': { must: true },
+  'narr.mood.curious': { must: true },
+  'narr.mood.social': { must: true },
+  'narr.mood.afraid': { must: true },
+  'narr.veryHungry': { each: true, every: 90 },
+  'narr.tired': {},
+  'narr.frozen': {},
+  'narr.favourite': {},
+  'narr.tooFast': {},
+  'narr.cornered': { must: true, each: true },
+  'end.continued': { must: true, each: true, every: 40 },
+};

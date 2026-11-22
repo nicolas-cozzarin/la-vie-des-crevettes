@@ -78,6 +78,8 @@ export interface ThreatOptions {
   gentle: boolean;
   /** The threats that may come in this place. None in a place without. */
   kinds: readonly ThreatKind[];
+  /** How many ambient threats may still come. Without a number, any. */
+  ambient?: number;
 }
 
 export type ThreatEvent =
@@ -122,6 +124,11 @@ export class ThreatDirector {
   private time = 0;
   private lastRelease = -Infinity;
   private nextRoll: number;
+  /**
+   * How many ambient threats may still come. In the story the mangrove has
+   * none before the first bird and one after it (doc 10, "When a threat starts").
+   */
+  ambientLeft: number;
   private queued: Request | null = null;
   private first = false;
   private rungBefore = false;
@@ -144,6 +151,7 @@ export class ThreatDirector {
     private readonly options: ThreatOptions,
   ) {
     this.nextRoll = tuning.gap;
+    this.ambientLeft = options.ambient ?? Infinity;
   }
 
   /** Where the predator is: its feet once it stands, else its shadow. */
@@ -269,12 +277,14 @@ export class ThreatDirector {
     if (
       kind === undefined ||
       !allowed ||
+      this.ambientLeft <= 0 ||
       this.time - this.lastRelease < this.tuning.gap ||
       player.coverGap > this.tuning.coverWithin
     ) {
       return;
     }
     if (this.random() < this.tuning.roll / this.tuning.meanWait) {
+      this.ambientLeft -= 1;
       this.begin({ kind, first: false, from: null, force: false }, player, events);
     }
   }

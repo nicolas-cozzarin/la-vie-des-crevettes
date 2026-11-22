@@ -19,7 +19,8 @@ import type { ThreatEvent } from '../core/threat/ThreatDirector';
 import { distanceToCover, isUnder } from '../core/world/cover';
 import { DiscoveryTracker, type Discoverable, type Pull } from '../core/world/discovery';
 import { FOOD_KINDS, type FoodKind } from '../core/world/kinds';
-import { ZoneTracker } from '../core/world/zones';
+import { inRect, ZoneTracker } from '../core/world/zones';
+import { newLife, type Life } from '../core/progress/life';
 import {
   areaFor,
   FIRST_AREA,
@@ -53,6 +54,8 @@ import { loadArea, type CoverHandle, type LoadedArea } from '../systems/AreaLoad
 import { Creatures, LIVE_KINDS } from '../systems/Creatures';
 import { MoodPresenter } from '../systems/MoodPresenter';
 import { Rim } from '../systems/Rim';
+import { Narrator } from '../systems/Narrator';
+import { StoryTeller } from '../systems/StoryTeller';
 import { Threats } from '../systems/Threats';
 import { ScentField } from '../systems/ScentField';
 import { Shoal } from '../systems/Shoal';
@@ -65,6 +68,8 @@ export interface PlayData {
   explore?: boolean;
   /** Explore mode only: where to start instead of the area's spawn. */
   at?: { x: number; y: number };
+  /** The life so far, from the place before. A new one when left out. */
+  life?: Life;
 }
 
 /** The player's shrimp on the event bus. */
@@ -159,6 +164,12 @@ export class PlayScene extends Phaser.Scene {
 
   private hud: HudScene | null = null;
 
+  /** The life this place is part of. In explore mode, a life of its own. */
+  private life: Life = newLife();
+  /** The story and its narration. None in explore mode. */
+  private narrator: Narrator | null = null;
+  private teller: StoryTeller | null = null;
+
   constructor() {
     super('Play');
   }
@@ -167,6 +178,7 @@ export class PlayScene extends Phaser.Scene {
     this.areaId = data.area !== undefined && isPlayableArea(data.area) ? data.area : FIRST_AREA;
     this.explore = data.explore === true;
     this.start = this.explore && data.at ? pointFor(this.areaId, data.at.x, data.at.y) : null;
+    this.life = data.life ?? newLife();
   }
 
   create(): void {
@@ -194,13 +206,16 @@ export class PlayScene extends Phaser.Scene {
     // Feelings. What is found lives only as long as the scene until saving
     // comes in step 9.
     this.bus = new EventBus<GameEvents>();
-    const hunger = (HUNGER.start as Record<string, number>)[area.id] ?? HUNGER.start.other;
+    const hunger =
+      this.life.hunger ?? (HUNGER.start as Record<string, number>)[area.id] ?? HUNGER.start.other;
     this.feelings = new FeelingsModel(FEELINGS, MOOD, { hunger });
     const range = stage === 'larva' ? CURIOSITY.range.juvenile : CURIOSITY.range[stage];
     this.discovery = new DiscoveryTracker(
       { range, weights: CURIOSITY.weights, find: CURIOSITY.find },
       this.bodyLengthPx,
+      this.life.discoveries,
     );
+    this.bus.on('discovery', ({ id }) => this.life.discoveries.add(id));
     this.things = discoverables(area);
     this.pull = { value: 0, target: null };
     this.enterZones();
@@ -228,7 +243,10 @@ export class PlayScene extends Phaser.Scene {
     this.wiggleLeft = 0;
     const likes = FOOD_KINDS.filter((kind) => kind !== 'microalgae');
     this.favourite =
-      likes[Math.floor(seededRandom(Date.now() >>> 0)() * likes.length)] ?? 'algaeFilm';
+      this.life.favourite ??
+      likes[Math.floor(seededRandom(Date.now() >>> 0)() * likes.length)] ??
+      'algaeFilm';
+    this.life.favourite = this.favourite;
     this.prompts = new Map();
     this.promptNow = null;
 
@@ -250,6 +268,8 @@ export class PlayScene extends Phaser.Scene {
     this.lift = 0;
 
     const camera = this.cameras.main;
+    const story = !this.explore;
+    const life = this.life;
     this.threats = new Threats(this, {
       area,
       loaded: this.loaded,
@@ -258,6 +278,9 @@ export class PlayScene extends Phaser.Scene {
       gentle: app.settings.gentleMode,
       reducedMotion: () => app.settings.reducedMotion,
       seed: Date.now() >>> 0,
+      // In the story the first bird waits for Sense, and one ambient bird may follow it.
+      armed: story ? (id) => id !== 'bird.first' || life.stepsDone.has('s1.sense') : undefined,
+      ambient: story ? (life.stepsDone.has('s1.bird') ? 1 : 0) : undefined,
     });
     this.shoal.watch(this.threats);
     camera.setBackgroundColor(COLORS.deepTeal);
@@ -273,6 +296,20 @@ export class PlayScene extends Phaser.Scene {
 
     this.scene.launch('Hud');
     this.hud = this.scene.get('Hud') as HudScene;
+
+    // The story of this place, told one line at a time.
+    this.narrator = null;
+    this.teller = null;
+    if (story) {
+      const narrator = new Narrator(() => this.hud, life.narrated, life.placesSeen);
+      this.narrator = narrator;
+      this.teller = new StoryTeller(this.bus, narrator, life, this.areaId, this.favourite);
+      this.bus.on('step:done', ({ id }) => {
+        if (id === 's1.bird') this.threats.director.ambientLeft = 1;
+      });
+      narrator.enter(this.areaId);
+      narrator.say('narr.c1.arrive');
+    }
 
     debugState.player = () => ({
       x: this.motion.x,
@@ -321,6 +358,9 @@ export class PlayScene extends Phaser.Scene {
       debugState.shrimp = null;
       debugState.creatures = null;
       debugState.threat = null;
+      this.life.hunger = this.feelings.values.hunger;
+      this.teller?.destroy();
+      this.narrator?.clear();
       this.threats.destroy();
       this.scent.destroy();
       this.shoal.destroy();
@@ -348,7 +388,10 @@ export class PlayScene extends Phaser.Scene {
     const tailFlip = !locked && actions.justPressed('tailFlip');
     let dart = tailFlip;
     if (sequence.flip) dart = this.flipAway();
-    if (sequence.place) this.wake();
+    if (sequence.place) {
+      this.wake();
+      this.teller?.woke();
+    }
     if (sequence.done) {
       this.feelings.stimulus('cornered');
       this.bus.emit('cornered', { kind: this.threats.director.kind ?? 'bird' });
@@ -400,7 +443,9 @@ export class PlayScene extends Phaser.Scene {
       if (moved.darted) {
         this.feelings.stimulus('tailFlip');
         this.bus.emit('tailflip', { who: PLAYER });
-        this.shoal.playerFlipped(this.clock, this.motion.x, this.motion.y);
+        if (this.shoal.playerFlipped(this.clock, this.motion.x, this.motion.y)) {
+          this.teller?.startledStranger();
+        }
         this.creatures.flip(this.motion.x, this.motion.y);
       }
       darted = darted || moved.darted;
@@ -426,6 +471,7 @@ export class PlayScene extends Phaser.Scene {
     this.lift += (lift - this.lift) * approach(frame, MOOD.screen);
     this.shoal.draw(frame, this.cameras.main.worldView, this.lift);
     this.showScent(frame);
+    this.tellStory(frame);
     this.showPrompt(own, locked);
     this.hud?.hush(this.threats.cornered.darkness);
     this.presenter.update(frame, {
@@ -529,14 +575,47 @@ export class PlayScene extends Phaser.Scene {
     this.scent.update(dt, x, y, shown);
   }
 
+  /** What the story needs from this frame, and the narration's own step. */
+  private tellStory(dt: number): void {
+    const teller = this.teller;
+    if (teller) {
+      const { x, y } = this.motion;
+      const has = this.feelings.has.bind(this.feelings);
+      let nearest = Infinity;
+      for (const other of this.shoal.greetable) {
+        nearest = Math.min(nearest, Math.hypot(other.x - x, other.y - y) / this.bodyLengthPx);
+      }
+      teller.update({
+        dt,
+        hunger: this.feelings.values.hunger,
+        mood: this.feelings.mood,
+        sensing: this.activity.name === 'sensing',
+        tucked: this.activity.tucked,
+        wary: has('wary'),
+        tired: this.motion.tired,
+        frozen: has('frozen'),
+        veryHungry: has('veryHungry'),
+        visit: this.threats.director.stage !== 'idle',
+        nearestShrimp: nearest,
+        atWayOut: (this.area.exits ?? []).some((exit) => inRect(x, y, exit.zone)),
+      });
+    }
+    this.narrator?.update(dt);
+  }
+
   /**
    * "Hold E to graze" when a graze could start, "F to greet" when another
-   * shrimp is close enough, the first three times each (doc 03).
+   * shrimp is close enough, the first three times each (doc 03). In the
+   * story, "Hold Q to sense the water" comes with the Sense hint.
    */
   private showPrompt(own: { x: number; y: number }, locked: boolean): void {
     let key: string | null = null;
-    let action: 'interact' | 'greet' = 'interact';
-    if (!locked && this.activity.name === 'free' && own.x === 0 && own.y === 0) {
+    let action: 'interact' | 'greet' | 'sense' = 'interact';
+    // The story's Sense hint brings its prompt, until Sense is used.
+    if (!locked && this.activity.name === 'free' && this.teller?.wantsSense) {
+      key = 'prompt.sense';
+      action = 'sense';
+    } else if (!locked && this.activity.name === 'free' && own.x === 0 && own.y === 0) {
       const input = this.activityInput(0, own, false);
       const food = this.activity.grazeable(input, this.patches);
       if (food) {

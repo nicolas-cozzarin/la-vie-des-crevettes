@@ -146,6 +146,29 @@ describe('the threat director', () => {
     expect(none.stage).toBe('idle');
   });
 
+  it('starts no more ambient threats than it is allowed, and a scripted one still comes', () => {
+    const story = new ThreatDirector(THREAT, BIRD, WORLD, () => 0, {
+      gentle: false,
+      kinds: ['bird'],
+      ambient: 0,
+    });
+    for (let time = 0; time < 300; time += 1) story.step(1, still());
+    expect(story.stage).toBe('idle');
+    story.request('bird', true);
+    story.step(1, still());
+    expect(story.stage).toBe('cue');
+    for (let time = 0; time < 30 && story.stage !== 'idle'; time += 1) story.step(1, still());
+    story.ambientLeft = 1;
+    let visits = 0;
+    for (let time = 0; time < 600; time += 1) {
+      const before = story.stage;
+      story.step(1, still());
+      if (before === 'idle' && story.stage === 'cue') visits += 1;
+    }
+    expect(visits).toBe(1);
+    expect(story.ambientLeft).toBe(0);
+  });
+
   it('waits about 150 s on average for an ambient threat once the gap has passed', () => {
     let sum = 0;
     const runs = 300;

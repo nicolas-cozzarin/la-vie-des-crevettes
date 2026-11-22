@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { app } from '../app';
 import { ensureTexture } from '../art/TextureFactory';
-import { COLORS, GAME_HEIGHT, GAME_WIDTH, TINTS } from '../config';
+import { COLORS, FONTS, GAME_HEIGHT, GAME_WIDTH, TINTS } from '../config';
 import { t } from '../i18n';
 import { textStyle } from '../ui/text';
 
@@ -11,6 +11,10 @@ const HINT_Y = GAME_HEIGHT - 90;
 const WORD_Y = 96;
 /** An activity's prompt sits above the line of hints. */
 const PROMPT_Y = HINT_Y - 72;
+/** The narration sits above the prompt (T82). */
+const NARRATION_Y = PROMPT_Y - 100;
+/** A place's name, alone, high in the view. */
+const PLACE_Y = 300;
 /** Seconds the mood's name takes to come and to go. */
 const WORD_FADE = 0.5;
 /** The colour fear's edges are drawn in: the deep water, almost black. */
@@ -35,6 +39,8 @@ export class HudScene extends Phaser.Scene {
   private wordPlate!: Phaser.GameObjects.Graphics;
   private promptText!: Phaser.GameObjects.Text;
   private promptPlate!: Phaser.GameObjects.Graphics;
+  private narration!: Phaser.GameObjects.Text;
+  private place!: Phaser.GameObjects.Text;
   /** The hints and the prompt, together, so the dark of being cornered can take them away. */
   private lines!: Phaser.GameObjects.Container;
   /** The prompt's alpha, eased toward 1 while one is asked for. */
@@ -92,6 +98,21 @@ export class HudScene extends Phaser.Scene {
       .setAlpha(0);
     this.promptShown = 0;
     this.promptWanted = false;
+    this.narration = this.add
+      .text(centerX, NARRATION_Y, '', {
+        ...textStyle(36, COLORS.paper, FONTS.title),
+        align: 'center',
+        wordWrap: { width: 1400 },
+      })
+      .setOrigin(0.5)
+      .setShadow(0, 2, '#000000', 10, false, true)
+      .setAlpha(0);
+    this.place = this.add
+      .text(centerX, PLACE_Y, '', textStyle(56, COLORS.paper, FONTS.title))
+      .setOrigin(0.5)
+      .setShadow(0, 2, '#000000', 12, false, true)
+      .setAlpha(0);
+
     this.lines = this.add.container(0, 0, [
       this.hintPlate,
       this.hintText,
@@ -141,6 +162,20 @@ export class HudScene extends Phaser.Scene {
     // A word already showing is replaced where it stands, without going dark first.
     this.wordAge = this.wordAge >= 0 ? this.word.alpha * WORD_FADE : 0;
     this.wordHold = seconds;
+  }
+
+  /** The line of narration, or null, and how visible it is. The narrator decides when. */
+  narrate(text: string | null, alpha: number): void {
+    if (!this.ready) return;
+    if (text !== null && text !== this.narration.text) this.narration.setText(text);
+    this.narration.setAlpha(text === null ? 0 : alpha);
+  }
+
+  /** A place's name, or null, and how visible it is. */
+  placeName(text: string | null, alpha: number): void {
+    if (!this.ready) return;
+    if (text !== null && text !== this.place.text) this.place.setText(text);
+    this.place.setAlpha(text === null ? 0 : alpha);
   }
 
   /** How dark the picture is, from 0 to 1: the hints and the prompt go with it. */

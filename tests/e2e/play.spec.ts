@@ -405,3 +405,110 @@ test.describe('other shrimp and animals', () => {
     await page.waitForFunction(() => (window.__lvdc?.creatures()?.rim ?? 0) > 0.5);
   });
 });
+
+test.describe('the bird', () => {
+  async function threat(page: Page) {
+    const snapshot = await page.evaluate(() => window.__lvdc?.threat() ?? null);
+    if (!snapshot) throw new Error('There is no threat director: the play scene is not running.');
+    return snapshot;
+  }
+
+  /** Keeps every stage the threat passes through, read in the page on every frame. */
+  async function recordStages(page: Page): Promise<() => Promise<string[]>> {
+    await page.evaluate(() => {
+      const seen: string[] = [];
+      (window as unknown as { stagesSeen: string[] }).stagesSeen = seen;
+      const look = () => {
+        const stage = window.__lvdc?.threat()?.stage;
+        if (stage && seen[seen.length - 1] !== stage) seen.push(stage);
+        requestAnimationFrame(look);
+      };
+      look();
+    });
+    return () => page.evaluate(() => (window as unknown as { stagesSeen: string[] }).stagesSeen);
+  }
+
+  test('walking into the clearing brings the first bird', async ({ page }) => {
+    const errors = watchErrors(page);
+    // The clearing begins at x 2900.
+    await explore(page, 'mangrove&at=2700,1900');
+    expect((await threat(page)).stage).toBe('idle');
+    await page.keyboard.down('KeyD');
+    await page.waitForFunction(() => window.__lvdc?.threat()?.stage === 'cue');
+    await page.keyboard.up('KeyD');
+    expect((await threat(page)).kind).toBe('bird');
+    expect(errors).toEqual([]);
+  });
+
+  test('without ?debug, F10 calls no bird', async ({ page }) => {
+    await explore(page, 'mangrove&at=2400,2000');
+    await page.keyboard.press('F10');
+    await page.waitForTimeout(1000);
+    expect((await threat(page)).stage).toBe('idle');
+  });
+
+  test('a shrimp hidden under a root tangle is never chased', async ({ page }) => {
+    test.setTimeout(90_000);
+    await explore(page, 'mangrove&at=1150,1860&debug');
+    await page.keyboard.down('ShiftLeft');
+    await page.waitForFunction(() => window.__lvdc?.player()?.tucked === true);
+    const stages = await recordStages(page);
+    await page.keyboard.press('F10');
+    await page.waitForFunction(() => window.__lvdc?.threat()?.stage === 'release', null, {
+      timeout: 75_000,
+    });
+    await page.keyboard.up('ShiftLeft');
+    expect(await stages()).toEqual(['idle', 'cue', 'presence', 'release']);
+    expect((await threat(page)).strikes).toBe(0);
+  });
+
+  test('a shrimp that stays in the ring is cornered and wakes tucked in cover', async ({
+    page,
+  }) => {
+    // A whole visit, perhaps two, takes a while where the game draws slowly.
+    test.setTimeout(150_000);
+    const errors = watchErrors(page);
+    await explore(page, 'mangrove&at=2400,2000&debug');
+    const stages = await recordStages(page);
+    await page.keyboard.press('F10');
+    // Moving toward the bird is what it notices. The key stays held, so the shrimp
+    // swims, and a bird that leaves unnoticed is called again.
+    let held: string | null = null;
+    await expect
+      .poll(
+        async () => {
+          const now = await threat(page);
+          if (now.stage === 'idle') await page.keyboard.press('F10');
+          const me = await player(page);
+          let key: string | null = null;
+          if (now.stage === 'presence' && now.predator) {
+            const dx = now.predator.x - me.x;
+            const dy = now.predator.y - me.y;
+            key =
+              Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'KeyD' : 'KeyA') : dy > 0 ? 'KeyS' : 'KeyW';
+          }
+          if (key !== held) {
+            if (held) await page.keyboard.up(held);
+            if (key) await page.keyboard.down(key);
+            held = key;
+          }
+          return now.stage;
+        },
+        { timeout: 45_000, intervals: [200] },
+      )
+      .toBe('chase');
+    if (held) await page.keyboard.up(held);
+    // Still, in the open, the strike lands.
+    await page.waitForFunction(() => window.__lvdc?.threat()?.cornered === true, null, {
+      timeout: 30_000,
+    });
+    await page.waitForFunction(() => window.__lvdc?.threat()?.cornered === false, null, {
+      timeout: 20_000,
+    });
+    const after = await player(page);
+    expect(after.tucked).toBe(true);
+    expect((await feelings(page)).values.fear).toBeGreaterThan(0.7);
+    expect(await stages()).toContain('cornered');
+    expect(errors).toEqual([]);
+  });
+});

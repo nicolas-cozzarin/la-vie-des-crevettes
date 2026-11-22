@@ -16,11 +16,11 @@ The design is settled in docs 01 to 14. This document adds no rules of play. If 
 
 ## What exists
 
-After steps 0 to 6 and the art and design work of 2026-11-14 to 16.
+After steps 0 to 7 and the art and design work of 2026-11-14 to 16.
 
 | Path | What it is |
 |------|------------|
-| `src/main.ts` | Game config, scene list, the `window.__lvdc` hook for browser tests. `__lvdc.player()` gives the shrimp's place, mode, area, activity and zones. `__lvdc.feelings()` gives the five values, the mood, the forced mood, the conditions, wariness left, what has been found and what the shrimp is curious about. `__lvdc.scent()` gives the ribbons drawn now. `__lvdc.shrimp()` gives each other shrimp's place, behaviour, activity, mood, fear and bond. `__lvdc.creatures()` gives where each moving animal is and what it does, and the strength of the pale rim |
+| `src/main.ts` | Game config, scene list, the `window.__lvdc` hook for browser tests. `__lvdc.player()` gives the shrimp's place, mode, area, activity and zones. `__lvdc.feelings()` gives the five values, the mood, the forced mood, the conditions, wariness left, what has been found and what the shrimp is curious about. `__lvdc.scent()` gives the ribbons drawn now. `__lvdc.shrimp()` gives each other shrimp's place, behaviour, activity, mood, fear and bond. `__lvdc.creatures()` gives where each moving animal is and what it does, and the strength of the pale rim. `__lvdc.threat()` gives the threat's stage, kind, notice, strikes, strike ring, where the predator is, and whether the player is cornered |
 | `src/app.ts` | Settings, storage and keyboard, shared by all scenes as `app` |
 | `src/config.ts` | Design size, colours, fonts, `DEPTH` layers |
 | `src/core/events.ts` | `EventBus`, typed. Play creates one bus of `GameEvents` and sends the mood, condition, tail flip and discovery events on it |
@@ -40,8 +40,9 @@ After steps 0 to 6 and the art and design work of 2026-11-14 to 16.
 | `src/core/bonds/Bonds.ts` | Bond values, gains with their limits, stages. A bond never falls |
 | `src/core/npc/` | The mind of another shrimp. `behaviours.ts` scores and chooses, `steer.ts` finds a way round roots, `alarm.ts` passes a fright on, `shoal.ts` gives the shoal's pulls, `NpcMind.ts` puts them together and returns what to press |
 | `src/core/creatures/` | `Crab`, `Snail` and `School`: how the animals of the mangrove move |
+| `src/core/threat/` | `ThreatDirector`: stages, the gap, the ambient roll, notice, gentle mode, and what each shrimp feels. `bird.ts`: where the bird stands, its legs, the aim and the hit. `cornered.ts`: the shelter to wake in |
 | `src/data/shrimp.ts` | `COMPANIONS` (Brise, Nacre, Écume) and `UNNAMED`: temperament, favourite food, size and look |
-| `src/data/tuning.ts` | `MOTION`, `FRAME`, `CAMERA`, `SHADOW`, `WORLD`, `HIDE`, `COVER`, `WATER_LIGHT`, and for the feelings `HUNGER`, `FEAR`, `COMFORT`, `CURIOSITY`, `COMPANY`, `WARY` (together `FEELINGS`), `MOOD`, `MOOD_SCREEN`, `GRAZE`, `SENSE`, and for step 6 `GREET`, `BOND`, `NPC`, `STEER`, `ALARM`, `SHOAL`, `CREATURES` |
+| `src/data/tuning.ts` | `MOTION`, `FRAME`, `CAMERA`, `SHADOW`, `WORLD`, `HIDE`, `COVER`, `WATER_LIGHT`, and for the feelings `HUNGER`, `FEAR`, `COMFORT`, `CURIOSITY`, `COMPANY`, `WARY` (together `FEELINGS`), `MOOD`, `MOOD_SCREEN`, `GRAZE`, `SENSE`, for step 6 `GREET`, `BOND`, `NPC`, `STEER`, `ALARM`, `SHOAL`, `CREATURES`, and for step 7 `THREAT`, `BIRD`, `CORNERED` |
 | `src/core/world/kinds.ts` | `FOOD_KINDS`, the closed list of foods, `AREA_IDS` and `LIFE_STAGES` |
 | `src/core/world/discovery.ts` | `curiosityPull` and `DiscoveryTracker`: what pulls curiosity, and when a thing is found |
 | `src/core/feelings/mood.ts` | `MOODS`, the `Mood` type and `MoodPicker`: enter and leave levels, the two timers (T60) |
@@ -65,10 +66,13 @@ After steps 0 to 6 and the art and design work of 2026-11-14 to 16.
 | `src/systems/Shoal.ts` | The other shrimp of an area: steps them, passes the alarm, keeps them apart, gives the bonds, draws them. The shoal's pulls start from chapter 2 |
 | `src/systems/Creatures.ts` | The crabs, snails and fish that move, drawn from their pictures. `LIVE_KINDS` lists them |
 | `src/systems/Rim.ts` | The pale rim on what the shrimp is curious about (T76) |
+| `src/systems/Threats.ts` | The threats of a place: the director, the bird, the cornered sequence and the triggers that start a scripted threat |
+| `src/systems/CorneredSequence.ts` | The blur, the dark, the one flip and the return (T79) |
+| `src/entities/Bird.ts` | The wading bird drawn from what the director says: shadow, head, feet, ripples, strike ring, beak and splash (T78) |
 | `src/entities/NpcShrimp.ts` | Another shrimp: motion, feelings, activity, mind and rig together |
 | `src/entities/ShrimpRig.ts` | The shrimp drawn from parts. Takes a look (with a tint, and a paler tail fan for Nacre), and on each frame an expression, a target to look at, the startle, the grazing legs, grooming and the first-taste wiggle. `setLift` brightens it |
-| `src/scenes/` | Boot, Title, Play, Hud, Pause, Controls. Play takes `{ area, explore, at }`, steps the feelings in its loop and finds things. Hud draws the edges, fear's edges, the mood's name and an activity's prompt |
-| `src/platform/` | The only code that touches the browser's keyboard, storage and address. `address.ts` reads `?explore=`, `&at=` and `?debug`. `KeyboardSource.onDebugKey` hears F9 (T63) |
+| `src/scenes/` | Boot, Title, Play, Hud, Pause, Controls. Play takes `{ area, explore, at }`, steps the feelings in its loop and finds things. Hud draws the edges, fear's edges, the mood's name and an activity's prompt, and fades the hints while cornered |
+| `src/platform/` | The only code that touches the browser's keyboard, storage and address. `address.ts` reads `?explore=`, `&at=` and `?debug`. `KeyboardSource.onDebugKey` hears F9 (T63) and F10 (T77) |
 | `src/ui/` | Buttons, menu list, text styles |
 | `tests/unit/`, `tests/content/`, `tests/e2e/` | Vitest and Playwright. `tests/content/areas.test.ts` checks every area file: images have painters, things are inside the area and not inside each other, strip ends are closed |
 
@@ -288,6 +292,8 @@ Notes:
 Tests: flee thresholds by temperament. Bond gains and their once-per limits. Stages at 0.25, 0.5, 0.8. A bond never falls. Alarm spreads once per 5 s per receiver.
 
 ## Step 7. The bird
+
+Built on 2026-11-22. What follows is how it was planned. What changed on the way is in T77 to T81. `Threats` in `src/systems/` holds the director, the bird and the cornered sequence for the play scene. The director also says what each other shrimp feels, so the shoal reads the same threat as the player.
 
 Document: 10 ("Threats").
 

@@ -129,6 +129,12 @@ export class Activity<T extends CoverSpot = CoverSpot, F extends FoodSpot = Food
   private finished: string | undefined;
   /** Under the cover and settled: the `hidden` condition of doc 10. */
   tucked = false;
+  /**
+   * Put there by the game, not by a held Hide: after being cornered, the
+   * shrimp wakes tucked in. It stays until it moves or flips, or until Hide
+   * is pressed, which makes it an ordinary hide.
+   */
+  private placed = false;
   private target = { x: 0, y: 0 };
   /** Seconds without getting closer: something solid is in the way. */
   private stalled = 0;
@@ -140,6 +146,18 @@ export class Activity<T extends CoverSpot = CoverSpot, F extends FoodSpot = Food
     private readonly graze: GrazeTuning,
     private readonly greeting: GreetTuning,
   ) {}
+
+  /** Wakes the shrimp tucked in under a cover, as after being cornered (doc 10). */
+  tuckInto(cover: T, at: { x: number; y: number }): void {
+    this.stop();
+    this.name = 'hiding';
+    this.cover = cover;
+    this.target = { x: at.x, y: at.y };
+    this.tucked = true;
+    this.placed = true;
+    this.stalled = 0;
+    this.lastDistance = 0;
+  }
 
   /** The nearest other shrimp that Greet would greet here, or null. */
   greetable(x: number, y: number, others: readonly OtherShrimp[]): OtherShrimp | null {
@@ -196,7 +214,10 @@ export class Activity<T extends CoverSpot = CoverSpot, F extends FoodSpot = Food
     }
 
     // A tail flip always ends what the body is doing. Fear must never lock the escape.
-    if (this.name === 'hiding' && (input.tailFlip || !input.hide)) this.stop();
+    if (this.name === 'hiding' && this.placed) {
+      if (input.hide) this.placed = false;
+      else if (input.tailFlip || moving) this.stop();
+    } else if (this.name === 'hiding' && (input.tailFlip || !input.hide)) this.stop();
     if (this.name === 'grazing' && this.food) {
       const full = (input.hunger ?? 1) < this.graze.full;
       const tasteOver = this.tasting && this.grazeTime >= this.graze.taste;
@@ -269,6 +290,7 @@ export class Activity<T extends CoverSpot = CoverSpot, F extends FoodSpot = Food
     if (this.name === 'sensing') return { axis: { x: 0, y: 0 }, eating: false };
     if (this.name === 'grazing' && this.food) return this.stepGraze(input, this.food);
     if (this.name !== 'hiding' || !this.cover) return { axis: input.axis, eating: false };
+    if (this.placed) return { axis: { x: 0, y: 0 }, eating: false };
 
     const dx = this.target.x - input.x;
     const dy = this.target.y - input.y;
@@ -309,6 +331,7 @@ export class Activity<T extends CoverSpot = CoverSpot, F extends FoodSpot = Food
 
   private stop(): void {
     this.name = 'free';
+    this.placed = false;
     this.cover = null;
     this.food = null;
     this.tucked = false;

@@ -389,3 +389,55 @@ export const CREATURES = {
   /** How bright the pale rim on a curiosity target is, and its width in pixels (doc 11, `fx.rim`). */
   rim: { color: 0xf4f1e4, strength: 0.35, width: 6 },
 };
+
+/** The threat director (doc 10, "Threats"). Seconds unless said. */
+export const THREAT = {
+  gap: 60,
+  roll: 10,
+  meanWait: 150,
+  /** BL. */
+  coverWithin: 5,
+  cue: { min: 2, max: 3 },
+  presence: { min: 5, max: 10 },
+  chase: 12,
+  cornered: 3.3,
+  release: { min: 3, max: 4 },
+  notice: { hidden: -1, still: -0.3, walk: 0.35, swim: 0.6, flip: 0.5, far: 0.5, first: 0.5 },
+};
+
+/** The wading bird (doc 10, "The wading bird"). Distances in BL, times in seconds. */
+export const BIRD = {
+  shadowSpeed: 3,
+  pass: 1,
+  crossBeforeEnd: 1,
+  step: 2,
+  stepSeconds: 1.2,
+  stance: 2.6,
+  stand: { min: 4, max: 6, clear: 2 },
+  reach: 5,
+  ring: { radius: 1, warn: 1, firstWarn: 1.3 },
+  lead: 0.25,
+  hit: 0.7,
+  strikes: 3,
+  strikeGap: 2,
+  giveUp: { hidden: 2, far: 8, seconds: 12 },
+  liftGap: 0.6,
+  range: 6,
+  sight: 8,
+  shadowReach: 3,
+  missReach: 3,
+  headTurn: 1.6,
+  /** The way the first bird's shadow comes from: the north-east, before the coast is turned. */
+  firstFrom: -Math.PI / 4,
+};
+
+/** Being cornered (doc 10, "Cornered"). Seconds from the instant before contact. */
+export const CORNERED = {
+  blurred: 0.25,
+  flips: 0.25,
+  dark: 0.6,
+  back: 1.8,
+  control: 3.3,
+  /** BL. */
+  away: 6,
+};

@@ -58,7 +58,7 @@ export const STIMULUS_KINDS = [
 export type StimulusKind = (typeof STIMULUS_KINDS)[number];
 
 export type BondStage = 'stranger' | 'familiar' | 'companion' | 'close';
-export type ThreatStage = 'idle' | 'cue' | 'presence' | 'chase' | 'release';
+export type ThreatStage = 'idle' | 'cue' | 'presence' | 'chase' | 'cornered' | 'release';
 export type DayPhase = 'dawn' | 'day' | 'dusk' | 'night';
 
 /** What the feelings need to know about a threat on this step. */

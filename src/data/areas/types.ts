@@ -108,7 +108,7 @@ export interface LandmarkDef {
 }
 
 export type CreatureKind =
-  'fiddlerCrab' | 'snail' | 'smallFish' | 'turtle' | 'pistolAndGoby' | 'huntingFish';
+  'fiddlerCrab' | 'snail' | 'hermitCrab' | 'smallFish' | 'turtle' | 'pistolAndGoby' | 'huntingFish';
 
 export interface CreatureDef {
   id: string;

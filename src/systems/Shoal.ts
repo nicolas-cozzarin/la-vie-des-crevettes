@@ -353,16 +353,28 @@ export class Shoal {
   /**
    * The threat left and the player got away. Each shrimp that took fright
    * during it and is now within the company radius of the player shares the
-   * escape: +0.10 (doc 02, "Bonds").
+   * escape: +0.10 (doc 02, "Bonds"). Returns the companions among them,
+   * for the journal's memory.
    */
-  escapedTogether(x: number, y: number): void {
+  escapedTogether(x: number, y: number): string[] {
     const reach = COMPANY.radius * this.options.bodyLengthPx;
+    const named: string[] = [];
     for (const npc of this.members) {
       if (!this.frightened.has(npc.id)) continue;
       if (Math.hypot(npc.x - x, npc.y - y) > reach) continue;
       this.report(this.options.bonds.add(npc.id, BOND.flee));
+      if (npc.named) named.push(npc.id);
     }
     this.frightened.clear();
+    return named;
+  }
+
+  /** The companions within the company radius of a point. */
+  companionsNear(x: number, y: number): string[] {
+    const reach = COMPANY.radius * this.options.bodyLengthPx;
+    return this.members
+      .filter((npc) => npc.named && Math.hypot(npc.x - x, npc.y - y) <= reach)
+      .map((npc) => npc.id);
   }
 
   /** The player took fright: the shrimp around feel it a moment later. */

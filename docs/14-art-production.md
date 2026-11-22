@@ -402,6 +402,7 @@ Release 1.1. Realistic and bare, without gloss and without horror (D41). The shr
 | `icon.tab.discoveries`, `.companions`, `.feel`, `.challenges`, `.achievements` | 64 | Built. A leaf, three small shrimp, an antenna tip with ripples, a spiral, a stamp ring |
 | `icon.type.taste`, `.reach`, `.watch`, `.escape`, `.meet`, `.find` | 64 | Built. Drawn with a heavier line, to read at 48 px on the small line |
 | `icon.bond.stranger`, `.familiar`, `.companion`, `.close` | 80 | Built. Two shrimp from above, closer at each stage; washed from Companion |
+| `icon.companion.brise`, `.nacre`, `.ecume` | 128 | Built. Each companion from above, heading up, with her mark: Brise's short left antenna with a blunt tip, Nacre's almost white fan, Écume smaller with a darker gut line (T55) |
 | `icon.ach.landfall`, `.newShell`, `.fullGrown`, `.antenna`, `.familiar`, `.shoal`, `.everyTaste`, `.nose`, `.quickTail`, `.unseen`, `.neverCornered`, `.underGrid`, `.nightGrazer`, `.neighbour`, `.slowCompany`, `.openWater`, `.nextOnes`, `.secondTide`, `.fifthTide`, `.fullCarnet`, `.allOfIt`, `.cleanAntennae`, `.stoneStill`, `.gentle` | 192 | Built. The stamps of doc 12, each a double ring, a wash by group and its drawing |
 
 ## The atelier

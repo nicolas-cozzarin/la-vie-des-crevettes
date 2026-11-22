@@ -27,7 +27,7 @@ export const DISCOVERIES: readonly DiscoveryEntry[] = [
   { id: 'food.seagrassFuzz', group: 'foods', image: 'food.seagrassFuzz' },
   { id: 'food.seaweed', group: 'foods', image: null },
   { id: 'place.drift', group: 'places', image: 'drift.shaft' },
-  { id: 'place.mangrove', group: 'places', image: 'mangrove.root.a' },
+  { id: 'place.mangrove', group: 'places', image: 'mangrove.tangle.a' },
   { id: 'place.hollow', group: 'places', image: 'mangrove.hollow' },
   { id: 'place.lagoon', group: 'places', image: 'lagoon.seagrass.a' },
   { id: 'place.seagrass', group: 'places', image: 'lagoon.seagrass.b' },

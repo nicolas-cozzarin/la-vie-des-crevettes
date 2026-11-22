@@ -169,6 +169,18 @@ export interface SaveV1 {
   achievements: string[];
   stats: Record<string, number>;        // tail flips, times cornered, and so on
   playSeconds: number;
+  // Added in step 9 with defaults (T89):
+  at: { x: number; y: number } | null;  // where the shrimp rested, or null for the area's start
+  pinned: string | null;
+  moodsNamed: Mood[];
+  promptsShown: Record<string, number>;
+  cardsUnlocked: string[];
+  narrated: string[];                   // lines already said
+  placesSeen: AreaId[];
+  molts: number;
+  hunger: number | null;
+  favourite: FoodKind | null;
+  journalSeen: string[];                // what the journal showed when last opened
 }
 
 export interface SettingsV1 {

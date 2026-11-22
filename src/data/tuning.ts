@@ -160,6 +160,8 @@ export const CURIOSITY = {
   /** BL. The Sense range, which is also how far curiosity reaches. */
   range: { juvenile: 8, subAdult: 11, adult: 14 },
   weights: { creature: 1, thing: 1, food: 0.8 },
+  /** The target of the challenge pinned in the journal. */
+  pinned: 0.6,
   /** BL and seconds to find each kind of thing. */
   find: {
     creature: { distance: 2.5, seconds: 2 },
@@ -375,6 +377,18 @@ export const CREATURES = {
     calm: 4,
     trailStep: 0.06,
     trailPoints: 40,
+  },
+  /** Doc 11, "Hermit crab". */
+  hermit: {
+    speed: 0.5,
+    run: { min: 0.3, max: 0.7 },
+    pause: { min: 1, max: 3 },
+    turn: 1.2,
+    home: 2,
+    rushed: 1.5,
+    calm: 4,
+    outTime: 1,
+    gentle: 1,
   },
   fish: {
     spread: 1.9,

@@ -292,12 +292,13 @@ The bird and the fish are named as the shrimp knows them. The last nine belong t
 | `companion.memory.fled` | You fled {threat} together. | Vous avez fui {threat} ensemble. |
 | `companion.memory.yourMolt` | She stayed while you were soft. | Elle est restée quand tu étais molle. |
 | `companion.memory.herMolt` | You stayed while she was soft. | Tu es restée quand elle était molle. |
+| `companion.memory.threat.bird` | the shadow with legs | l'ombre à pattes |
 | `bond.stranger` | Stranger | Inconnue |
 | `bond.familiar` | Familiar | Familière |
 | `bond.companion` | Companion | Compagne |
 | `bond.close` | Close | Proche |
 
-In `companion.memory.fled`, `{threat}` takes the creature's name with a lower-case article: "the shadow with legs", "l'ombre à pattes". Keep a second key per creature for that form if the article cannot be made by code.
+In `companion.memory.fled`, `{threat}` takes the creature's name with a lower-case article: "the shadow with legs", "l'ombre à pattes". Keep a second key per creature for that form if the article cannot be made by code: `companion.memory.threat.<kind>`, one per threat as it is built.
 
 ## Challenges
 

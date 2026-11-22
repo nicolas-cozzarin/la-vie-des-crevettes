@@ -54,6 +54,8 @@ export const debugState: {
   creatures: (() => CreaturesSnapshot) | null;
   threat: (() => ThreatSnapshot) | null;
   drift: (() => DriftSnapshot) | null;
+  journal: (() => JournalSnapshot) | null;
+  progress: (() => ProgressSnapshot) | null;
 } = {
   player: null,
   feelings: null,
@@ -62,7 +64,32 @@ export const debugState: {
   creatures: null,
   threat: null,
   drift: null,
+  journal: null,
+  progress: null,
 };
+
+/** What the browser test can ask about the open journal. */
+export interface JournalSnapshot {
+  page: string;
+  index: number;
+  /** The ids of the entries on this page. */
+  entries: string[];
+  pinned: string | null;
+  /** Entries on this page with the dot of "new since last opened". */
+  fresh: string[];
+}
+
+/** What the browser test can ask about the life's progress. */
+export interface ProgressSnapshot {
+  challenges: Record<string, number>;
+  achievements: string[];
+  cards: string[];
+  discoveries: string[];
+  stats: Record<string, number>;
+  pinned: string | null;
+  /** The small line on screen, by its id, or null. */
+  line: string | null;
+}
 
 /** What the browser test can ask about the larva in the Drift. */
 export interface DriftSnapshot {

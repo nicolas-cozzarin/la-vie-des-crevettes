@@ -4,7 +4,9 @@ import type {
   CreaturesSnapshot,
   DriftSnapshot,
   FeelingsSnapshot,
+  JournalSnapshot,
   PlayerSnapshot,
+  ProgressSnapshot,
   ThreatSnapshot,
 } from './debug';
 import type { ScentSnapshot } from './systems/ScentField';
@@ -30,6 +32,10 @@ export interface DebugHook {
   threat(): ThreatSnapshot | null;
   /** The larva in the Drift, or null outside it. */
   drift(): DriftSnapshot | null;
+  /** The open journal: its page, the chosen entry, the pinned challenge. Null when closed. */
+  journal(): JournalSnapshot | null;
+  /** What the life has counted and earned, and the small line on screen. */
+  progress(): ProgressSnapshot | null;
 }
 
 declare global {

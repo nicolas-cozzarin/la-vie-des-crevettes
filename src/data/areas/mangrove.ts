@@ -318,6 +318,9 @@ export const mangrove: AreaDef = {
     { id: 'snail.2', kind: 'snail', x: 1960, y: 3300, heading: 2.5 },
     { id: 'snail.3', kind: 'snail', x: 3230, y: 3100, heading: -1.2 },
     { id: 'snail.4', kind: 'snail', x: 1385, y: 1608, heading: 3.3 },
+    // In the mud of zone C, among the snails (T91).
+    { id: 'hermit.1', kind: 'hermitCrab', x: 2260, y: 3190, heading: 0.3 },
+    { id: 'hermit.2', kind: 'hermitCrab', x: 2900, y: 3240, heading: 2.7 },
     // Young fish holding among the roots, facing the current.
     { id: 'fish.landing', kind: 'smallFish', x: 1560, y: 1300, heading: Math.PI, count: 14 },
     { id: 'fish.deep', kind: 'smallFish', x: 5250, y: 1620, heading: Math.PI, count: 18 },

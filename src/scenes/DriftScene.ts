@@ -27,6 +27,7 @@ import { keepLife } from '../systems/keep';
 import { ProgressKeeper } from '../systems/ProgressKeeper';
 import { Rim } from '../systems/Rim';
 import type { HudScene } from './HudScene';
+import type { JournalHost } from './JournalScene';
 
 export interface DriftData {
   /** Opened by `?explore=drift`: no story, and landfall opens the mangrove to explore. */
@@ -54,7 +55,7 @@ interface Speck {
  * brown haze, and it settles among the roots: then the mangrove. The rules are
  * in `core/drift` and `DriftMotion`; this scene draws them and tells the story.
  */
-export class DriftScene extends Phaser.Scene {
+export class DriftScene extends Phaser.Scene implements JournalHost {
   private def!: DriftDef;
   private explore = false;
   private at: { x: number; y: number } | null = null;
@@ -368,6 +369,10 @@ export class DriftScene extends Phaser.Scene {
     const actions = app.actions;
     if (!this.leaving && actions.justPressed('pause')) {
       this.openPause();
+      return;
+    }
+    if (!this.leaving && actions.justPressed('journal')) {
+      this.openJournal();
       return;
     }
     const frame = Math.min(deltaMs / 1000, FRAME.longest);
@@ -804,5 +809,16 @@ export class DriftScene extends Phaser.Scene {
     if (!this.scene.isActive() || this.leaving) return;
     this.scene.pause();
     this.scene.launch('Pause');
+  }
+
+  /** The journal, over the paused Drift (doc 12, "The journal"). */
+  private openJournal(): void {
+    if (!this.scene.isActive() || this.leaving) return;
+    this.scene.pause();
+    this.scene.launch('Journal', { game: 'Drift', from: 'game' });
+  }
+
+  journalLife() {
+    return { life: this.life, area: 'drift' as const, unreleased: debugRequested() };
   }
 }

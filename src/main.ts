@@ -7,6 +7,7 @@ import { BootScene } from './scenes/BootScene';
 import { ControlsScene } from './scenes/ControlsScene';
 import { DriftScene } from './scenes/DriftScene';
 import { HudScene } from './scenes/HudScene';
+import { JournalScene } from './scenes/JournalScene';
 import { PauseScene } from './scenes/PauseScene';
 import { PlayScene } from './scenes/PlayScene';
 import { TitleScene } from './scenes/TitleScene';
@@ -27,7 +28,16 @@ const game = new Phaser.Game({
   fps: { smoothStep: false },
   // The game reads the keyboard itself, by key position. See src/platform/KeyboardSource.ts.
   input: { keyboard: false },
-  scene: [BootScene, TitleScene, DriftScene, PlayScene, HudScene, PauseScene, ControlsScene],
+  scene: [
+    BootScene,
+    TitleScene,
+    DriftScene,
+    PlayScene,
+    HudScene,
+    PauseScene,
+    JournalScene,
+    ControlsScene,
+  ],
 });
 
 // Once per frame, before any scene runs, so every scene sees the same presses.
@@ -44,4 +54,6 @@ window.__lvdc = {
   creatures: () => debugState.creatures?.() ?? null,
   threat: () => debugState.threat?.() ?? null,
   drift: () => debugState.drift?.() ?? null,
+  journal: () => debugState.journal?.() ?? null,
+  progress: () => debugState.progress?.() ?? null,
 };

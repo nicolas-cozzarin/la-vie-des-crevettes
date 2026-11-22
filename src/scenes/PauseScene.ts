@@ -39,13 +39,14 @@ export class PauseScene extends Phaser.Scene {
     const menu = new MenuList(
       this,
       centerX,
-      centerY - 50,
+      centerY - 75,
       [
         { label: t('pause.resume'), run: () => this.resume() },
+        { label: t('pause.journal'), run: () => this.leave('Journal') },
         { label: t('pause.controls'), run: () => this.leave('Controls') },
         { label: t('pause.quit'), run: () => this.leave('Title') },
       ],
-      { size: 40, gap: 84, color: COLORS.ink, marker: TINTS.deepTeal },
+      { size: 40, gap: 80, color: COLORS.ink, marker: TINTS.deepTeal },
     );
     onMenuKey(this, (key) => {
       if (key === 'back') this.resume();
@@ -67,10 +68,12 @@ export class PauseScene extends Phaser.Scene {
     this.scene.stop();
   }
 
-  private leave(to: 'Controls' | 'Title'): void {
+  private leave(to: 'Journal' | 'Controls' | 'Title'): void {
     if (this.leaving) return;
     this.leaving = true;
-    if (to === 'Controls') {
+    if (to === 'Journal') {
+      this.scene.start('Journal', { game: this.paused(), from: 'pause' });
+    } else if (to === 'Controls') {
       this.scene.start('Controls', { returnTo: 'Pause' });
     } else {
       this.scene.stop(this.paused());

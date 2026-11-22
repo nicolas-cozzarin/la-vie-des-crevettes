@@ -658,6 +658,67 @@ const stamps: Record<string, Painter> = {
   }),
 };
 
+/** The body wash of the companion portraits: the soft grey-green of a live shrimp. */
+const BODY: Rgb = [150, 168, 160];
+
+/**
+ * A companion seen from above, heading up, with the mark that tells her
+ * apart (doc 11): Brise's short left antenna, Nacre's pale fan, Écume
+ * smaller with a darker gut line (T55).
+ */
+function companion(seed: number, mark: 'shortAntenna' | 'paleFan' | 'gut'): Painter {
+  return painter(128, 0.04, seed, (pen) => {
+    const length = mark === 'gut' ? 0.82 : 0.95;
+    const up = -Math.PI / 2;
+    const y = 0.22;
+    const tail = y + 0.4 * length;
+    if (mark === 'paleFan') {
+      // Under the lines: the fan almost white, the rest of her washed as usual.
+      pen.wash(
+        [
+          { x: 0, y: tail },
+          { x: 0.13 * length, y: tail + 0.12 * length },
+          { x: 0, y: tail + 0.17 * length },
+          { x: -0.13 * length, y: tail + 0.12 * length },
+        ],
+        [252, 250, 244],
+        0.95,
+      );
+    }
+    pen.shrimp(0, y, length, up, BODY, false);
+    const tip = y - 0.48 * length;
+    // The antennae, the left one (to the picture's left) a third shorter with a blunt end.
+    const left = mark === 'shortAntenna' ? 0.67 : 1;
+    pen.line(
+      [
+        { x: -0.03 * length, y: tip },
+        { x: -0.16 * length, y: tip - 0.27 * length * left },
+        { x: -0.24 * length, y: tip - 0.47 * length * left },
+      ],
+      0.7,
+    );
+    if (mark === 'shortAntenna') pen.dot(-0.24 * length, tip - 0.47 * length * left, 0.025);
+    pen.line(
+      [
+        { x: 0.03 * length, y: tip },
+        { x: 0.16 * length, y: tip - 0.27 * length },
+        { x: 0.24 * length, y: tip - 0.47 * length },
+      ],
+      0.7,
+    );
+    if (mark === 'gut') {
+      pen.line(
+        [
+          { x: 0, y: y - 0.1 * length },
+          { x: 0, y: y + 0.12 * length },
+          { x: 0, y: tail - 0.02 },
+        ],
+        1.2,
+      );
+    }
+  });
+}
+
 export const iconPainters: Record<string, Painter> = {
   'icon.type.taste': typeTaste,
   'icon.type.reach': typeReach,
@@ -674,5 +735,8 @@ export const iconPainters: Record<string, Painter> = {
   'icon.bond.familiar': bond(32, 0.3, false),
   'icon.bond.companion': bond(33, 0.2, true),
   'icon.bond.close': bond(34, 0.12, true),
+  'icon.companion.brise': companion(41, 'shortAntenna'),
+  'icon.companion.nacre': companion(42, 'paleFan'),
+  'icon.companion.ecume': companion(43, 'gut'),
   ...Object.fromEntries(Object.entries(stamps).map(([id, one]) => [`icon.ach.${id}`, one])),
 };

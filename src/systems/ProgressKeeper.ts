@@ -7,6 +7,7 @@ import type { AreaId } from '../core/world/kinds';
 import { CHALLENGES } from '../data/challenges';
 import { PROGRESS_DEFS } from '../data/progress';
 import { SMALL_LINE } from '../data/tuning';
+import { debugState } from '../debug';
 import { i18n, t } from '../i18n';
 
 const PLAYER = 'player';
@@ -34,6 +35,7 @@ export class ProgressKeeper {
   readonly progress: Progress;
   private readonly lines = new SmallLines(SMALL_LINE);
   private readonly stops: (() => void)[] = [];
+  private lineNow: SmallLine | null = null;
 
   constructor(
     private readonly bus: EventBus<GameEvents>,
@@ -56,10 +58,10 @@ export class ProgressKeeper {
     on('greeting', ({ a, b }) => {
       if (a !== PLAYER && b !== PLAYER) return;
       options.find('creature.shrimp');
-      hear({ kind: 'greeting', other: a === PLAYER ? b : a });
+      hear({ kind: 'greeting', other: a === PLAYER ? b : a, area });
     });
     on('discovery', ({ id }) => {
-      hear({ kind: 'discovery', id });
+      hear({ kind: 'discovery', id, area });
       const name = `name.${id}`;
       if (i18n.has(name)) {
         this.line({
@@ -97,6 +99,16 @@ export class ProgressKeeper {
     on('bond:changed', ({ with: id, value }) => hear({ kind: 'bond', with: id, value }));
 
     if (options.arrived) hear({ kind: 'area', area });
+
+    debugState.progress = () => ({
+      challenges: { ...life.challenges },
+      achievements: [...life.achievements],
+      cards: [...life.cards],
+      discoveries: [...life.discoveries],
+      stats: { ...life.stats },
+      pinned: life.pinned,
+      line: this.lineNow?.id ?? null,
+    });
   }
 
   /** A count with no event of its own, such as the yolk ending or landfall. */
@@ -118,12 +130,14 @@ export class ProgressKeeper {
   update(dt: number, held: Readonly<Record<string, boolean>>): void {
     this.report(this.progress.hold(dt, held));
     const { line, alpha } = this.lines.step(dt);
+    this.lineNow = line;
     this.hud()?.smallLine(line, alpha);
   }
 
   destroy(): void {
     for (const stop of this.stops) stop();
     this.stops.length = 0;
+    debugState.progress = null;
   }
 
   private hear(event: ProgressEvent): void {

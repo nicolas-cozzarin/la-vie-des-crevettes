@@ -32,7 +32,16 @@ export interface Pull {
   target: Discoverable | null;
 }
 
-/** The pull of the strongest unknown thing in range. */
+/** The target of the challenge pinned in the journal, and how hard it pulls (doc 10). */
+export interface PinnedPull {
+  thing: Discoverable;
+  weight: number;
+}
+
+/**
+ * The pull of the strongest unknown thing in range. The pinned target
+ * pulls too, known or not.
+ */
 export function curiosityPull(
   x: number,
   y: number,
@@ -40,16 +49,20 @@ export function curiosityPull(
   known: ReadonlySet<string>,
   tuning: DiscoveryTuning,
   bodyLengthPx: number,
+  pinned: PinnedPull | null = null,
 ): Pull {
   const range = tuning.range * bodyLengthPx;
   let best: Pull = { value: 0, target: null };
-  for (const thing of things) {
-    if (known.has(thing.id)) continue;
+  const weigh = (thing: Discoverable, weight: number) => {
     const distance = Math.hypot(thing.x - x, thing.y - y);
-    if (distance >= range) continue;
-    const value = tuning.weights[thing.kind] * (1 - distance / range);
+    if (distance >= range) return;
+    const value = weight * (1 - distance / range);
     if (value > best.value) best = { value, target: thing };
+  };
+  for (const thing of things) {
+    if (!known.has(thing.id)) weigh(thing, tuning.weights[thing.kind]);
   }
+  if (pinned) weigh(pinned.thing, pinned.weight);
   return best;
 }
 
@@ -87,8 +100,13 @@ export class DiscoveryTracker {
     return true;
   }
 
-  pull(x: number, y: number, things: readonly Discoverable[]): Pull {
-    return curiosityPull(x, y, things, this.found, this.tuning, this.bodyLengthPx);
+  pull(
+    x: number,
+    y: number,
+    things: readonly Discoverable[],
+    pinned: PinnedPull | null = null,
+  ): Pull {
+    return curiosityPull(x, y, things, this.found, this.tuning, this.bodyLengthPx, pinned);
   }
 
   /** Returns the entries found on this step. */

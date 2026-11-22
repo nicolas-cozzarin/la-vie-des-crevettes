@@ -19,6 +19,7 @@ import { ShrimpMotion, type Mover } from '../core/movement/ShrimpMotion';
 import type { ThreatEvent } from '../core/threat/ThreatDirector';
 import { distanceToCover, isUnder } from '../core/world/cover';
 import { DiscoveryTracker, type Discoverable, type Pull } from '../core/world/discovery';
+import { CHALLENGE_TARGETS } from '../data/challenges';
 import { FOOD_KINDS, type FoodKind } from '../core/world/kinds';
 import { inRect, ZoneTracker } from '../core/world/zones';
 import { newLife, type Life } from '../core/progress/life';
@@ -68,6 +69,7 @@ import { ScentField } from '../systems/ScentField';
 import { Shoal } from '../systems/Shoal';
 import { WaterLight } from '../systems/WaterLight';
 import type { HudScene } from './HudScene';
+import type { JournalHost } from './JournalScene';
 
 export interface PlayData {
   area?: string;
@@ -122,7 +124,7 @@ function discoverables(area: AreaDef): Discoverable[] {
  * chooses the area, comes in step 8. Until then Play opens the mangrove, and
  * `?explore=<area>` opens any area that has data.
  */
-export class PlayScene extends Phaser.Scene {
+export class PlayScene extends Phaser.Scene implements JournalHost {
   private areaId: PlayableArea = FIRST_AREA;
   private explore = false;
   private resume = false;
@@ -444,6 +446,10 @@ export class PlayScene extends Phaser.Scene {
       this.openPause();
       return;
     }
+    if (actions.justPressed('journal')) {
+      this.openJournal();
+      return;
+    }
 
     // A slow frame is played as several short steps, so the shrimp covers the
     // same ground whatever the frame rate.
@@ -532,7 +538,8 @@ export class PlayScene extends Phaser.Scene {
     this.threats.enter(this.motion.x, this.motion.y);
     this.threats.draw(frame);
     this.loaded.update(frame, this.motion.x, this.motion.y);
-    this.creatures.update(frame, this.motion);
+    // Walking up to a hermit crab without sending it into its shell (doc 12, "Slowly").
+    if (this.creatures.update(frame, this.motion) > 0) this.keeper.count('gentle.hermitCrab');
     this.rim.set(this.rimmed());
     this.rim.update(frame);
     for (const [patch, image] of this.foodImages) image.setAlpha(0.15 + 0.85 * patch.amount);
@@ -671,10 +678,12 @@ export class PlayScene extends Phaser.Scene {
       const unknown = this.things
         .filter((thing) => thing.kind !== 'food' && !this.discovery.known.has(thing.id))
         .map((thing, index) => ({ id: `${thing.id}#${index}`, x: thing.x, y: thing.y }));
+      // The pinned challenge's target has a white ribbon too (doc 12, "Pinning").
+      const pinned = this.pinnedTarget();
       const found = ribbons(
         x,
         y,
-        { foods: this.patches, shrimp: this.shoal.sources, dangers: [], unknown },
+        { foods: this.patches, shrimp: this.shoal.sources, dangers: [], unknown, pinned },
         range,
         SENSE,
       );
@@ -768,7 +777,13 @@ export class PlayScene extends Phaser.Scene {
   private stepFeelings(dt: number, moving: boolean): void {
     const { x, y } = this.motion;
     for (const id of this.discovery.step(dt, x, y, this.things)) this.found(id);
-    this.pull = this.discovery.pull(x, y, this.things);
+    const pinned = this.pinnedTarget();
+    this.pull = this.discovery.pull(
+      x,
+      y,
+      this.things,
+      pinned ? { thing: pinned, weight: CURIOSITY.pinned } : null,
+    );
 
     const context: FeelingsContext = {
       motion: this.motion.mode,
@@ -821,6 +836,10 @@ export class PlayScene extends Phaser.Scene {
         this.life.molts += 1;
         this.viewFrom = this.viewScale;
         this.bus.emit('molt:done', { who: PLAYER, molts: this.life.molts });
+        // A companion close by as the shell comes off stays in the journal.
+        for (const id of this.shoal.companionsNear(this.motion.x, this.motion.y)) {
+          this.keeper.count(`softWith.${id}`);
+        }
         continue;
       }
       const phase = event.phase;
@@ -888,7 +907,9 @@ export class PlayScene extends Phaser.Scene {
           clean: event.clean,
           still: event.still,
         });
-        this.shoal.escapedTogether(this.motion.x, this.motion.y);
+        for (const id of this.shoal.escapedTogether(this.motion.x, this.motion.y)) {
+          this.keeper.count(`fledWith.${id}.${event.kind}`);
+        }
       }
     }
   }
@@ -1021,6 +1042,35 @@ export class PlayScene extends Phaser.Scene {
     if (!this.scene.isActive()) return;
     this.scene.pause();
     this.scene.launch('Pause');
+  }
+
+  /**
+   * Where the pinned challenge leads, if it has a place in this area and is
+   * not done: the nearest animal of its kind, or its landmark.
+   */
+  private pinnedTarget(): Discoverable | null {
+    const id = this.life.pinned;
+    if (!id || this.keeper.progress.isDone(id)) return null;
+    const target = CHALLENGE_TARGETS[id];
+    if (!target) return null;
+    const { x, y } = this.motion;
+    if ('creature' in target) {
+      const near = this.creatures.nearest(target.creature, x, y);
+      return near ? { id: `pinned.${id}`, kind: 'creature', x: near.x, y: near.y } : null;
+    }
+    const thing = this.things.find((one) => one.id === target.discovery);
+    return thing ? { id: `pinned.${id}`, kind: thing.kind, x: thing.x, y: thing.y } : null;
+  }
+
+  /** The journal, over the paused game (doc 12, "The journal"). */
+  private openJournal(): void {
+    if (!this.scene.isActive()) return;
+    this.scene.pause();
+    this.scene.launch('Journal', { game: 'Play', from: 'game' });
+  }
+
+  journalLife() {
+    return { life: this.life, area: this.areaId, unreleased: debugRequested() };
   }
 
   /** The view trails the shrimp a little and looks slightly ahead of it. */

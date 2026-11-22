@@ -1,9 +1,10 @@
 import Phaser from 'phaser';
 import { imageFit } from '../art/fit';
-import { CRAB_CLAW_JOINT } from '../art/painters/creatures';
+import { CRAB_CLAW_JOINT, HERMIT_LEGS_JOINT, HERMIT_SHELL_MOUTH } from '../art/painters/creatures';
 import { ensureTexture } from '../art/TextureFactory';
 import { DEPTH } from '../config';
 import { Crab } from '../core/creatures/crab';
+import { Hermit } from '../core/creatures/hermit';
 import { School } from '../core/creatures/school';
 import { Snail } from '../core/creatures/snail';
 import type { MotionMode } from '../core/movement/ShrimpMotion';
@@ -15,8 +16,12 @@ import { CREATURES, FRAME, WORLD } from '../data/tuning';
 export const LIVE_KINDS: ReadonlySet<CreatureDef['kind']> = new Set([
   'fiddlerCrab',
   'snail',
+  'hermitCrab',
   'smallFish',
 ]);
+
+/** A hermit crab's whole length, shell and legs, in BL (doc 11). */
+const HERMIT_LENGTH = 0.9;
 
 /** Where the crab's body is pinned in its picture, as the still picture draws it. */
 const CRAB_PIN_X = 104;
@@ -41,6 +46,17 @@ interface LiveSnail {
   shell: Phaser.GameObjects.Image;
 }
 
+interface LiveHermit {
+  def: CreatureDef;
+  rule: Hermit;
+  shadow: Phaser.GameObjects.Image;
+  body: Phaser.GameObjects.Container;
+  shell: Phaser.GameObjects.Image;
+  legs: Phaser.GameObjects.Image;
+  /** Where the legs sit when out, in the body's own pixels. */
+  legsAt: number;
+}
+
 interface LiveSchool {
   def: CreatureDef;
   rule: School;
@@ -63,6 +79,7 @@ export interface Passer {
 export class Creatures {
   private readonly crabs: LiveCrab[] = [];
   private readonly snails: LiveSnail[] = [];
+  private readonly hermits: LiveHermit[] = [];
   private readonly schools: LiveSchool[] = [];
 
   constructor(
@@ -75,6 +92,8 @@ export class Creatures {
       const random = seededRandom(seedOf(`${area.id}:${def.id}`));
       if (def.kind === 'fiddlerCrab') this.crabs.push(this.makeCrab(scene, def, bl, random));
       else if (def.kind === 'snail') this.snails.push(this.makeSnail(scene, def, bl, random));
+      else if (def.kind === 'hermitCrab')
+        this.hermits.push(this.makeHermit(scene, def, bl, random));
       else if (def.kind === 'smallFish') this.schools.push(this.makeSchool(scene, def, bl, random));
     }
   }
@@ -82,9 +101,10 @@ export class Creatures {
   /**
    * One frame: every animal steps and its pictures follow. A slow frame is
    * stepped in short pieces, as the shrimp is, so a burst plays the same at
-   * any frame rate.
+   * any frame rate. Returns how many hermit crabs the shrimp walked up to
+   * gently on this frame.
    */
-  update(dt: number, passer: Passer): void {
+  update(dt: number, passer: Passer): number {
     const bl = this.bodyLengthPx;
     const fast = passer.mode === 'swim' || passer.mode === 'dart' || passer.mode === 'glide';
     const pieces = Math.max(1, Math.ceil(dt / FRAME.step - 1e-9));
@@ -115,6 +135,13 @@ export class Creatures {
       }
       this.placeSnail(snail);
     }
+    let gentle = 0;
+    for (const hermit of this.hermits) {
+      for (let index = 0; index < pieces; index++) {
+        if (hermit.rule.step(piece, { x: passer.x, y: passer.y, fast })) gentle++;
+      }
+      this.placeHermit(hermit);
+    }
     for (const school of this.schools) {
       for (let index = 0; index < pieces; index++) school.rule.step(piece);
       school.rule.fish.forEach((fish, index) => {
@@ -124,6 +151,7 @@ export class Creatures {
           .setRotation(fish.heading);
       });
     }
+    return gentle;
   }
 
   /** A tail flip at (x, y): a school close by bursts apart. */
@@ -143,6 +171,8 @@ export class Creatures {
     if (crab) return { x: crab.x, y: crab.y };
     const snail = this.snails.find((one) => one.def.id === id);
     if (snail) return { x: snail.rule.x, y: snail.rule.y };
+    const hermit = this.hermits.find((one) => one.def.id === id);
+    if (hermit) return { x: hermit.rule.x, y: hermit.rule.y };
     const school = this.schools.find((one) => one.def.id === id);
     if (school) return { x: school.rule.x, y: school.rule.y };
     return null;
@@ -154,6 +184,8 @@ export class Creatures {
     if (crab) return crab.parts;
     const snail = this.snails.find((one) => one.def.id === id);
     if (snail) return [snail.shell];
+    const hermit = this.hermits.find((one) => one.def.id === id);
+    if (hermit) return [hermit.shell, hermit.legs];
     return this.schools.find((one) => one.def.id === id)?.fish ?? [];
   }
 
@@ -193,6 +225,12 @@ export class Creatures {
         x: snail.rule.x,
         y: snail.rule.y,
         state: snail.rule.withdrawn ? 'withdrawn' : 'crawling',
+      })),
+      ...this.hermits.map((hermit) => ({
+        id: hermit.def.id,
+        x: hermit.rule.x,
+        y: hermit.rule.y,
+        state: hermit.rule.withdrawn ? 'withdrawn' : 'out',
       })),
       ...this.schools.map((school) => ({
         id: school.def.id,
@@ -315,6 +353,57 @@ export class Creatures {
       t.lineTo(rule.x, rule.y);
       t.strokePath();
     }
+  }
+
+  /**
+   * A hermit crab: the snail's kind of shell with legs and claws out of its
+   * mouth, laid over its front (doc 14, "Animals in parts"). Pulling in,
+   * the legs slide back and are gone.
+   */
+  private makeHermit(
+    scene: Phaser.Scene,
+    def: CreatureDef,
+    bl: number,
+    random: () => number,
+  ): LiveHermit {
+    const rule = new Hermit(
+      CREATURES.hermit,
+      { x: def.x, y: def.y, heading: def.heading ?? 0 },
+      bl,
+      random,
+    );
+    const shellKey = ensureTexture(scene, 'snail.shell');
+    const legsKey = ensureTexture(scene, 'hermit.legs');
+    const shellFrame = scene.textures.getFrame(shellKey);
+    const legsFrame = scene.textures.getFrame(legsKey);
+    // From the back of the shell to the tips of the claws.
+    const mouth = HERMIT_SHELL_MOUTH.x - shellFrame.width / 2;
+    const reach = legsFrame.width - HERMIT_LEGS_JOINT.x;
+    const scale = (HERMIT_LENGTH * bl) / (shellFrame.width / 2 + mouth + reach);
+    const legs = scene.add
+      .image(mouth, HERMIT_SHELL_MOUTH.y - shellFrame.height / 2, legsKey)
+      .setOrigin(HERMIT_LEGS_JOINT.x / legsFrame.width, HERMIT_LEGS_JOINT.y / legsFrame.height);
+    const shell = scene.add.image(0, 0, shellKey);
+    const body = scene.add
+      .container(def.x, def.y, [shell, legs])
+      .setScale(scale)
+      .setDepth(DEPTH.bedAnimals);
+    const shadow = scene.add
+      .image(def.x + 3, def.y + 5, ensureTexture(scene, 'shadow.soft'))
+      .setDisplaySize(HERMIT_LENGTH * bl, 0.45 * bl)
+      .setAlpha(0.4)
+      .setDepth(DEPTH.groundObjects);
+    const hermit = { def, rule, shadow, body, shell, legs, legsAt: mouth };
+    this.placeHermit(hermit);
+    return hermit;
+  }
+
+  private placeHermit(hermit: LiveHermit): void {
+    const { rule } = hermit;
+    hermit.body.setPosition(rule.x, rule.y).setRotation(rule.heading + rule.rock);
+    hermit.shadow.setPosition(rule.x + 3, rule.y + 5).setRotation(rule.heading);
+    // In its shell the legs are drawn back into it, out of sight.
+    hermit.legs.setX(hermit.legsAt - (1 - rule.out) * 70).setAlpha(rule.out);
   }
 
   private makeSchool(

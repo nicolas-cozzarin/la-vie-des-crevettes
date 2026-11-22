@@ -98,9 +98,9 @@ export interface ProgressRecord {
 export type ProgressEvent =
   | { kind: 'eaten'; food: FoodKind; area: AreaId; full: boolean; night: boolean }
   | { kind: 'tailflip' }
-  | { kind: 'greeting'; other: string }
+  | { kind: 'greeting'; other: string; area: AreaId }
   | { kind: 'touched'; what: string }
-  | { kind: 'discovery'; id: string }
+  | { kind: 'discovery'; id: string; area: AreaId }
   | { kind: 'step'; id: string }
   | { kind: 'threat'; threat: ThreatKind; stage: ThreatStage; area: AreaId }
   | { kind: 'escaped'; threat: ThreatKind; clean: boolean; still: boolean }
@@ -222,12 +222,15 @@ export class Progress {
       case 'greeting':
         this.add('greetings');
         this.set(`greeted.${event.other}`);
+        // Where each one was met and each thing found, for the journal.
+        this.set(`metIn.${event.area}.${event.other}`);
         break;
       case 'touched':
         this.add(`touched.${event.what}`);
         break;
       case 'discovery':
         record.discoveries.add(event.id);
+        this.set(`foundIn.${event.area}.${event.id}`);
         break;
       case 'step':
         record.stepsDone.add(event.id);

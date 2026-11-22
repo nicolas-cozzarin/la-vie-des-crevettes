@@ -22,6 +22,8 @@ export interface Life extends ProgressRecord {
   /** How many times each prompt has shown, for the first three times (doc 03). */
   promptsShown: Record<string, number>;
   playSeconds: number;
+  /** What the journal showed when it was last opened, so what is new has a dot. */
+  journalSeen: Set<string>;
 }
 
 export function newLife(): Life {
@@ -36,5 +38,6 @@ export function newLife(): Life {
     pinned: null,
     promptsShown: {},
     playSeconds: 0,
+    journalSeen: new Set(),
   };
 }

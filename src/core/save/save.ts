@@ -42,6 +42,8 @@ export interface SaveV1 {
   molts: number;
   hunger: number | null;
   favourite: FoodKind | null;
+  /** What the journal showed when it was last opened. */
+  journalSeen: string[];
 }
 
 /** Where a life is when it is saved. */
@@ -75,6 +77,7 @@ export function saveOf(life: Life, place: SavePlace): SaveV1 {
     molts: life.molts,
     hunger: life.hunger,
     favourite: life.favourite,
+    journalSeen: [...life.journalSeen],
   };
 }
 
@@ -99,6 +102,7 @@ export function lifeOf(save: SaveV1): Life {
   life.molts = save.molts;
   life.hunger = save.hunger;
   life.favourite = save.favourite;
+  life.journalSeen = new Set(save.journalSeen);
   return life;
 }
 
@@ -170,6 +174,7 @@ export function loadSave(store: KeyValueStore): SaveV1 | null {
     molts: Math.floor(count(raw.molts, 0)),
     hunger,
     favourite: oneOf(FOOD_KINDS, raw.favourite),
+    journalSeen: strings(raw.journalSeen),
   };
 }
 

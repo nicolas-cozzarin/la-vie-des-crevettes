@@ -43,11 +43,11 @@ describe('challenges', () => {
 
   it('count three different shrimp greeted', () => {
     const p = progress();
-    p.hear({ kind: 'greeting', other: 'nacre' });
-    p.hear({ kind: 'greeting', other: 'nacre' });
-    p.hear({ kind: 'greeting', other: 'young.1' });
+    p.hear({ kind: 'greeting', other: 'nacre', area: 'mangrove' });
+    p.hear({ kind: 'greeting', other: 'nacre', area: 'mangrove' });
+    p.hear({ kind: 'greeting', other: 'young.1', area: 'mangrove' });
     expect(p.value('c1.greet3')).toBe(2);
-    const news = p.hear({ kind: 'greeting', other: 'young.2' });
+    const news = p.hear({ kind: 'greeting', other: 'young.2', area: 'mangrove' });
     expect(news).toContainEqual({ kind: 'done', id: 'c1.greet3' });
   });
 
@@ -88,7 +88,7 @@ describe('challenges', () => {
 
   it('count a discovery and a touch', () => {
     const p = progress();
-    p.hear({ kind: 'discovery', id: 'thing.sunkenBranch' });
+    p.hear({ kind: 'discovery', id: 'thing.sunkenBranch', area: 'mangrove' });
     p.hear({ kind: 'touched', what: 'drift.larva' });
     expect(p.isDone('c1.branch')).toBe(true);
     expect(p.isDone('c0.larva')).toBe(true);
@@ -106,12 +106,12 @@ describe('achievements', () => {
       kind: 'achievement',
       id: 'newShell',
     });
-    expect(p.hear({ kind: 'greeting', other: 'nacre' })).toContainEqual({
+    expect(p.hear({ kind: 'greeting', other: 'nacre', area: 'mangrove' })).toContainEqual({
       kind: 'achievement',
       id: 'antenna',
     });
     // Once only.
-    expect(p.hear({ kind: 'greeting', other: 'young.1' })).not.toContainEqual({
+    expect(p.hear({ kind: 'greeting', other: 'young.1', area: 'mangrove' })).not.toContainEqual({
       kind: 'achievement',
       id: 'antenna',
     });

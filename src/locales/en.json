@@ -186,6 +186,7 @@
   "companion.memory.fled": "You fled {threat} together.",
   "companion.memory.yourMolt": "She stayed while you were soft.",
   "companion.memory.herMolt": "You stayed while she was soft.",
+  "companion.memory.threat.bird": "the shadow with legs",
 
   "bond.stranger": "Stranger",
   "bond.familiar": "Familiar",

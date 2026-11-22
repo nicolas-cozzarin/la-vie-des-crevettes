@@ -186,6 +186,7 @@
   "companion.memory.fled": "Vous avez fui {threat} ensemble.",
   "companion.memory.yourMolt": "Elle est restée quand tu étais molle.",
   "companion.memory.herMolt": "Tu es restée quand elle était molle.",
+  "companion.memory.threat.bird": "l'ombre à pattes",
 
   "bond.stranger": "Inconnue",
   "bond.familiar": "Familière",

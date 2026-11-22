@@ -86,6 +86,7 @@ export class TitleScene extends Phaser.Scene {
         generation: kept.generation,
         promptsShown: kept.promptsShown,
         playSeconds: kept.playSeconds,
+        journalSeen: kept.journalSeen,
       };
       // Counted for one life only.
       life.stats.cornered = 0;

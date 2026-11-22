@@ -53,7 +53,41 @@ export const debugState: {
   shrimp: (() => ShrimpSnapshot[]) | null;
   creatures: (() => CreaturesSnapshot) | null;
   threat: (() => ThreatSnapshot) | null;
-} = { player: null, feelings: null, scent: null, shrimp: null, creatures: null, threat: null };
+  drift: (() => DriftSnapshot) | null;
+} = {
+  player: null,
+  feelings: null,
+  scent: null,
+  shrimp: null,
+  creatures: null,
+  threat: null,
+  drift: null,
+};
+
+/** What the browser test can ask about the larva in the Drift. */
+export interface DriftSnapshot {
+  x: number;
+  y: number;
+  /** How far along the Drift, the way the water runs. */
+  along: number;
+  heading: number;
+  shape: 'early' | 'mid' | 'late';
+  /** A to E. */
+  zone: string;
+  /** Seconds since the Drift began. */
+  time: number;
+  yolk: boolean;
+  /** Motes eaten, and other larvae touched. */
+  eaten: number;
+  touched: number;
+  /** Other larvae still drifting. */
+  larvae: number;
+  landing: boolean;
+  explore: boolean;
+  steps: string[];
+  narration: string | null;
+  nearestMote: { x: number; y: number; distance: number } | null;
+}
 
 /** What the browser test can ask about the threat under way. */
 export interface ThreatSnapshot {

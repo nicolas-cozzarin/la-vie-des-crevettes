@@ -5,6 +5,7 @@ import { debugState } from './debug';
 import { i18n } from './i18n';
 import { BootScene } from './scenes/BootScene';
 import { ControlsScene } from './scenes/ControlsScene';
+import { DriftScene } from './scenes/DriftScene';
 import { HudScene } from './scenes/HudScene';
 import { PauseScene } from './scenes/PauseScene';
 import { PlayScene } from './scenes/PlayScene';
@@ -24,9 +25,13 @@ const game = new Phaser.Game({
   // second for a while after every start and focus change, which plays the game in
   // slow motion on a slow machine. The play scene cuts long frames into short steps.
   fps: { smoothStep: false },
+  // One texture per draw. Phaser 4 picks a picture's texture in the shader by an exact
+  // comparison of an interpolated number, which can miss: whole triangles of a picture
+  // then vanish (seen in the Drift, T84). One texture per draw is always exact.
+  render: { maxTextures: 1 },
   // The game reads the keyboard itself, by key position. See src/platform/KeyboardSource.ts.
   input: { keyboard: false },
-  scene: [BootScene, TitleScene, PlayScene, HudScene, PauseScene, ControlsScene],
+  scene: [BootScene, TitleScene, DriftScene, PlayScene, HudScene, PauseScene, ControlsScene],
 });
 
 // Once per frame, before any scene runs, so every scene sees the same presses.
@@ -42,4 +47,5 @@ window.__lvdc = {
   shrimp: () => debugState.shrimp?.() ?? null,
   creatures: () => debugState.creatures?.() ?? null,
   threat: () => debugState.threat?.() ?? null,
+  drift: () => debugState.drift?.() ?? null,
 };

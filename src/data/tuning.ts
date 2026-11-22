@@ -500,3 +500,66 @@ export const MOLT = {
   /** How see-through the soft body is. */
   softAlpha: 0.85,
 };
+
+/** The Drift, chapter 0 (doc 11, "Chapter 0. Drift"; doc 10, "The larva"). Pixels and seconds. */
+export const DRIFT = {
+  motion: {
+    /** About 75 px per second: the crossing takes about two minutes. */
+    flow: 75,
+    steer: 110,
+    lean: 45,
+    response: 0.35,
+    /** Jerks for the first shape, small pulses for the second, a steady swim for the last. */
+    beat: {
+      early: { rate: 2.2, depth: 0.8 },
+      mid: { rate: 3, depth: 0.5 },
+      late: { rate: 3.5, depth: 0.15 },
+    },
+    margin: 90,
+    tilt: 0.5,
+  },
+  /** Seconds the larva lives on its yolk: it cannot eat and hunger waits (FAO). */
+  yolk: 10,
+  /** The larva's length in each shape (doc 11). */
+  length: { early: 44, mid: 56, late: 70 },
+  /** Seconds one shape takes to become the next. */
+  change: 1.2,
+  /** How far along the Drift the larva takes its last shape: early in the shafts. */
+  lateAt: 5300,
+  motes: {
+    cloud: [6, 12] as [number, number],
+    spread: 110,
+    size: [14, 36] as [number, number],
+    drift: 0.35,
+    wobble: 18,
+  },
+  /** BL: motes brighten within this of the larva. */
+  brighten: 1.5,
+  /** BL: how far the mouth reaches beyond a mote's edge. */
+  reach: 0.15,
+  larvae: {
+    count: 12,
+    settlers: 3,
+    pace: [0.85, 1.15] as [number, number],
+    /** BL a settler keeps from the player, from and to. */
+    keep: [2.5, 6] as [number, number],
+    steer: 40,
+    /** BL two larvae keep apart. */
+    apart: 1.2,
+    reachHaze: 1 / 3,
+    /** Their length, as a share of the player's: 40 to 70 px at the middle shape. */
+    size: [0.8, 1.2] as [number, number],
+    /** BL: touching another larva. */
+    touch: 0.8,
+  },
+  copepod: { every: [2, 4] as [number, number], hop: 84, hopTime: 0.25, drift: 0.35 },
+  bell: { breathe: 5, drift: 0.25, open: 0.12 },
+  /** Specks: how many, and the share of the flow each of the three layers drifts at. */
+  specks: { count: 150, layers: [0.15, 0.35, 0.55] },
+  /** The view looks ahead along the flow, as a share of its width. */
+  ahead: 0.16,
+  /** The brown haze at its thickest. */
+  haze: 0.55,
+  /** Landfall: seconds to settle, how much nearer the view sinks, seconds of the fade. */
+  landfall: { settle: 3, sink: 1.15, fade: 1.5 },
+};

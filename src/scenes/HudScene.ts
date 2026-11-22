@@ -5,7 +5,8 @@ import { COLORS, FONTS, GAME_HEIGHT, GAME_WIDTH, TINTS } from '../config';
 import { t } from '../i18n';
 import { textStyle } from '../ui/text';
 
-type Hint = 'move' | 'dart' | 'pause' | 'done';
+/** The larva of the Drift only steers: its first hint is that, and it has no tail flip. */
+type Hint = 'move' | 'steer' | 'dart' | 'pause' | 'done';
 
 const HINT_Y = GAME_HEIGHT - 90;
 const WORD_Y = 96;
@@ -28,6 +29,7 @@ const FEAR_EDGE = 0x0a1418;
  */
 export class HudScene extends Phaser.Scene {
   private ready = false;
+  private larva = false;
   private hint: Hint = 'move';
   private hintText!: Phaser.GameObjects.Text;
   private hintPlate!: Phaser.GameObjects.Graphics;
@@ -54,6 +56,10 @@ export class HudScene extends Phaser.Scene {
     super('Hud');
   }
 
+  init(data: { larva?: boolean }): void {
+    this.larva = data.larva === true;
+  }
+
   create(): void {
     const centerX = GAME_WIDTH / 2;
     const centerY = GAME_HEIGHT / 2;
@@ -77,7 +83,7 @@ export class HudScene extends Phaser.Scene {
       .setTileScale(2)
       .setAlpha(0.07);
 
-    this.hint = 'move';
+    this.hint = this.larva ? 'steer' : 'move';
     this.movedFor = 0;
     this.hintClock = 0;
     this.hintPlate = this.add.graphics();
@@ -130,9 +136,9 @@ export class HudScene extends Phaser.Scene {
   track(dt: number, moving: boolean, darted: boolean): void {
     if (!this.ready) return;
     this.hintClock += dt;
-    if (this.hint === 'move') {
+    if (this.hint === 'move' || this.hint === 'steer') {
       if (moving) this.movedFor += dt;
-      if (this.movedFor > 2.5) this.nextHint('dart');
+      if (this.movedFor > 2.5) this.nextHint(this.larva ? 'pause' : 'dart');
     } else if (this.hint === 'dart') {
       if (darted && this.hintClock > 1) this.nextHint('pause');
     } else if (this.hint === 'pause') {
@@ -231,6 +237,9 @@ export class HudScene extends Phaser.Scene {
         down: app.actionKey('moveDown'),
         right: app.actionKey('moveRight'),
       });
+    }
+    if (this.hint === 'steer') {
+      return t('prompt.steer', { up: app.actionKey('moveUp'), down: app.actionKey('moveDown') });
     }
     if (this.hint === 'dart') return t('play.hint.dart', { key: app.actionKey('tailFlip') });
     if (this.hint === 'pause') return t('play.hint.pause', { key: app.actionKey('pause') });

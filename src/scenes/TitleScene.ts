@@ -59,9 +59,9 @@ export class TitleScene extends Phaser.Scene {
     if (this.leaving) return;
     this.leaving = true;
     if (to === 'Play') {
-      // The key that chose Play must not also act inside the game.
+      // The key that chose Play must not also act inside the game. A life begins in the Drift.
       app.actions.clearQueued();
-      this.scene.start('Play');
+      this.scene.start('Drift');
     } else {
       this.scene.start('Controls', { returnTo: 'Title' });
     }

@@ -6,6 +6,9 @@ import { MenuList } from '../ui/MenuList';
 import { onMenuKey } from '../ui/menuKeys';
 import { textStyle } from '../ui/text';
 
+/** The scenes the pause menu can be laid over. */
+const GAMES = ['Drift', 'Play'] as const;
+
 /** The pause menu, laid over the paused game. Escape always brings it up. */
 export class PauseScene extends Phaser.Scene {
   private leaving = false;
@@ -60,7 +63,7 @@ export class PauseScene extends Phaser.Scene {
     this.leaving = true;
     // Keys pressed in the menu must not act inside the game.
     app.actions.clearQueued();
-    this.scene.resume('Play');
+    this.scene.resume(this.paused());
     this.scene.stop();
   }
 
@@ -70,8 +73,13 @@ export class PauseScene extends Phaser.Scene {
     if (to === 'Controls') {
       this.scene.start('Controls', { returnTo: 'Pause' });
     } else {
-      this.scene.stop('Play');
+      this.scene.stop(this.paused());
       this.scene.start('Title');
     }
+  }
+
+  /** The game under the menu: the Drift or Play. */
+  private paused(): (typeof GAMES)[number] {
+    return GAMES.find((key) => this.scene.isPaused(key)) ?? 'Play';
   }
 }

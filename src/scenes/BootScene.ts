@@ -13,6 +13,10 @@ export class BootScene extends Phaser.Scene {
     document.documentElement.lang = app.settings.lang;
     // Explore mode goes straight to the place asked for. See src/platform/address.ts.
     const explore = exploreRequest();
+    if (explore === 'drift') {
+      this.scene.start('Drift', { explore: true, at: exploreStart() ?? undefined });
+      return;
+    }
     if (explore !== null && isPlayableArea(explore)) {
       this.scene.start('Play', { area: explore, explore: true, at: exploreStart() ?? undefined });
       return;

@@ -310,7 +310,7 @@ export class PlayScene extends Phaser.Scene {
     this.lead = { x: 0, y: 0 };
     this.aim();
 
-    this.scene.launch('Hud');
+    this.scene.launch('Hud', { larva: false });
     this.hud = this.scene.get('Hud') as HudScene;
 
     // The story of this place, told one line at a time.

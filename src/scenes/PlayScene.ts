@@ -39,6 +39,7 @@ import {
   HIDE,
   HUNGER,
   MOOD,
+  MOOD_SCREEN,
   MOTION,
   SENSE,
 } from '../data/tuning';
@@ -382,7 +383,7 @@ export class PlayScene extends Phaser.Scene {
     for (const [patch, image] of this.foodImages) image.setAlpha(0.15 + 0.85 * patch.amount);
     this.wiggleLeft = Math.max(0, this.wiggleLeft - frame);
     this.rig.update(frame, this.motion, this.feel(eating));
-    const lift = this.feelings.mood === 'social' ? 0.07 : 0;
+    const lift = this.feelings.mood === 'social' ? MOOD_SCREEN.socialLift : 0;
     this.lift += (lift - this.lift) * approach(frame, MOOD.screen);
     this.shoal.draw(frame, this.cameras.main.worldView, this.lift);
     this.showScent(frame);

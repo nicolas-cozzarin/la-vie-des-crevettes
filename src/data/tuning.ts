@@ -228,6 +228,8 @@ export const MOOD_SCREEN = {
   contentLighter: 0.35,
   /** Seconds a mood's name stays on screen, with "Name feelings on screen". */
   nameSeconds: 2.5,
+  /** Social: how much brighter the other shrimp are drawn (T74). */
+  socialLift: 0.07,
 };
 
 /** Grazing. See doc 10, "Activities". BL are from the shrimp's centre. */

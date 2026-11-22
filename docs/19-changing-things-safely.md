@@ -46,6 +46,11 @@ To undo a change that is already published, open the merged pull request on GitH
 | How a mood looks on the screen | `MOOD_SCREEN` in `src/data/tuning.ts`. The way it is drawn in `src/systems/MoodPresenter.ts` | Doc 10, "Screen". T62 | The game with `?debug` and F9, by eye |
 | What a food gives: hunger, seconds, regrowth | `FOODS` in `src/data/foods.ts`. The food list itself is **Ask first** (rule 1) | Doc 10, "Hunger" | `food.test.ts` |
 | How grazing and Sense work: reach, mouth, ribbon range and look | `GRAZE` and `SENSE` in `src/data/tuning.ts`. The rules in `src/core/activity/Activity.ts` and `src/core/scent/ribbons.ts` | Doc 10, "Activities". T67, T68 | `activity.test.ts`, `scent.test.ts`. The game with `?explore=mangrove`, by eye |
+| A companion: temperament, favourite food, size, marking | `COMPANIONS` and `UNNAMED` in `src/data/shrimp.ts` | Doc 10, "Other shrimp". Doc 14 for the look | `npc.test.ts` for the flee thresholds |
+| How other shrimp choose, move and greet | `NPC`, `STEER`, `ALARM`, `SHOAL` and `GREET` in `src/data/tuning.ts`. The rules in `src/core/npc/` and `src/core/activity/Activity.ts` | Doc 10, "Other shrimp". T71 to T74 | `npc.test.ts`, `activity.test.ts`. The game with `?explore=mangrove&at=4420,2250`, by eye |
+| A bond's gains and stages | `BOND` in `src/data/tuning.ts`. The rules in `src/core/bonds/Bonds.ts` | Docs 02 and 10. T73 | `bonds.test.ts` |
+| How the crabs, snails and fish move | `CREATURES` in `src/data/tuning.ts`. The rules in `src/core/creatures/`, the drawing in `src/systems/Creatures.ts` | Doc 11. T75 | `creatures.test.ts` |
+| The pale rim | `CREATURES.rim` in `src/data/tuning.ts`. `src/systems/Rim.ts` | Doc 11, `fx.rim`. T76 | The browser test |
 | The life stage of an area | `STAGE_IN` in `src/data/areas/index.ts` | Doc 11, "Scale". `STAGE_LOOKS` in `src/art/expressions.ts` for how each stage looks | |
 | The save format | **Ask first** | A version number and a way to read the old version | To build in step 9 |
 | The way the coast runs | See "Turning the coast round" | | |
@@ -61,7 +66,7 @@ To undo a change that is already published, open the merged pull request on GitH
 | `tests/content/rules.test.ts` | The foods are not the six plant foods. A file names an organisation the author asked to keep out. A file in `public/` is not credited. Pictures or rules use `Math.random`. Code outside `src/platform` touches the keyboard or the storage. An asset path starts with `/`. Code asks for a text key that does not exist. A painter imports the engine |
 | `eslint.config.js` | `src/core` imports Phaser, the engine-facing folders, `src/data` or `src/platform` |
 | `tests/unit/*` | A rule of the game changed its result |
-| `tests/e2e/*` | The game does not start, the shrimp does not move, the atelier does not draw. A root does not stop the shrimp. Hide does not tuck it in under a tangle. Explore mode does not open an area or start at the point given. Hunger does not rise while walking. A creature not yet met does not make the shrimp curious, or is not found by staying near it. F9 does not force each mood with `?debug`, or does anything without it. Sense shows no ribbon to a nearby food. Grazing does not lower hunger or find the food |
+| `tests/e2e/*` | The game does not start, the shrimp does not move, the atelier does not draw. A root does not stop the shrimp. Hide does not tuck it in under a tangle. Explore mode does not open an area or start at the point given. Hunger does not rise while walking. A creature not yet met does not make the shrimp curious, or is not found by staying near it. F9 does not force each mood with `?debug`, or does anything without it. Sense shows no ribbon to a nearby food. Grazing does not lower hunger or find the food. Greeting another shrimp starts no bond. A snail does not crawl. A tail flip does not burst a school, or it does not regroup. The curious target gets no rim |
 
 The organisation check holds the names as hashes, so that the test does not write them. Its comment says how they are made.
 

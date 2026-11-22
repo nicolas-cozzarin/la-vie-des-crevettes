@@ -3,6 +3,7 @@ import type { Mood } from './core/feelings/mood';
 import type { Condition, Feelings } from './core/feelings/types';
 import type { MotionMode } from './core/movement/ShrimpMotion';
 import type { ScentSnapshot } from './systems/ScentField';
+import type { ShrimpSnapshot } from './systems/Shoal';
 
 /** What the browser test can ask about the player's shrimp. */
 export interface PlayerSnapshot {
@@ -41,4 +42,13 @@ export const debugState: {
   player: (() => PlayerSnapshot) | null;
   feelings: (() => FeelingsSnapshot) | null;
   scent: (() => ScentSnapshot[]) | null;
-} = { player: null, feelings: null, scent: null };
+  shrimp: (() => ShrimpSnapshot[]) | null;
+  creatures: (() => CreaturesSnapshot) | null;
+} = { player: null, feelings: null, scent: null, shrimp: null, creatures: null };
+
+/** What the browser test can ask about the animals: where each is, and how strong the rim is. */
+export interface CreaturesSnapshot {
+  /** A school also says how far its fish are from their places, in BL. */
+  animals: { id: string; x: number; y: number; state: string; scattered?: number }[];
+  rim: number;
+}

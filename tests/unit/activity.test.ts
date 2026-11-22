@@ -5,6 +5,7 @@ const BL = 100;
 const TUNING = { reach: 1.5, tuck: 0.45, settled: 0.12, slowing: 0.35 };
 const tangle = { x: 0, y: 0, r: 200 };
 const GRAZE = { reach: 0.6, head: 0.4, full: 0.15, taste: 1, fearEnds: 0.5 };
+const GREET = { reach: 2, seconds: 0.9, callHold: 0.6 };
 
 function input(x: number, y: number, hide: boolean, more: Partial<ActivityInput> = {}) {
   return { dt: 1 / 60, x, y, hide, tailFlip: false, axis: { x: 1, y: 0 }, ...more };
@@ -12,13 +13,13 @@ function input(x: number, y: number, hide: boolean, more: Partial<ActivityInput>
 
 describe('Activity', () => {
   it('starts free and passes the player direction through', () => {
-    const activity = new Activity(TUNING, BL, GRAZE);
+    const activity = new Activity(TUNING, BL, GRAZE, GREET);
     expect(activity.name).toBe('free');
     expect(activity.update(input(1000, 0, false), [tangle]).axis).toEqual({ x: 1, y: 0 });
   });
 
   it('starts hiding only with cover in reach', () => {
-    const activity = new Activity(TUNING, BL, GRAZE);
+    const activity = new Activity(TUNING, BL, GRAZE, GREET);
     // 1.6 BL from the edge: too far.
     activity.update(input(360, 0, true), [tangle]);
     expect(activity.name).toBe('free');
@@ -29,13 +30,13 @@ describe('Activity', () => {
   });
 
   it('says whether Hide would start here', () => {
-    const activity = new Activity(TUNING, BL, GRAZE);
+    const activity = new Activity(TUNING, BL, GRAZE, GREET);
     expect(activity.canHide(340, 0, [tangle])).toBe(true);
     expect(activity.canHide(360, 0, [tangle])).toBe(false);
   });
 
   it('walks the body in, ignoring the movement keys', () => {
-    const activity = new Activity(TUNING, BL, GRAZE);
+    const activity = new Activity(TUNING, BL, GRAZE, GREET);
     const { axis } = activity.update(input(340, 0, true, { axis: { x: 1, y: 1 } }), [tangle]);
     expect(axis.x).toBeLessThan(0);
     expect(axis.y).toBeCloseTo(0);
@@ -43,7 +44,7 @@ describe('Activity', () => {
   });
 
   it('settles and counts as hidden at the tuck point', () => {
-    const activity = new Activity(TUNING, BL, GRAZE);
+    const activity = new Activity(TUNING, BL, GRAZE, GREET);
     activity.update(input(340, 0, true), [tangle]);
     const { axis } = activity.update(input(92, 0, true), [tangle]);
     expect(axis).toEqual({ x: 0, y: 0 });
@@ -51,7 +52,7 @@ describe('Activity', () => {
   });
 
   it('settles where it is when blocked under the cover', () => {
-    const activity = new Activity(TUNING, BL, GRAZE);
+    const activity = new Activity(TUNING, BL, GRAZE, GREET);
     activity.update(input(340, 0, true), [tangle]);
     let result = activity.update(input(150, 0, true), [tangle]);
     for (let frame = 0; frame < 30; frame += 1)
@@ -61,7 +62,7 @@ describe('Activity', () => {
   });
 
   it('ends when Hide is let go', () => {
-    const activity = new Activity(TUNING, BL, GRAZE);
+    const activity = new Activity(TUNING, BL, GRAZE, GREET);
     activity.update(input(340, 0, true), [tangle]);
     activity.update(input(300, 0, false), [tangle]);
     expect(activity.name).toBe('free');
@@ -69,7 +70,7 @@ describe('Activity', () => {
   });
 
   it('always lets a tail flip leave cover', () => {
-    const activity = new Activity(TUNING, BL, GRAZE);
+    const activity = new Activity(TUNING, BL, GRAZE, GREET);
     activity.update(input(340, 0, true), [tangle]);
     activity.update(input(92, 0, true), [tangle]);
     expect(activity.tucked).toBe(true);
@@ -80,7 +81,7 @@ describe('Activity', () => {
   });
 
   it('does not start hiding on the frame of a tail flip', () => {
-    const activity = new Activity(TUNING, BL, GRAZE);
+    const activity = new Activity(TUNING, BL, GRAZE, GREET);
     activity.update(input(340, 0, true, { tailFlip: true }), [tangle]);
     expect(activity.name).toBe('free');
   });
@@ -103,7 +104,7 @@ describe('Activity, grazing and sensing', () => {
   }
 
   it('starts grazing only when the mouth is within 0.6 BL of a patch', () => {
-    const activity = new Activity(TUNING, BL, GRAZE);
+    const activity = new Activity(TUNING, BL, GRAZE, GREET);
     // The patch's edge is at 120 and the mouth 40 ahead: 70 from the edge, then 50.
     activity.update(graze(10), [], [film]);
     expect(activity.name).toBe('free');
@@ -113,7 +114,7 @@ describe('Activity, grazing and sensing', () => {
   });
 
   it('steps to the patch, then eats', () => {
-    const activity = new Activity(TUNING, BL, GRAZE);
+    const activity = new Activity(TUNING, BL, GRAZE, GREET);
     const walking = activity.update(graze(30), [], [film]);
     expect(walking.eating).toBe(false);
     expect(walking.axis.x).toBeGreaterThan(0);
@@ -131,13 +132,13 @@ describe('Activity, grazing and sensing', () => {
       { tailFlip: true },
     ];
     for (const more of ends) {
-      const activity = new Activity(TUNING, BL, GRAZE);
+      const activity = new Activity(TUNING, BL, GRAZE, GREET);
       activity.update(graze(100), [], [film]);
       expect(activity.name).toBe('grazing');
       activity.update(graze(100, more), [], [film]);
       expect(activity.name).toBe('free');
     }
-    const activity = new Activity(TUNING, BL, GRAZE);
+    const activity = new Activity(TUNING, BL, GRAZE, GREET);
     const small = { ...film };
     activity.update(graze(100), [], [small]);
     small.amount = 0;
@@ -146,11 +147,11 @@ describe('Activity, grazing and sensing', () => {
   });
 
   it('a full shrimp does not graze, but may taste a new food for 1 s', () => {
-    const full = new Activity(TUNING, BL, GRAZE);
+    const full = new Activity(TUNING, BL, GRAZE, GREET);
     full.update(graze(100, { hunger: 0.1 }), [], [film]);
     expect(full.name).toBe('free');
 
-    const taste = new Activity(TUNING, BL, GRAZE);
+    const taste = new Activity(TUNING, BL, GRAZE, GREET);
     const fresh = { hunger: 0.1, tasted: () => false };
     taste.update(graze(100, fresh), [], [film]);
     expect(taste.name).toBe('grazing');
@@ -168,7 +169,7 @@ describe('Activity, grazing and sensing', () => {
   });
 
   it('senses while Sense is held, standing still, until released or afraid', () => {
-    const activity = new Activity(TUNING, BL, GRAZE);
+    const activity = new Activity(TUNING, BL, GRAZE, GREET);
     const result = activity.update({ ...input(1000, 0, false), sense: true }, [], []);
     expect(activity.name).toBe('sensing');
     expect(result.axis).toEqual({ x: 0, y: 0 });
@@ -180,9 +181,62 @@ describe('Activity, grazing and sensing', () => {
   });
 
   it('a tail flip ends sensing', () => {
-    const activity = new Activity(TUNING, BL, GRAZE);
+    const activity = new Activity(TUNING, BL, GRAZE, GREET);
     activity.update({ ...input(1000, 0, false), sense: true }, [], []);
     activity.update({ ...input(1000, 0, false), sense: true, tailFlip: true }, [], []);
     expect(activity.name).toBe('free');
+  });
+
+  describe('greeting and calling', () => {
+    const nacre = { id: 'nacre', x: 150, y: 0 };
+    const still = { axis: { x: 0, y: 0 } };
+
+    it('Greet within 2 BL of another shrimp turns to it, holds still 0.9 s, then is done', () => {
+      const activity = new Activity(TUNING, BL, GRAZE, GREET);
+      const press = { ...input(0, 0, false, still), greet: true, others: [nacre], dt: 0.1 };
+      const first = activity.update(press, [], []);
+      expect(activity.name).toBe('greeting');
+      expect(activity.with).toBe('nacre');
+      expect(first.axis).toEqual({ x: 0, y: 0 });
+      expect(first.face).toBeCloseTo(0);
+      let done: string | undefined;
+      for (let step = 0; step < 10 && !done; step++) {
+        done = activity.update({ ...press, axis: { x: 1, y: 0 } }, [], []).greeted;
+      }
+      expect(done).toBe('nacre');
+      expect(activity.name).toBe('free');
+      // Still held: it does not greet again until a new press.
+      activity.update(press, [], []);
+      expect(activity.name).toBe('free');
+      activity.update({ ...press, greet: false }, [], []);
+      activity.update(press, [], []);
+      expect(activity.name).toBe('greeting');
+    });
+
+    it('nobody within 2 BL: nothing, and held 0.6 s it becomes a call', () => {
+      const activity = new Activity(TUNING, BL, GRAZE, GREET);
+      const far = { id: 'far', x: 300, y: 0 };
+      const hold = { ...input(0, 0, false, still), greet: true, others: [far], dt: 0.2 };
+      activity.update(hold, [], []);
+      activity.update(hold, [], []);
+      expect(activity.name).toBe('free');
+      const third = activity.update(hold, [], []);
+      expect(activity.name).toBe('calling');
+      expect(third.called).toBe(true);
+      expect(activity.update(hold, [], []).called).toBeUndefined();
+      activity.update({ ...hold, greet: false }, [], []);
+      expect(activity.name).toBe('free');
+    });
+
+    it('a tail flip or fear ends a greeting, with no greeting done', () => {
+      for (const more of [{ tailFlip: true }, { fear: 0.6 }]) {
+        const activity = new Activity(TUNING, BL, GRAZE, GREET);
+        const press = { ...input(0, 0, false, still), greet: true, others: [nacre], dt: 0.1 };
+        activity.update(press, [], []);
+        const result = activity.update({ ...press, ...more }, [], []);
+        expect(activity.name).toBe('free');
+        expect(result.greeted).toBeUndefined();
+      }
+    });
   });
 });

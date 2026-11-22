@@ -57,6 +57,8 @@ export interface RigLook {
   eyeScale: number;
   /** 1, or 0.85 while the new shell is soft. */
   alpha: number;
+  /** Multiplies the body's colour: white for none. Unnamed shrimp differ a little (doc 11). */
+  tint: number;
 }
 
 export const DEFAULT_LOOK: RigLook = {
@@ -67,6 +69,7 @@ export const DEFAULT_LOOK: RigLook = {
   gutAlpha: 1,
   eyeScale: 1.15,
   alpha: 1,
+  tint: 0xffffff,
 };
 
 /** What changes in the look as the shrimp grows. Larva is drawn by its own rig. */

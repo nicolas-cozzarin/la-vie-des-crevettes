@@ -73,6 +73,8 @@
   "play.hint.pause": "{key} for the menu",
   "prompt.graze": "Hold {key} to graze",
   "prompt.taste": "{key} to taste",
+  "prompt.greet": "{key} to greet",
+  "prompt.call": "Hold {key} to call",
 
   "mood.calm": "Calm",
   "mood.hungry": "Hungry",

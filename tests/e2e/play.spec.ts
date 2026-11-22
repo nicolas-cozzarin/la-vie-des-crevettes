@@ -341,3 +341,67 @@ test.describe('food and scent', () => {
     await page.waitForFunction(() => window.__lvdc?.player()?.activity === 'free');
   });
 });
+
+test.describe('other shrimp and animals', () => {
+  test('greeting another shrimp starts a bond', async ({ page }) => {
+    const errors = watchErrors(page);
+    // Nacre and two young shrimp live here, around 4590, 2250.
+    await explore(page, 'mangrove&at=4420,2250');
+    await page.waitForFunction(() => (window.__lvdc?.shrimp()?.length ?? 0) >= 3);
+    // They move about, so greet again until one is in reach.
+    await expect
+      .poll(
+        async () => {
+          await page.keyboard.down('KeyF');
+          await page.waitForTimeout(200);
+          await page.keyboard.up('KeyF');
+          return page.evaluate(() =>
+            Math.max(0, ...(window.__lvdc?.shrimp() ?? []).map((one) => one.bond)),
+          );
+        },
+        { timeout: 20_000 },
+      )
+      .toBeGreaterThan(0);
+    expect(errors).toEqual([]);
+  });
+
+  test('a snail crawls', async ({ page }) => {
+    await explore(page, 'mangrove&at=1250,1700');
+    const where = () =>
+      page.evaluate(
+        () => window.__lvdc?.creatures()?.animals.find((one) => one.id === 'snail.4') ?? null,
+      );
+    const start = await where();
+    expect(start?.state).toBe('crawling');
+    await page.waitForFunction(
+      (from) => {
+        const now = window.__lvdc?.creatures()?.animals.find((one) => one.id === 'snail.4');
+        return now !== undefined && Math.hypot(now.x - from.x, now.y - from.y) > 4;
+      },
+      { x: start?.x ?? 0, y: start?.y ?? 0 },
+    );
+  });
+
+  test('a tail flip close by bursts a school of young fish, and it regroups', async ({ page }) => {
+    // The school by the landing holds at 1560, 1300.
+    await explore(page, 'mangrove&at=1400,1300');
+    const school = (state: string) =>
+      page.waitForFunction(
+        (wanted) =>
+          window.__lvdc?.creatures()?.animals.find((one) => one.id === 'fish.landing')?.state ===
+          wanted,
+        state,
+      );
+    await school('holding');
+    await page.keyboard.press('Space');
+    await school('scattered');
+    await school('holding');
+  });
+
+  test('what the shrimp is curious about gets the pale rim', async ({ page }) => {
+    // An algae film lies at 1262, 1612, a snail crawls close by.
+    await explore(page, 'mangrove&at=1250,1560');
+    await page.waitForFunction(() => window.__lvdc?.feelings()?.mood === 'curious');
+    await page.waitForFunction(() => (window.__lvdc?.creatures()?.rim ?? 0) > 0.5);
+  });
+});

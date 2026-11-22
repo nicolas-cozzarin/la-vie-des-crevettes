@@ -47,6 +47,8 @@ export interface RigFeel {
   grazing?: boolean;
   /** 0 to 1 through the first-taste wiggle, or null (doc 14, "First-taste wiggle"). */
   wiggle?: number | null;
+  /** One antenna is drawn down through the front legs, then the other (doc 10, "grooming"). */
+  grooming?: boolean;
 }
 
 /** The expression as the rig holds it: `fan` always a number, and how firmly it is held. */
@@ -69,6 +71,17 @@ const PLATE_OVERLAP = 1.22;
 const JOINT_LAG = 0.02;
 /** The most one joint bends sideways, in radians. */
 const JOINT_LIMIT = 0.26;
+
+/** Seconds each antenna takes in grooming, before the other. */
+const GROOM_SIDE = 2.5;
+/** The colour a pale tail fan is washed toward, as Nacre's is (doc 11). */
+const PALE = [250, 250, 246] as const;
+
+/** A grey, or a colour scaled, as one number for a tint. */
+function shade(amount: number, color: readonly [number, number, number] = [255, 255, 255]): number {
+  const [r, g, b] = color.map((channel) => Math.round(Phaser.Math.Clamp(channel * amount, 0, 255)));
+  return ((r ?? 0) << 16) | ((g ?? 0) << 8) | (b ?? 0);
+}
 
 /** Radians. How far the abdomen bends at its tip in the first-taste wiggle. */
 const WIGGLE_BEND = 0.32;
@@ -156,6 +169,11 @@ export class ShrimpRig {
   private pickPhase = 0;
   /** 0 to 1 through the wiggle, or -1. */
   private wiggle = -1;
+  /** 0 to 1: how far into grooming, and the clock that changes sides. */
+  private groom = 0;
+  private groomPhase = 0;
+  /** How much brighter the body is drawn: other shrimp when the player is social (doc 10). */
+  private lift = 0;
   private target: { x: number; y: number } | null = null;
   private readonly look: RigLook;
 
@@ -196,10 +214,41 @@ export class ShrimpRig {
       this.carapace,
       ...this.eyes,
     ]);
+    this.applyTints();
+  }
+
+  /** Brighter by a share, 0 for none. Eased by the caller. */
+  setLift(amount: number): void {
+    if (Math.abs(amount - this.lift) < 0.004) return;
+    this.lift = amount;
+    this.applyTints();
+  }
+
+  /**
+   * The body's own colour (`look.tint`), lifted toward white by `lift`, and
+   * the tail fan washed pale by `look.fanPale`. One two-colour tint does both:
+   * the first colour multiplies the picture, the second fills its dark.
+   */
+  private applyTints(): void {
+    const body = [...this.segments, ...this.scales, this.carapace];
+    const fan = [...this.uropods, this.telson];
+    for (const image of [...body, ...fan]) {
+      const pale = fan.includes(image) ? this.look.fanPale * (image === this.telson ? 0.7 : 1) : 0;
+      const second = Math.max(this.lift, pale);
+      image
+        .setTintMode(Phaser.TintModes.MULTIPLY_TWO)
+        .setTint(pale > 0 ? 0xffffff : this.look.tint)
+        .setTint2(shade(second, second === pale ? PALE : [255, 255, 255]));
+    }
   }
 
   destroy(): void {
     this.root.destroy(true);
+  }
+
+  /** Shown or hidden: a shrimp far out of view is not drawn. */
+  setVisible(visible: boolean): void {
+    if (this.root.visible !== visible) this.root.setVisible(visible);
   }
 
   update(dt: number, motionPose: RigPose, feel?: RigFeel): void {
@@ -269,7 +318,11 @@ export class ShrimpRig {
     this.target = feel?.target ?? null;
     const startled = feel?.startled === true;
     this.flinch += ((startled ? 1 : 0) - this.flinch) * approach(dt, startled ? 0.04 : 0.12);
-    this.picking += ((feel?.grazing ? 1 : 0) - this.picking) * approach(dt, 0.15);
+    const grooming = feel?.grooming === true;
+    this.groom += ((grooming ? 1 : 0) - this.groom) * approach(dt, 0.35);
+    if (grooming) this.groomPhase += dt;
+    const picks = feel?.grazing === true || grooming;
+    this.picking += ((picks ? 1 : 0) - this.picking) * approach(dt, 0.15);
     // One pick of both front pairs every half second.
     this.pickPhase += (TAU / 0.5) * dt;
     this.wiggle = feel?.wiggle ?? -1;
@@ -607,6 +660,13 @@ export class ShrimpRig {
         base.y = this.placed ? fromY + (toY - fromY) * share : toY;
 
         let first = heading + side * (angle + sweep);
+        let bendEach = curl;
+        // Grooming: this antenna is drawn in and back, under the head, through the front legs.
+        const groomSide = Math.floor(this.groomPhase / GROOM_SIDE) % 2;
+        if (this.groom > 0.01 && which === groomSide) {
+          first = heading + side * lerp(angle + sweep, -0.35, this.groom);
+          bendEach = lerp(curl, -0.3, this.groom);
+        }
         if (this.target && e.aim > 0) {
           // Turn toward the target, a little apart so that the two do not cross.
           const toTarget = Math.atan2(this.target.y - base.y, this.target.x - base.x) + side * 0.07;
@@ -616,7 +676,7 @@ export class ShrimpRig {
         for (let index = 1; index < ANTENNA_POINTS; index++) {
           const before = chain[index - 1] as Point;
           const point = chain[index] as Point;
-          const rest = first + side * index * curl;
+          const rest = first + side * index * bendEach;
           if (this.placed) {
             // Stiff near the head, loose toward the tip.
             const pull = approach(stepTime, 1 / lerp(24, tipRate, index / (ANTENNA_POINTS - 1)));

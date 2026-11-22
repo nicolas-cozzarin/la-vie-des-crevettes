@@ -553,7 +553,7 @@ Nacre notices a cue 1 s before anyone else. Once Nacre is a Companion, the playe
 
 | Bond stage | Behaviour toward the player |
 |------------|-----------------------------|
-| Stranger | Keeps 2 BL away. Backs off if approached fast. Does not greet back |
+| Stranger | Keeps 1.2 BL away (T72). Backs off if approached fast. Does not greet back |
 | Familiar | Greets back. No longer startled by the player's tail flips |
 | Companion | Comes when called. Its alarm reaches the player early. Grazes nearby by choice |
 | Close | Stays within 3 BL through the player's molt. Leads the player to its favourite food once per chapter. Rests touching |

@@ -16,6 +16,7 @@ import type {
   WallDef,
 } from '../data/areas/types';
 import { CAMERA, COVER, WORLD } from '../data/tuning';
+import { LIVE_KINDS } from './Creatures';
 
 /**
  * Builds a place from its data with Phaser objects: the bed, what lies on it,
@@ -41,6 +42,15 @@ export interface FoodHandle {
   image: Phaser.GameObjects.Image;
 }
 
+/** Something the shrimp can be curious about, with the pictures that get the pale rim. */
+export interface RimSpot {
+  /** The discovery it stands for, as `Discoverable.id`. */
+  id: string;
+  x: number;
+  y: number;
+  images: Phaser.GameObjects.Image[];
+}
+
 export interface LoadedArea {
   area: AreaDef;
   bodyLengthPx: number;
@@ -49,6 +59,8 @@ export interface LoadedArea {
   covers: CoverHandle[];
   foods: FoodHandle[];
   zones: NamedZone[];
+  /** The foods, landmarks, covers and still animals that have a journal entry, for the pale rim. */
+  spots: RimSpot[];
   /** Keep the bed under the view. Call after the camera moves. */
   placeGround(left: number, top: number): void;
   /** Fade the cover the player is under and move the drifting leaves. */
@@ -168,6 +180,7 @@ export function loadArea(scene: Phaser.Scene, area: AreaDef): LoadedArea {
 
   // 4. Food and the landmarks that lie on the bed. Fuzz grows on the seagrass: it is drawn with its clump.
   const foods: FoodHandle[] = [];
+  const spots: RimSpot[] = [];
   for (const food of area.food ?? []) {
     if (food.kind === 'seagrassFuzz') continue;
     const image = centred(
@@ -179,6 +192,7 @@ export function loadArea(scene: Phaser.Scene, area: AreaDef): LoadedArea {
       food.rotation,
     );
     foods.push({ def: food, image });
+    spots.push({ id: `food.${food.kind}`, x: food.x, y: food.y, images: [image] });
   }
   for (const landmark of area.landmarks ?? []) {
     if (landmark.layer !== 'ground') continue;
@@ -192,7 +206,17 @@ export function loadArea(scene: Phaser.Scene, area: AreaDef): LoadedArea {
       DEPTH.groundObjects,
       turn,
     );
-    centred(landmark.image, landmark.x, landmark.y, landmark.width, DEPTH.groundObjects, turn);
+    const picture = centred(
+      landmark.image,
+      landmark.x,
+      landmark.y,
+      landmark.width,
+      DEPTH.groundObjects,
+      turn,
+    );
+    if (landmark.discovery) {
+      spots.push({ id: landmark.discovery, x: landmark.x, y: landmark.y, images: [picture] });
+    }
   }
 
   // 5. The edges, then what stands on the bed. A root clump may close the end of an edge strip.
@@ -222,20 +246,34 @@ export function loadArea(scene: Phaser.Scene, area: AreaDef): LoadedArea {
   obstacles.push(...(area.blocks ?? []));
 
   // 6. Animals: on the bed, in mid-water, or over the cover with their shadows below.
+  // Those that move are drawn by the creatures system instead.
   for (const creature of area.creatures ?? []) {
+    if (LIVE_KINDS.has(creature.kind)) continue;
+    let body: Phaser.GameObjects.Image;
     if (OVER_COVER.has(creature.kind)) {
       addStill(scene, area, creature, bl, DEPTH.midWater, stills, 'shadow');
-      addStill(scene, area, creature, bl, DEPTH.overCover, stills, 'body');
+      body = addStill(scene, area, creature, bl, DEPTH.overCover, stills, 'body');
     } else {
       const depth = MID_WATER.has(creature.kind) ? DEPTH.midWater : DEPTH.bedAnimals;
-      addStill(scene, area, creature, bl, depth, stills, 'body');
+      body = addStill(scene, area, creature, bl, depth, stills, 'body');
     }
+    spots.push({ id: `creature.${creature.kind}`, x: creature.x, y: creature.y, images: [body] });
   }
 
   // 7. Cover, above the shrimp. A floating leaf throws its shadow on what lies below.
   for (const landmark of area.landmarks ?? []) {
     if (landmark.layer !== 'cover') continue;
-    centred(landmark.image, landmark.x, landmark.y, landmark.width, DEPTH.cover, landmark.rotation);
+    const picture = centred(
+      landmark.image,
+      landmark.x,
+      landmark.y,
+      landmark.width,
+      DEPTH.cover,
+      landmark.rotation,
+    );
+    if (landmark.discovery) {
+      spots.push({ id: landmark.discovery, x: landmark.x, y: landmark.y, images: [picture] });
+    }
   }
   const covers: CoverHandle[] = [];
   for (const cover of area.cover ?? []) {
@@ -268,7 +306,11 @@ export function loadArea(scene: Phaser.Scene, area: AreaDef): LoadedArea {
         );
         images.push(image);
         foods.push({ def: food, image });
+        spots.push({ id: 'food.seagrassFuzz', x: food.x, y: food.y, images: [image] });
       }
+    }
+    if (cover.discovery && images.length > 0) {
+      spots.push({ id: cover.discovery, x: cover.x, y: cover.y, images: images.slice(0, 1) });
     }
     covers.push({
       id: cover.id,
@@ -291,6 +333,7 @@ export function loadArea(scene: Phaser.Scene, area: AreaDef): LoadedArea {
     covers,
     foods,
     zones: area.zones ?? [],
+    spots,
     placeGround(left, top) {
       ground.setPosition(left, top).setTilePosition(left / groundScale, top / groundScale);
     },
@@ -409,7 +452,7 @@ function addSlab(
 
 /**
  * An animal as a still picture: drawn once into its own texture with the
- * atelier's code, then placed. They start to move in step 5.
+ * atelier's code, then placed. The ones that move are not drawn here (step 6).
  */
 function addStill(
   scene: Phaser.Scene,
@@ -419,7 +462,7 @@ function addStill(
   depth: number,
   stills: Stills,
   part: 'body' | 'shadow',
-): void {
+): Phaser.GameObjects.Image {
   const reach = STILL_REACH[creature.kind] * bl;
   const key = `still.${area.id}.${creature.id}.${part}.${WORLD.mirror ? 'm' : 'n'}`;
   if (!scene.textures.exists(key)) {
@@ -433,7 +476,7 @@ function addStill(
     else stills.drawCreature(ctx, creature, bl);
     texture.refresh();
   }
-  scene.add
+  return scene.add
     .image(creature.x, creature.y, key)
     .setDisplaySize(2 * reach, 2 * reach)
     .setDepth(depth);

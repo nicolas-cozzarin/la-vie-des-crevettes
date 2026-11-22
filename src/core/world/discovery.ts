@@ -15,6 +15,8 @@ export interface Discoverable {
   y: number;
   /** Found by going under it, as the hollow is: the radius of the cover. */
   under?: number;
+  /** For an animal that moves: its id in the area file, so its place can follow it. */
+  ref?: string;
 }
 
 export interface DiscoveryTuning {

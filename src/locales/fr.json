@@ -73,6 +73,8 @@
   "play.hint.pause": "{key} pour le menu",
   "prompt.graze": "Maintiens {key} pour brouter",
   "prompt.taste": "{key} pour goûter",
+  "prompt.greet": "{key} pour saluer",
+  "prompt.call": "Maintiens {key} pour appeler",
 
   "mood.calm": "Calme",
   "mood.hungry": "Affamée",

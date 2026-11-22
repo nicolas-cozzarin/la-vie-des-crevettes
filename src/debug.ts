@@ -22,6 +22,13 @@ export interface PlayerSnapshot {
   tucked: boolean;
   /** Ids of the named zones the shrimp is in. */
   zones: string[];
+  /** Where a molt is, and how many molts this life has had. */
+  molt: string;
+  molts: number;
+  /** The story steps done in this life. */
+  steps: string[];
+  /** The line of narration on screen, by its key, or null. */
+  narration: string | null;
 }
 
 /** What the browser test can ask about the player's feelings. */

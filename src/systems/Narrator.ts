@@ -27,6 +27,11 @@ export class Narrator {
     return this.queue.say(key);
   }
 
+  /** The key of the line on screen, or null. */
+  get showing(): string | null {
+    return this.queue.current?.key ?? null;
+  }
+
   /** Whether a line is showing or waiting. */
   get busy(): boolean {
     return this.queue.busy || this.place !== null;

@@ -471,4 +471,32 @@ export const STORY = {
   waryLine: 8,
   /** The first shrimp this close is met. BL. */
   meet: 4,
+  /** Into the wait for the molt, out in the open, the body asks for cover. */
+  notHere: 20,
+};
+
+/** Molting (doc 10, "Molting"). Seconds unless said. */
+export const MOLT = {
+  shelter: 2,
+  molt: 6,
+  soft: 30,
+  hardened: 3,
+  scratch: 0.6,
+  scratchGap: [3, 5] as [number, number],
+  softSpeed: 0.5,
+  /** The body grows by this share at each molt. */
+  growth: 0.12,
+  /** Hunger added as the new shell hardens. */
+  hunger: 0.2,
+  /** The view eases out to this share of the zoom by each molt: 1.40, 1.30, 1.20, 1.10 (doc 10). */
+  viewByMolts: [1.4, 1.3, 1.2, 1.1],
+  /** How far the body backs out of the old shell, in BL. */
+  backOut: 0.9,
+  /** Seconds the empty shell takes to drift off, and how far it goes, in BL. */
+  shellDrift: 60,
+  shellAway: 3,
+  /** How see-through the empty shell is. */
+  shellAlpha: 0.35,
+  /** How see-through the soft body is. */
+  softAlpha: 0.85,
 };

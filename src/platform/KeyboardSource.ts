@@ -10,9 +10,9 @@ type CaptureHandler = (code: string) => void;
  * and cannot be rebound. They do something only while a handler listens,
  * which the play scene does only with `?debug` (doc 15, steps 4 and 7).
  */
-const DEBUG_KEYS = { F9: 'mood', F10: 'threat' } as const;
+const DEBUG_KEYS = { F8: 'molt', F9: 'mood', F10: 'threat' } as const;
 
-/** What a debug key does: F9 cycles the mood, F10 calls a threat now (step 7). */
+/** What a debug key does: F8 brings the molt signal (step 8), F9 cycles the mood, F10 calls a threat now (step 7). */
 export type DebugKey = (typeof DEBUG_KEYS)[keyof typeof DEBUG_KEYS];
 
 export interface KeyboardSourceOptions {

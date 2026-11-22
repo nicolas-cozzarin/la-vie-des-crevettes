@@ -10,6 +10,7 @@ import { FeelingsModel, type FeelingsChange } from '../core/feelings/FeelingsMod
 import { MOODS, type Mood } from '../core/feelings/mood';
 import type { FeelingsContext } from '../core/feelings/types';
 import type { GameEvents } from '../core/gameEvents';
+import type { MoltEvent } from '../core/molt/Molt';
 import { approach, rotateToward } from '../core/movement/angles';
 import { moveCircle, type Bounds } from '../core/movement/collision';
 import { seededRandom } from '../core/random';
@@ -42,6 +43,7 @@ import {
   HIDE,
   HUNGER,
   MOOD,
+  MOLT,
   MOOD_SCREEN,
   MOTION,
   SENSE,
@@ -54,6 +56,7 @@ import { loadArea, type CoverHandle, type LoadedArea } from '../systems/AreaLoad
 import { Creatures, LIVE_KINDS } from '../systems/Creatures';
 import { MoodPresenter } from '../systems/MoodPresenter';
 import { Rim } from '../systems/Rim';
+import { Molting } from '../systems/Molting';
 import { Narrator } from '../systems/Narrator';
 import { StoryTeller } from '../systems/StoryTeller';
 import { Threats } from '../systems/Threats';
@@ -161,6 +164,10 @@ export class PlayScene extends Phaser.Scene {
   private rim!: Rim;
   /** The bird and what it does, and the cornered sequence (step 7). */
   private threats!: Threats;
+  /** The player's molt (step 8), and how far the view has eased out with it. */
+  private molting!: Molting;
+  private viewScale = 1;
+  private viewFrom = 1;
 
   private hud: HudScene | null = null;
 
@@ -283,6 +290,15 @@ export class PlayScene extends Phaser.Scene {
       ambient: story ? (life.stepsDone.has('s1.bird') ? 1 : 0) : undefined,
     });
     this.shoal.watch(this.threats);
+    this.molting = new Molting(
+      this,
+      this.bodyLengthPx,
+      DEPTH.bedAnimals,
+      STAGE_LOOKS[stage],
+      Date.now() >>> 0,
+    );
+    this.viewScale = 1;
+    this.viewFrom = 1;
     camera.setBackgroundColor(COLORS.deepTeal);
     this.presenter = new MoodPresenter(camera, {
       hud: () => this.hud,
@@ -322,6 +338,10 @@ export class PlayScene extends Phaser.Scene {
       activity: this.activity.name,
       tucked: this.activity.tucked,
       zones: [...this.zones.current],
+      molt: this.molting.molt.stage,
+      molts: this.life.molts,
+      steps: [...this.life.stepsDone],
+      narration: this.narrator?.showing ?? null,
     });
     debugState.scent = () => this.scent.snapshot;
     debugState.shrimp = () => this.shoal.snapshot;
@@ -337,12 +357,13 @@ export class PlayScene extends Phaser.Scene {
       curiousAbout: this.pull.target?.id ?? null,
     });
 
-    // `?debug`: a key cycles the forced mood, to look at each one.
-    // F10 calls the bird at once.
+    // `?debug`: F9 cycles the forced mood, to look at each one. F10 calls
+    // the bird at once. F8 brings the molt signal.
     const stopDebug = debugRequested()
       ? app.keyboard.onDebugKey((key) => {
           if (key === 'mood') this.cycleMood();
-          else this.threats.callBird();
+          else if (key === 'threat') this.threats.callBird();
+          else this.answerMolt(this.molting.signal());
         })
       : null;
 
@@ -362,6 +383,7 @@ export class PlayScene extends Phaser.Scene {
       this.teller?.destroy();
       this.narrator?.clear();
       this.threats.destroy();
+      this.molting.destroy();
       this.scent.destroy();
       this.shoal.destroy();
       this.rig.destroy();
@@ -381,10 +403,13 @@ export class PlayScene extends Phaser.Scene {
     // A slow frame is played as several short steps, so the shrimp covers the
     // same ground whatever the frame rate.
     const frame = Math.min(deltaMs / 1000, FRAME.longest);
-    // Cornered: the body moves by itself and the keys do nothing until it wakes.
-    const locked = this.threats.cornered.running;
+    // Cornered, and in the molt itself, the keys do nothing.
+    const locked = this.threats.cornered.running || this.molting.molt.locked;
     const sequence = this.threats.cornered.update(frame);
-    const own = locked ? { x: 0, y: 0 } : actions.axis();
+    // Soft after a molt, the shrimp moves at half speed.
+    const slow = this.molting.molt.speed;
+    const axisNow = actions.axis();
+    const own = locked ? { x: 0, y: 0 } : { x: axisNow.x * slow, y: axisNow.y * slow };
     const tailFlip = !locked && actions.justPressed('tailFlip');
     let dart = tailFlip;
     if (sequence.flip) dart = this.flipAway();
@@ -440,6 +465,7 @@ export class PlayScene extends Phaser.Scene {
         eating,
       });
       const moved = this.motion.step(dt, { x: axis.x, y: axis.y, dart }, this.mover);
+      this.stepMolt(dt);
       if (moved.darted) {
         this.feelings.stimulus('tailFlip');
         this.bus.emit('tailflip', { who: PLAYER });
@@ -466,6 +492,9 @@ export class PlayScene extends Phaser.Scene {
     this.rim.update(frame);
     for (const [patch, image] of this.foodImages) image.setAlpha(0.15 + 0.85 * patch.amount);
     this.wiggleLeft = Math.max(0, this.wiggleLeft - frame);
+    this.molting.draw(frame);
+    this.rig.setGrowth(this.molting.growth);
+    this.rig.setAlpha(this.feelings.has('soft') ? MOLT.softAlpha : 1);
     this.rig.update(frame, this.motion, this.feel(eating));
     const lift = this.feelings.mood === 'social' ? MOOD_SCREEN.socialLift : 0;
     this.lift += (lift - this.lift) * approach(frame, MOOD.screen);
@@ -495,7 +524,8 @@ export class PlayScene extends Phaser.Scene {
       x: this.motion.x,
       y: this.motion.y,
       heading: this.motion.heading,
-      hide: held('hide'),
+      // Through the molt itself the body stays tucked in, whatever the keys do.
+      hide: held('hide') || this.molting.molt.locked,
       interact: held('interact'),
       sense: held('sense'),
       tailFlip: dart,
@@ -598,7 +628,9 @@ export class PlayScene extends Phaser.Scene {
         visit: this.threats.director.stage !== 'idle',
         nearestShrimp: nearest,
         atWayOut: (this.area.exits ?? []).some((exit) => inRect(x, y, exit.zone)),
+        premolt: this.molting.molt.premolt,
       });
+      if (teller.takeMoltDue()) this.answerMolt(this.molting.signal());
     }
     this.narrator?.update(dt);
   }
@@ -668,6 +700,56 @@ export class PlayScene extends Phaser.Scene {
     this.report(this.feelings.step(dt, context));
   }
 
+  /** One step of the molt: its phases, and the body backing out of the old shell. */
+  private stepMolt(dt: number): void {
+    const { events, back } = this.molting.step(dt, this.activity.tucked, this.motion);
+    if (back > 0) {
+      const heading = this.motion.heading;
+      const after = this.mover(
+        this.motion.x,
+        this.motion.y,
+        -Math.cos(heading) * back,
+        -Math.sin(heading) * back,
+      );
+      this.motion.x = after.x;
+      this.motion.y = after.y;
+    }
+    this.answerMolt(events);
+    // The view eases out as the new shell hardens (doc 10, "Molting").
+    const hardening = this.molting.molt.hardening;
+    if (hardening > 0) {
+      const by = MOLT.viewByMolts;
+      const molts = this.life.molts;
+      const ratio = (by[molts + 1] ?? by[by.length - 1] ?? 1) / (by[molts] ?? 1);
+      this.viewScale = this.viewFrom * (1 + (ratio - 1) * hardening);
+    }
+  }
+
+  /** What each phase of the molt does to the feelings, the story and the body. */
+  private answerMolt(events: readonly MoltEvent[]): void {
+    for (const event of events) {
+      if (event.type === 'done') {
+        this.life.molts += 1;
+        this.viewFrom = this.viewScale;
+        this.bus.emit('molt:done', { who: PLAYER, molts: this.life.molts });
+        continue;
+      }
+      const phase = event.phase;
+      this.feelings.setPremolt(phase === 'signal' || phase === 'shelter');
+      if (phase === 'molt' || phase === 'soft') {
+        // Tucked in for the molt, and still tucked in when it ends, until the player moves.
+        const cover = this.activity.cover;
+        if (cover) this.activity.tuckInto(cover, { x: this.motion.x, y: this.motion.y });
+      }
+      if (phase === 'soft') this.feelings.setSoft(MOLT.soft);
+      if (phase === 'hardened') this.feelings.hungerUp(MOLT.hunger);
+      if (phase !== 'none' && phase !== 'hardened') {
+        this.bus.emit('molt:phase', { who: PLAYER, phase });
+      }
+      this.teller?.moltPhase(phase);
+    }
+  }
+
   /** What the threat director needs from the player on this step. */
   private threatPlayer(darted: boolean) {
     const { x, y } = this.motion;
@@ -686,7 +768,8 @@ export class PlayScene extends Phaser.Scene {
       hidden: this.activity.tucked,
       underCover,
       darted,
-      soft: this.feelings.has('soft'),
+      // No threat may start from the shelter of a molt until the shell is hard.
+      soft: this.feelings.has('soft') || this.molting.molt.guarded,
       coverGap: coverGap / this.bodyLengthPx,
     };
   }
@@ -790,6 +873,8 @@ export class PlayScene extends Phaser.Scene {
       startled: has('startled'),
       grazing: eating,
       wiggle: this.wiggleLeft > 0 ? 1 - this.wiggleLeft / GRAZE.wiggle : null,
+      arch: this.molting.molt.arch,
+      scratch: this.molting.molt.scratching,
     };
   }
 
@@ -876,7 +961,7 @@ export class PlayScene extends Phaser.Scene {
   /** Point the camera at the view, kept inside the area, and lay the bed under it. */
   private aim(): void {
     // Fear zooms in a little (MoodPresenter).
-    const zoom = CAMERA.zoom * this.presenter.zoom;
+    const zoom = CAMERA.zoom * this.presenter.zoom * this.viewScale;
     this.cameras.main.setZoom(zoom);
     const halfW = GAME_WIDTH / zoom / 2;
     const halfH = GAME_HEIGHT / zoom / 2;

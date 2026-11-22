@@ -25,6 +25,8 @@ export interface StoryFrame {
   nearestShrimp: number;
   /** In the way out of the place. */
   atWayOut: boolean;
+  /** Waiting to molt. */
+  premolt: boolean;
 }
 
 const PLAYER = 'player';
@@ -46,6 +48,8 @@ export class StoryTeller {
   /** Seconds since the first greeting, or null before. */
   private sinceGreet: number | null = null;
   private sinceHard: number | null = null;
+  private premoltFor = 0;
+  private moltSignalled = false;
   private wokeNow = false;
 
   constructor(
@@ -97,9 +101,15 @@ export class StoryTeller {
     );
   }
 
-  /** The molt signal is due: 60 s after the first greeting, once the bird has gone. */
-  get moltDue(): boolean {
-    return this.sinceGreet !== null && this.sinceGreet >= STORY.moltAfterGreet;
+  /**
+   * The molt signal is due: 60 s after the first greeting, once the bird has
+   * gone. True once, on the frame it comes due.
+   */
+  takeMoltDue(): boolean {
+    if (this.moltSignalled || this.story.has('s1.molt')) return false;
+    if (this.sinceGreet === null || this.sinceGreet < STORY.moltAfterGreet) return false;
+    this.moltSignalled = true;
+    return true;
   }
 
   update(frame: StoryFrame): void {
@@ -134,6 +144,9 @@ export class StoryTeller {
     if (frame.frozen && frame.visit) this.narrator.say('narr.frozen');
     if (frame.veryHungry) this.narrator.say('narr.veryHungry');
     if (frame.nearestShrimp <= STORY.meet) this.narrator.say('narr.c1.meet');
+    // Waiting to molt out in the open, the body asks for cover.
+    this.premoltFor = frame.premolt ? this.premoltFor + dt : 0;
+    if (this.premoltFor >= STORY.notHere && !frame.tucked) this.narrator.say('narr.c1.notHere');
     if (frame.atWayOut) {
       this.narrator.say(this.story.has('s1.molt') ? 'end.continued' : 'narr.c1.closed');
     }
@@ -153,9 +166,16 @@ export class StoryTeller {
     this.narrator.say('narr.tooFast');
   }
 
-  /** The molt has hardened: the salt line comes 10 s later. */
-  hardened(): void {
-    this.sinceHard = 0;
+  /** A phase of the player's molt began. */
+  moltPhase(phase: string): void {
+    if (phase === 'signal') this.narrator.say('narr.c1.tight');
+    if (phase === 'molt') this.narrator.say('narr.c1.molt');
+    if (phase === 'soft') this.narrator.say('narr.c1.soft');
+    if (phase === 'hardened') {
+      this.narrator.say('narr.c1.hard');
+      // The taste of salt comes 10 s later.
+      this.sinceHard = 0;
+    }
   }
 
   destroy(): void {

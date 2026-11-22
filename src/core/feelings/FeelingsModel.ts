@@ -91,9 +91,20 @@ export class FeelingsModel {
     return CONDITIONS.filter((condition) => this.conditions.has(condition));
   }
 
-  /** For the molt, in a later step: soft for this many seconds. */
+  /** For the molt: soft for this many seconds. */
   setSoft(seconds: number): void {
     this.softLeft = seconds;
+  }
+
+  /** For the molt: waiting to molt, from the signal until the molt begins. */
+  setPremolt(on: boolean): void {
+    if (on) this.conditions.add('premolt');
+    else this.conditions.delete('premolt');
+  }
+
+  /** A new shell costs food: hunger rises by this much. */
+  hungerUp(amount: number): void {
+    this.feelings.hunger = clamp(this.feelings.hunger + amount);
   }
 
   /** How much more a fright bites right now. */

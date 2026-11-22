@@ -20,11 +20,24 @@ async function openTitle(page: Page): Promise<void> {
   await waitForScene(page, 'Title');
 }
 
-/** Play is the first entry of the title menu. */
-async function startPlay(page: Page): Promise<void> {
+/** Play is the first entry of the title menu. A life begins in the Drift. */
+async function startDrift(page: Page): Promise<void> {
   await page.keyboard.press('Enter');
+  await waitForScene(page, 'Drift');
+  await page.waitForFunction(() => window.__lvdc?.drift() !== null);
+}
+
+/** The mangrove, opened straight away to explore, for what the shrimp itself does. */
+async function openMangrove(page: Page): Promise<void> {
+  await page.goto('./?explore=mangrove');
   await waitForScene(page, 'Play');
   await page.waitForFunction(() => window.__lvdc?.player() !== null);
+}
+
+async function drift(page: Page) {
+  const snapshot = await page.evaluate(() => window.__lvdc?.drift() ?? null);
+  if (!snapshot) throw new Error('There is no larva: the Drift is not running.');
+  return snapshot;
 }
 
 /**
@@ -48,10 +61,25 @@ async function player(page: Page) {
 }
 
 test.describe('play', () => {
-  test('Play starts the game and holding a movement key moves the shrimp', async ({ page }) => {
+  test('Play starts the Drift, and the larva steers up', async ({ page }) => {
     const errors = watchErrors(page);
     await openTitle(page);
-    await startPlay(page);
+    await startDrift(page);
+
+    const start = await drift(page);
+    expect(start.shape).toBe('early');
+    expect(start.explore).toBe(false);
+    await page.keyboard.down('ArrowUp');
+    await page.waitForFunction((y) => (window.__lvdc?.drift()?.y ?? y) < y - 100, start.y);
+    await page.keyboard.up('ArrowUp');
+    expect((await drift(page)).x).toBeGreaterThan(start.x);
+
+    expect(errors).toEqual([]);
+  });
+
+  test('holding a movement key moves the shrimp', async ({ page }) => {
+    const errors = watchErrors(page);
+    await openMangrove(page);
 
     const start = await player(page);
     expect(start.mode).toBe('rest');
@@ -64,8 +92,7 @@ test.describe('play', () => {
   });
 
   test('the shrimp swims when the key is held, and settles when it is let go', async ({ page }) => {
-    await openTitle(page);
-    await startPlay(page);
+    await openMangrove(page);
 
     await page.keyboard.down('ArrowRight');
     await page.waitForFunction(() => {
@@ -80,8 +107,7 @@ test.describe('play', () => {
   });
 
   test('the tail flip throws the shrimp backward, tail first', async ({ page }) => {
-    await openTitle(page);
-    await startPlay(page);
+    await openMangrove(page);
 
     const start = await player(page);
     await page.keyboard.press('Space');
@@ -96,8 +122,7 @@ test.describe('play', () => {
   });
 
   test('Escape opens the pause menu and closes it again', async ({ page }) => {
-    await openTitle(page);
-    await startPlay(page);
+    await openMangrove(page);
 
     await page.keyboard.press('Escape');
     await waitForScene(page, 'Pause');
@@ -198,7 +223,7 @@ test.describe('controls', () => {
     await waitForScene(page, 'Title');
     expect(await tailFlipKeys(page)).toEqual(['KeyG', null]);
 
-    await startPlay(page);
+    await openMangrove(page);
     const start = await player(page);
 
     // Space no longer does anything.
@@ -252,7 +277,7 @@ test.describe('controls', () => {
 
     await page.keyboard.press('Escape');
     await waitForScene(page, 'Title');
-    await startPlay(page);
+    await startDrift(page);
     await page.keyboard.press('Escape');
     await waitForScene(page, 'Pause');
   });
@@ -510,5 +535,118 @@ test.describe('the bird', () => {
     expect((await feelings(page)).values.fear).toBeGreaterThan(0.7);
     expect(await stages()).toContain('cornered');
     expect(errors).toEqual([]);
+  });
+});
+
+test.describe('the Drift', () => {
+  async function exploreDrift(page: Page, at = ''): Promise<void> {
+    await page.goto(`./?explore=drift${at ? `&at=${at}` : ''}`);
+    await waitForScene(page, 'Drift');
+    await page.waitForFunction(() => window.__lvdc?.drift() !== null);
+  }
+
+  test('opens to explore, with no story, and the larva lives on its yolk at first', async ({
+    page,
+  }) => {
+    const errors = watchErrors(page);
+    await exploreDrift(page);
+    const start = await drift(page);
+    expect(start.explore).toBe(true);
+    expect(start.yolk).toBe(true);
+    expect(start.zone).toBe('A');
+    const hunger = (await feelings(page)).values.hunger;
+    await page.waitForTimeout(2000);
+    expect((await feelings(page)).values.hunger).toBeCloseTo(hunger, 5);
+    expect((await drift(page)).narration).toBeNull();
+    expect(errors).toEqual([]);
+  });
+
+  test('a mote the larva touches is eaten, and microalgae are found', async ({ page }) => {
+    test.setTimeout(120_000);
+    await exploreDrift(page, '1900,900');
+    let held: string | null = null;
+    // Steer toward the nearest mote until one is eaten.
+    await expect
+      .poll(
+        async () => {
+          const now = await drift(page);
+          const mote = now.nearestMote;
+          let key: string | null = null;
+          if (mote && mote.y < now.y - 8) key = 'ArrowUp';
+          else if (mote && mote.y > now.y + 8) key = 'ArrowDown';
+          if (key !== held) {
+            if (held) await page.keyboard.up(held);
+            if (key) await page.keyboard.down(key);
+            held = key;
+          }
+          return now.eaten;
+        },
+        { timeout: 90_000, intervals: [150] },
+      )
+      .toBeGreaterThan(0);
+    if (held) await page.keyboard.up(held);
+    expect((await feelings(page)).discovered).toContain('food.microalgae');
+  });
+
+  test('Escape pauses the Drift and resumes it', async ({ page }) => {
+    await exploreDrift(page);
+    await page.keyboard.press('Escape');
+    await waitForScene(page, 'Pause');
+    const paused = await drift(page);
+    await page.waitForTimeout(400);
+    expect((await drift(page)).x).toBe(paused.x);
+    await page.keyboard.press('Escape');
+    await page.waitForFunction(() => {
+      const scenes = window.__lvdc?.scenes() ?? [];
+      return scenes.includes('Drift') && !scenes.includes('Pause');
+    });
+  });
+
+  test('at landfall the larva settles and the mangrove begins', async ({ page }) => {
+    test.setTimeout(120_000);
+    await exploreDrift(page, '8300,900');
+    await page.waitForFunction(() => window.__lvdc?.drift()?.landing === true, null, {
+      timeout: 30_000,
+    });
+    await waitForScene(page, 'Play');
+    await page.waitForFunction(() => window.__lvdc?.player()?.area === 'mangrove', null, {
+      timeout: 30_000,
+    });
+    expect((await player(page)).explore).toBe(true);
+    expect(await page.evaluate(() => window.__lvdc?.drift())).toBeNull();
+  });
+});
+
+test.describe('the story', () => {
+  test('the Drift shows its name, then the tide', async ({ page }) => {
+    test.setTimeout(60_000);
+    await openTitle(page);
+    await startDrift(page);
+    await page.waitForFunction(() => window.__lvdc?.drift()?.narration === 'narr.c0.start', null, {
+      timeout: 30_000,
+    });
+  });
+
+  test('with ?debug, F8 brings the molt: sheltered, the shrimp molts, is soft, and grows', async ({
+    page,
+  }) => {
+    test.setTimeout(180_000);
+    await page.goto('./?explore=mangrove&debug&at=2700,1900');
+    await waitForScene(page, 'Play');
+    await page.waitForFunction(() => window.__lvdc?.player() !== null);
+    await page.keyboard.press('F8');
+    await page.waitForFunction(() => window.__lvdc?.player()?.molt === 'signal');
+    await page.keyboard.down('ShiftLeft');
+    await page.waitForFunction(() => window.__lvdc?.player()?.molt === 'molt', null, {
+      timeout: 30_000,
+    });
+    await page.keyboard.up('ShiftLeft');
+    await page.waitForFunction(() => window.__lvdc?.player()?.molt === 'soft', null, {
+      timeout: 40_000,
+    });
+    expect((await feelings(page)).conditions).toContain('soft');
+    await page.waitForFunction(() => window.__lvdc?.player()?.molts === 1, null, {
+      timeout: 90_000,
+    });
   });
 });

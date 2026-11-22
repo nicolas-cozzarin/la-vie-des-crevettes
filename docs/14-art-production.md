@@ -414,7 +414,7 @@ A page that shows the art without starting the game. It is how the author looks 
 
 | Section | Address | Shows |
 |---------|---------|-------|
-| Drift scenes | `?show=driftscenes` | Four views of chapter 0, composed by hand because the Drift has no data file yet: the dark, the green, the shafts, the haze. Each shows the larva in the shape it has there |
+| Drift scenes | `?show=driftscenes` | Four views of chapter 0, composed by hand: the dark, the green, the shafts, the haze. Each shows the larva in the shape it has there. The game reads the Drift from `src/data/drift.ts`; `?explore=drift` shows it in play |
 | Mangrove scenes | `?show=scenes` | Ten views drawn from `src/data/areas/mangrove.ts`, each the size of the game's screen: arriving, grazing, hidden under a tangle, the bird, meeting Nacre, the crabs, the leaf bed, the hollow, the sunken branch, and a map of the whole area with its zones |
 | Lagoon scenes | `?show=lagoonscenes` | Nine views drawn from `src/data/areas/lagoon.ts`: out of the creek, dug in on the flat, the turtle in the meadow, the shoal at dusk, the goby and the pistol shrimp, plankton at night, the hunting fish in the pass, the north-west rocks, and a map |
 | The six moods | `?show=moods` | The shrimp held still in each posture of the table above |

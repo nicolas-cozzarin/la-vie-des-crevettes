@@ -25,10 +25,6 @@ const game = new Phaser.Game({
   // second for a while after every start and focus change, which plays the game in
   // slow motion on a slow machine. The play scene cuts long frames into short steps.
   fps: { smoothStep: false },
-  // One texture per draw. Phaser 4 picks a picture's texture in the shader by an exact
-  // comparison of an interpolated number, which can miss: whole triangles of a picture
-  // then vanish (seen in the Drift, T84). One texture per draw is always exact.
-  render: { maxTextures: 1 },
   // The game reads the keyboard itself, by key position. See src/platform/KeyboardSource.ts.
   input: { keyboard: false },
   scene: [BootScene, TitleScene, DriftScene, PlayScene, HudScene, PauseScene, ControlsScene],

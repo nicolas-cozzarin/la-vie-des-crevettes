@@ -11,6 +11,7 @@ import type { GameEvents } from '../core/gameEvents';
 import { approach } from '../core/movement/angles';
 import { DriftMotion, type LarvaShape } from '../core/movement/DriftMotion';
 import { newLife, type Life } from '../core/progress/life';
+import { debugRequested } from '../platform/address';
 import { seededRandom } from '../core/random';
 import { DiscoveryTracker, type Discoverable, type Pull } from '../core/world/discovery';
 import { inRect } from '../core/world/zones';
@@ -22,6 +23,8 @@ import { t } from '../i18n';
 import { DriftTeller } from '../systems/DriftTeller';
 import { MoodPresenter } from '../systems/MoodPresenter';
 import { Narrator } from '../systems/Narrator';
+import { keepLife } from '../systems/keep';
+import { ProgressKeeper } from '../systems/ProgressKeeper';
 import { Rim } from '../systems/Rim';
 import type { HudScene } from './HudScene';
 
@@ -30,6 +33,8 @@ export interface DriftData {
   explore?: boolean;
   /** Explore mode only: where to start, as the data file writes it. */
   at?: { x: number; y: number };
+  /** The life so far, from a save. A new one when left out. */
+  life?: Life;
 }
 
 const PLAYER = 'player';
@@ -87,6 +92,9 @@ export class DriftScene extends Phaser.Scene {
   private rim!: Rim;
   private narrator: Narrator | null = null;
   private teller: DriftTeller | null = null;
+  private keeper!: ProgressKeeper;
+  /** The yolk was still there on the last frame. */
+  private hadYolk = true;
   private hud: HudScene | null = null;
   private view = { x: 0, y: 0 };
   /** Landfall: seconds since it began, or null before. */
@@ -101,7 +109,7 @@ export class DriftScene extends Phaser.Scene {
   init(data: DriftData): void {
     this.explore = data.explore === true;
     this.at = this.explore && data.at ? driftPoint(data.at.x, data.at.y) : null;
-    this.life = newLife();
+    this.life = !this.explore && data.life ? data.life : newLife();
   }
 
   create(): void {
@@ -302,6 +310,14 @@ export class DriftScene extends Phaser.Scene {
       this.teller = new DriftTeller(this.bus, narrator, this.life);
       this.teller.begin();
     }
+    // What the journal counts. Explore mode counts too, in a life of its own that is never kept.
+    this.keeper = new ProgressKeeper(this.bus, this.life, 'drift', () => this.hud, {
+      arrived: true,
+      author: debugRequested(),
+      find: (id) => this.found(id),
+    });
+    this.hadYolk = true;
+    if (!this.explore) keepLife(app.store, this.life, { area: 'drift', stage: 'larva', at: null });
     this.found('place.drift');
     this.bus.emit('area:entered', { area: 'drift' });
     this.bus.emit('zone:entered', { area: 'drift', zone: this.zone });
@@ -341,6 +357,7 @@ export class DriftScene extends Phaser.Scene {
       debugState.drift = null;
       debugState.feelings = null;
       this.teller?.destroy();
+      this.keeper.destroy();
       this.narrator?.clear();
       this.hud = null;
       this.scene.stop('Hud');
@@ -404,6 +421,9 @@ export class DriftScene extends Phaser.Scene {
       veryHungry: this.feelings.has('veryHungry'),
     });
     this.narrator?.update(frame);
+    if (this.hadYolk && !this.yolk) this.keeper.count('yolkEnded');
+    this.hadYolk = this.yolk;
+    this.keeper.update(frame, {});
     this.presenter.update(frame, {
       mood: this.feelings.mood,
       waryLeft: 0,
@@ -466,6 +486,7 @@ export class DriftScene extends Phaser.Scene {
     const shape = this.shapeAt(this.along(this.motion.x));
     if (shape !== this.shape && SHAPES.indexOf(shape) > SHAPES.indexOf(this.shape)) {
       this.shape = shape;
+      this.keeper.count('shapeChanges');
       if (shape === 'late') this.teller?.changed();
       // The others are at the same stage.
       for (const image of this.larvaImages.values()) image.setTexture(`larva.${shape}`);
@@ -523,6 +544,7 @@ export class DriftScene extends Phaser.Scene {
       if (this.touching.has(larva)) continue;
       this.touched += 1;
       this.teller?.touched();
+      this.keeper.touched('drift.larva');
     }
     this.touching = now;
   }
@@ -727,6 +749,7 @@ export class DriftScene extends Phaser.Scene {
       if (this.along(this.motion.x) >= this.along(this.def.landfall)) {
         this.landing = 0;
         this.teller?.landed();
+        this.keeper.count('landfalls');
       }
       return;
     }

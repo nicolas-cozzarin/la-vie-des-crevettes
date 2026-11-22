@@ -138,13 +138,16 @@ export function newRecord(): ProgressRecord {
 export class Progress {
   /** The current run of each held condition, in seconds. Not saved: a break is a break. */
   private readonly runs = new Map<string, number>();
+  private readonly byId: ReadonlyMap<string, ChallengeDef>;
 
   constructor(
     private readonly defs: ProgressDefs,
     readonly record: ProgressRecord,
     /** With `?debug`, cards still to check unlock too, so the author can read them. */
     private readonly unreleased = false,
-  ) {}
+  ) {
+    this.byId = new Map(defs.challenges.map((one) => [one.id, one]));
+  }
 
   /** Hears one thing the game did. Returns what it changed. */
   hear(event: ProgressEvent): ProgressNews[] {
@@ -157,15 +160,24 @@ export class Progress {
    * wave. A run ends the moment its condition stops.
    */
   hold(dt: number, flags: Readonly<Record<string, boolean>>): ProgressNews[] {
+    // Goals read whole seconds, so they are only compared when one is crossed.
+    let crossed = false;
     for (const [flag, on] of Object.entries(flags)) {
       const run = on ? (this.runs.get(flag) ?? 0) + dt : 0;
       this.runs.set(flag, run);
       if (!on) continue;
-      this.add(`held.${flag}`, dt);
+      const held = `held.${flag}`;
+      const before = this.stat(held);
+      this.add(held, dt);
+      if (Math.floor(this.stat(held)) > Math.floor(before)) crossed = true;
       const best = `best.${flag}`;
-      if (run > (this.record.stats[best] ?? 0)) this.record.stats[best] = run;
+      const top = this.stat(best);
+      if (run > top) {
+        this.record.stats[best] = run;
+        if (Math.floor(run) > Math.floor(top)) crossed = true;
+      }
     }
-    return this.settle();
+    return crossed ? this.settle() : [];
   }
 
   stat(name: string): number {
@@ -174,13 +186,13 @@ export class Progress {
 
   /** A challenge's value now, at most its target. */
   value(id: string): number {
-    const def = this.defs.challenges.find((one) => one.id === id);
+    const def = this.byId.get(id);
     if (!def) return 0;
     return Math.min(def.target, Math.floor(this.read(def.count) + 1e-9));
   }
 
   isDone(id: string): boolean {
-    const def = this.defs.challenges.find((one) => one.id === id);
+    const def = this.byId.get(id);
     return def !== undefined && this.value(id) >= def.target;
   }
 

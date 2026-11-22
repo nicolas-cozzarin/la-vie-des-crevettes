@@ -43,6 +43,12 @@ export class Molting {
     return this.molt.signal();
   }
 
+  /** Coming back from the save: the body keeps the size its molts gave it. */
+  restore(molts: number): void {
+    this.growth = (1 + MOLT.growth) ** molts;
+    this.grownFrom = this.growth;
+  }
+
   /**
    * One step. `pose` is the player's now. Returns the events, and how far to
    * move the body back along its heading on this step, in pixels.

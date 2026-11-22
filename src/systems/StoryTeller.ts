@@ -60,6 +60,9 @@ export class StoryTeller {
     private readonly favourite: FoodKind,
   ) {
     this.story = new Story(STORY_STEPS, life.stepsDone);
+    // Coming back from the save, the clocks between steps start again where they matter.
+    if (this.story.has('s1.fill') && !this.story.has('s1.sense')) this.sinceFull = STORY.senseHint;
+    if (this.story.has('s1.greet') && !this.story.has('s1.molt')) this.sinceGreet = 0;
     const on = <K extends keyof GameEvents>(type: K, handler: (event: GameEvents[K]) => void) =>
       this.stops.push(bus.on(type, handler));
 

@@ -22,6 +22,7 @@ import { DiscoveryTracker, type Discoverable, type Pull } from '../core/world/di
 import { FOOD_KINDS, type FoodKind } from '../core/world/kinds';
 import { inRect, ZoneTracker } from '../core/world/zones';
 import { newLife, type Life } from '../core/progress/life';
+import { RestSaver } from '../core/save/RestSaver';
 import {
   areaFor,
   FIRST_AREA,
@@ -46,6 +47,7 @@ import {
   MOLT,
   MOOD_SCREEN,
   MOTION,
+  SAVE,
   SENSE,
 } from '../data/tuning';
 import { debugState } from '../debug';
@@ -56,7 +58,9 @@ import { loadArea, type CoverHandle, type LoadedArea } from '../systems/AreaLoad
 import { Creatures, LIVE_KINDS } from '../systems/Creatures';
 import { MoodPresenter } from '../systems/MoodPresenter';
 import { Rim } from '../systems/Rim';
+import { keepLife } from '../systems/keep';
 import { Molting } from '../systems/Molting';
+import { ProgressKeeper } from '../systems/ProgressKeeper';
 import { Narrator } from '../systems/Narrator';
 import { StoryTeller } from '../systems/StoryTeller';
 import { Threats } from '../systems/Threats';
@@ -69,10 +73,12 @@ export interface PlayData {
   area?: string;
   /** Opened by `?explore=`: one place, no story. */
   explore?: boolean;
-  /** Explore mode only: where to start instead of the area's spawn. */
+  /** Explore mode, or coming back from a save: where to start instead of the area's spawn, as the data file writes it. */
   at?: { x: number; y: number };
-  /** The life so far, from the place before. A new one when left out. */
+  /** The life so far, from the place before or from the save. A new one when left out. */
   life?: Life;
+  /** Coming back to this place from the save, rather than arriving in it. */
+  resume?: boolean;
 }
 
 /** The player's shrimp on the event bus. */
@@ -119,6 +125,7 @@ function discoverables(area: AreaDef): Discoverable[] {
 export class PlayScene extends Phaser.Scene {
   private areaId: PlayableArea = FIRST_AREA;
   private explore = false;
+  private resume = false;
   private start: { x: number; y: number } | null = null;
   private area!: AreaDef;
   private loaded!: LoadedArea;
@@ -150,11 +157,16 @@ export class PlayScene extends Phaser.Scene {
   private wiggleLeft = 0;
   /** The player's favourite food, chosen at random for each life (T35). */
   private favourite: FoodKind = 'algaeFilm';
-  /** How many times each prompt has shown, and the one showing now. */
-  private prompts = new Map<string, number>();
+  /** The prompt showing now. How many times each has shown is kept in the life. */
   private promptNow: string | null = null;
+  /** What the journal counts, the small line, and when to keep the life at rest. */
+  private keeper!: ProgressKeeper;
+  private restSaver!: RestSaver;
+  /** Last frame's activity and tuck, to tell when Sense or cover is left. */
+  private wasSensing = 0;
+  private wasTucked = false;
 
-  /** The other shrimp, and the player's bonds with them. Bonds last as long as the scene until saving (step 9). */
+  /** The other shrimp, and the player's bonds with them. Bonds are kept in the life. */
   private bonds!: Bonds;
   private shoal!: Shoal;
   /** How much brighter the other shrimp are drawn while the player is social (doc 10, "Screen"). */
@@ -184,7 +196,9 @@ export class PlayScene extends Phaser.Scene {
   init(data: PlayData): void {
     this.areaId = data.area !== undefined && isPlayableArea(data.area) ? data.area : FIRST_AREA;
     this.explore = data.explore === true;
-    this.start = this.explore && data.at ? pointFor(this.areaId, data.at.x, data.at.y) : null;
+    this.resume = !this.explore && data.resume === true;
+    this.start =
+      (this.explore || this.resume) && data.at ? pointFor(this.areaId, data.at.x, data.at.y) : null;
     this.life = data.life ?? newLife();
   }
 
@@ -254,11 +268,13 @@ export class PlayScene extends Phaser.Scene {
       likes[Math.floor(seededRandom(Date.now() >>> 0)() * likes.length)] ??
       'algaeFilm';
     this.life.favourite = this.favourite;
-    this.prompts = new Map();
     this.promptNow = null;
+    this.wasSensing = 0;
+    this.wasTucked = false;
 
     // Other shrimp. From chapter 2 they keep together as a shoal.
     this.bonds = new Bonds(BOND);
+    this.bonds.load(this.life.bonds);
     this.shoal = new Shoal(this, {
       area,
       stage,
@@ -286,7 +302,12 @@ export class PlayScene extends Phaser.Scene {
       reducedMotion: () => app.settings.reducedMotion,
       seed: Date.now() >>> 0,
       // In the story the first bird waits for Sense, and one ambient bird may follow it.
-      armed: story ? (id) => id !== 'bird.first' || life.stepsDone.has('s1.sense') : undefined,
+      // Once it has gone, it does not come again on coming back from the save.
+      armed: story
+        ? (id) =>
+            id !== 'bird.first' ||
+            (life.stepsDone.has('s1.sense') && !life.stepsDone.has('s1.bird'))
+        : undefined,
       ambient: story ? (life.stepsDone.has('s1.bird') ? 1 : 0) : undefined,
     });
     this.shoal.watch(this.threats);
@@ -312,6 +333,29 @@ export class PlayScene extends Phaser.Scene {
 
     this.scene.launch('Hud', { larva: false });
     this.hud = this.scene.get('Hud') as HudScene;
+
+    // What the journal counts. Explore mode counts too, in a life of its own that is never kept.
+    this.keeper = new ProgressKeeper(this.bus, this.life, this.areaId, () => this.hud, {
+      arrived: !this.resume,
+      author: debugRequested(),
+      find: (id) => {
+        if (this.discovery.add(id)) this.found(id);
+      },
+    });
+    this.keeper.progress.record.bonds = this.life.bonds;
+    if (this.discovery.add(`place.${this.areaId}`)) this.found(`place.${this.areaId}`);
+    this.restSaver = new RestSaver(SAVE);
+    if (this.resume) {
+      // The body keeps the size of its molts, and the view with it.
+      this.molting.restore(this.life.molts);
+      const by = MOLT.viewByMolts;
+      this.viewScale = (by[this.life.molts] ?? by[by.length - 1] ?? 1) / (by[0] ?? 1);
+      this.viewFrom = this.viewScale;
+    } else if (story) {
+      // Each chapter's start is kept (doc 02, "Saving").
+      keepLife(app.store, this.life, { area: this.areaId, stage, at: null });
+      this.restSaver.savedNow();
+    }
 
     // The story of this place, told one line at a time.
     this.narrator = null;
@@ -381,6 +425,7 @@ export class PlayScene extends Phaser.Scene {
       debugState.threat = null;
       this.life.hunger = this.feelings.values.hunger;
       this.teller?.destroy();
+      this.keeper.destroy();
       this.narrator?.clear();
       this.threats.destroy();
       this.molting.destroy();
@@ -513,6 +558,49 @@ export class PlayScene extends Phaser.Scene {
     });
     this.follow(frame);
     this.hud?.track(frame, own.x !== 0 || own.y !== 0, darted && !locked);
+    this.keep(frame, own, locked);
+  }
+
+  /**
+   * What the journal counts on each frame, Sense and cover as they are left,
+   * and keeping the life at each rest under cover (doc 02, "Saving").
+   */
+  private keep(frame: number, own: { x: number; y: number }, locked: boolean): void {
+    const { x, y } = this.motion;
+    const bl = this.bodyLengthPx;
+    const sensing = this.activity.name === 'sensing';
+    if (sensing) this.wasSensing += frame;
+    else if (this.wasSensing > 0) {
+      this.bus.emit('sense:used', { seconds: this.wasSensing });
+      this.wasSensing = 0;
+    }
+    const tucked = this.activity.tucked;
+    if (tucked !== this.wasTucked) {
+      const coverId = this.activity.cover?.id ?? '';
+      if (tucked) this.bus.emit('cover:entered', { who: PLAYER, coverId });
+      else this.bus.emit('cover:left', { who: PLAYER, coverId, wary: this.feelings.has('wary') });
+      this.wasTucked = tucked;
+    }
+    this.life.playSeconds += frame;
+    this.keeper.update(frame, {
+      watchWave: this.creatures.wavingNear(x, y, 3 * bl),
+      hiddenTogether: tucked && this.shoal.hiddenNear(x, y, 1.5 * bl),
+    });
+    if (this.explore) return;
+    const resting =
+      tucked &&
+      own.x === 0 &&
+      own.y === 0 &&
+      !locked &&
+      this.threats.director.stage === 'idle' &&
+      this.molting.molt.stage === 'none';
+    if (this.restSaver.step(frame, resting)) {
+      this.life.hunger = this.feelings.values.hunger;
+      const at = pointFor(this.areaId, x, y);
+      if (keepLife(app.store, this.life, { area: this.areaId, stage: STAGE_IN[this.areaId], at })) {
+        this.keeper.say('saved', t('notice.saved'));
+      }
+    }
   }
 
   private activityInput(dt: number, own: { x: number; y: number }, dart: boolean, locked = false) {
@@ -666,9 +754,10 @@ export class PlayScene extends Phaser.Scene {
     }
     if (key !== this.promptNow) {
       if (key !== null) {
-        const times = this.prompts.get(key) ?? 0;
+        const shown = this.life.promptsShown;
+        const times = shown[key] ?? 0;
         if (times >= 3) key = null;
-        else this.prompts.set(key, times + 1);
+        else shown[key] = times + 1;
       }
       this.promptNow = key;
       this.hud?.prompt(key === null ? null : t(key, { key: app.actionKey(action) }));

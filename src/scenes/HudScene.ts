@@ -3,6 +3,7 @@ import { app } from '../app';
 import { ensureTexture } from '../art/TextureFactory';
 import { COLORS, FONTS, GAME_HEIGHT, GAME_WIDTH, TINTS } from '../config';
 import { t } from '../i18n';
+import type { SmallLine } from '../core/progress/SmallLines';
 import { textStyle } from '../ui/text';
 
 /** The larva of the Drift only steers: its first hint is that, and it has no tail flip. */
@@ -16,6 +17,10 @@ const PROMPT_Y = HINT_Y - 72;
 const NARRATION_Y = PROMPT_Y - 100;
 /** A place's name, alone, high in the view. */
 const PLACE_Y = 300;
+/** The small line's right edge and middle (doc 12, "What shows over play"). */
+const LINE_RIGHT = GAME_WIDTH - 60;
+const LINE_Y = 70;
+const LINE_ICON = 48;
 /** Seconds the mood's name takes to come and to go. */
 const WORD_FADE = 0.5;
 /** The colour fear's edges are drawn in: the deep water, almost black. */
@@ -43,6 +48,10 @@ export class HudScene extends Phaser.Scene {
   private promptPlate!: Phaser.GameObjects.Graphics;
   private narration!: Phaser.GameObjects.Text;
   private place!: Phaser.GameObjects.Text;
+  private lineText!: Phaser.GameObjects.Text;
+  private lineIcon!: Phaser.GameObjects.Image;
+  private linePlate!: Phaser.GameObjects.Graphics;
+  private lineNow: SmallLine | null = null;
   /** The hints and the prompt, together, so the dark of being cornered can take them away. */
   private lines!: Phaser.GameObjects.Container;
   /** The prompt's alpha, eased toward 1 while one is asked for. */
@@ -119,6 +128,14 @@ export class HudScene extends Phaser.Scene {
       .setShadow(0, 2, '#000000', 12, false, true)
       .setAlpha(0);
 
+    this.linePlate = this.add.graphics().setAlpha(0);
+    this.lineIcon = this.add.image(0, LINE_Y, ensureTexture(this, 'icon.type.find')).setAlpha(0);
+    this.lineText = this.add
+      .text(LINE_RIGHT - 24, LINE_Y, '', textStyle(26, COLORS.ink))
+      .setOrigin(1, 0.5)
+      .setAlpha(0);
+    this.lineNow = null;
+
     this.lines = this.add.container(0, 0, [
       this.hintPlate,
       this.hintText,
@@ -182,6 +199,36 @@ export class HudScene extends Phaser.Scene {
     if (!this.ready) return;
     if (text !== null && text !== this.place.text) this.place.setText(text);
     this.place.setAlpha(text === null ? 0 : alpha);
+  }
+
+  /**
+   * The small line at the top right, or null, and how visible it is: a
+   * paper tag with its mark and a few words. The queue decides which.
+   */
+  smallLine(line: SmallLine | null, alpha: number): void {
+    if (!this.ready) return;
+    if (line !== this.lineNow) {
+      this.lineNow = line;
+      if (line) {
+        this.lineText.setText(line.text);
+        const iconRoom = line.icon ? LINE_ICON + 14 : 0;
+        const width = this.lineText.width + 48 + iconRoom;
+        if (line.icon) {
+          this.lineIcon
+            .setTexture(ensureTexture(this, line.icon))
+            .setDisplaySize(LINE_ICON, LINE_ICON)
+            .setPosition(LINE_RIGHT - 24 - this.lineText.width - 14 - LINE_ICON / 2, LINE_Y);
+        }
+        this.lineIcon.setVisible(line.icon !== null);
+        this.linePlate.clear();
+        this.linePlate.fillStyle(TINTS.paper, 0.9);
+        this.linePlate.fillRoundedRect(LINE_RIGHT - width, LINE_Y - 34, width, 68, 10);
+      }
+    }
+    const shown = line ? alpha : 0;
+    this.linePlate.setAlpha(shown);
+    this.lineIcon.setAlpha(shown);
+    this.lineText.setAlpha(shown);
   }
 
   /** How dark the picture is, from 0 to 1: the hints and the prompt go with it. */

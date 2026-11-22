@@ -440,6 +440,13 @@ export class Shoal {
     return this.members.some((npc) => this.options.bonds.value(npc.id) >= BOND.stages.companion);
   }
 
+  /** Another shrimp tucked under cover within `reach` px, for "Side by side". */
+  hiddenNear(x: number, y: number, reach: number): boolean {
+    return this.members.some(
+      (npc) => npc.activity.tucked && Math.hypot(npc.x - x, npc.y - y) <= reach,
+    );
+  }
+
   /** Every other shrimp, as the player's Greet needs them. */
   get greetable(): OtherShrimp[] {
     return this.members.map((npc) => ({ id: npc.id, x: npc.x, y: npc.y }));

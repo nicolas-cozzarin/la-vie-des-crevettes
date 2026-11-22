@@ -68,6 +68,11 @@ export class Crab {
     return this.hidden > 0;
   }
 
+  /** Out on the mud and in a bout of waving. */
+  get waving(): boolean {
+    return this.hidden <= 0 && this.phase === 'bout';
+  }
+
   step(dt: number): CrabPose {
     const t = this.tuning;
     if (this.hidden > 0) {

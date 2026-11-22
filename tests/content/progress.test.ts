@@ -46,6 +46,12 @@ const both = (key: string) => {
 };
 
 describe('challenges', () => {
+  it('each have a type icon', () => {
+    for (const challenge of CHALLENGES) {
+      expect(PAINTERS[`icon.type.${challenge.type}`], challenge.id).toBeDefined();
+    }
+  });
+
   const rows = table('docs/12-goals-and-journal.md', '## Challenges');
 
   it('are the ones of doc 12, with the same chapter and target', () => {
@@ -90,10 +96,11 @@ describe('achievements', () => {
     );
   });
 
-  it('each have a name and a way to earn it', () => {
+  it('each have a name, a way to earn it, and a stamp', () => {
     for (const achievement of ACHIEVEMENTS) {
       both(`ach.${achievement.id}.name`);
       both(`ach.${achievement.id}.how`);
+      expect(PAINTERS[`icon.ach.${achievement.id}`], achievement.id).toBeDefined();
     }
   });
 });

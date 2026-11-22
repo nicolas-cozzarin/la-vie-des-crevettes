@@ -17,7 +17,7 @@ ensureTexture(scene, 'mangrove.root.a')
 |------|-------|
 | `src/art/TextureFactory.ts` | `ensureTexture`, for the game |
 | `src/art/painters/index.ts` | `PAINTERS`: every painter by image name. `PAINTER_GROUPS`: the same, by family |
-| `src/art/painters/*.ts` | One file per family: `shrimp`, `world`, `drift`, `mangrove`, `lagoon`, `creatures` (the mangrove's animals), `lagoonAnimals`, `channel`, `effects`. `icons` to come |
+| `src/art/painters/*.ts` | One file per family: `shrimp`, `world`, `drift`, `mangrove`, `lagoon`, `creatures` (the mangrove's animals), `lagoonAnimals`, `channel`, `effects`, `icons` |
 | `src/art/paint.ts` | Shared helpers: colours, washes, `blob`, `speckle`, `patches`, `glow`, `softFill`, `band` for a root or a branch, `traceLeaf`, `wrapped` for tiles, `onLayer` for a part that must fade |
 | `src/art/fit.ts` | `imageFit(name)`: how the solid part of a picture sits inside the picture. See "From data to picture" |
 | `src/art/expressions.ts` | `RigExpression`, `RigLook`, and `MOOD_EXPRESSIONS`, the table below as code |
@@ -399,10 +399,10 @@ Release 1.1. Realistic and bare, without gloss and without horror (D41). The shr
 |------|------|--------|
 | `ui.paper` | 1024, tile | To paint |
 | `ui.keycap` | 96 | To paint |
-| `icon.tab.discoveries`, `.companions`, `.feel`, `.challenges`, `.achievements` | 64 | To paint |
-| `icon.type.taste`, `.reach`, `.watch`, `.escape`, `.meet`, `.find` | 64 | To paint |
-| `icon.bond.stranger`, `.familiar`, `.companion`, `.close` | 80 | To paint |
-| `icon.ach.<id>`, 24 of them | 192 | To paint |
+| `icon.tab.discoveries`, `.companions`, `.feel`, `.challenges`, `.achievements` | 64 | Built. A leaf, three small shrimp, an antenna tip with ripples, a spiral, a stamp ring |
+| `icon.type.taste`, `.reach`, `.watch`, `.escape`, `.meet`, `.find` | 64 | Built. Drawn with a heavier line, to read at 48 px on the small line |
+| `icon.bond.stranger`, `.familiar`, `.companion`, `.close` | 80 | Built. Two shrimp from above, closer at each stage; washed from Companion |
+| `icon.ach.landfall`, `.newShell`, `.fullGrown`, `.antenna`, `.familiar`, `.shoal`, `.everyTaste`, `.nose`, `.quickTail`, `.unseen`, `.neverCornered`, `.underGrid`, `.nightGrazer`, `.neighbour`, `.slowCompany`, `.openWater`, `.nextOnes`, `.secondTide`, `.fifthTide`, `.fullCarnet`, `.allOfIt`, `.cleanAntennae`, `.stoneStill`, `.gentle` | 192 | Built. The stamps of doc 12, each a double ring, a wash by group and its drawing |
 
 ## The atelier
 

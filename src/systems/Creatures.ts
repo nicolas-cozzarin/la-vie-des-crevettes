@@ -157,6 +157,28 @@ export class Creatures {
     return this.schools.find((one) => one.def.id === id)?.fish ?? [];
   }
 
+  /** A crab waving its claw within `reach` px of the point, for "The waving claw". */
+  wavingNear(x: number, y: number, reach: number): boolean {
+    return this.crabs.some(
+      (crab) => crab.rule.waving && Math.hypot(crab.x - x, crab.y - y) <= reach,
+    );
+  }
+
+  /** The nearest animal of a kind, for a pinned challenge's ribbon. */
+  nearest(kind: string, x: number, y: number): { x: number; y: number } | null {
+    let best: { x: number; y: number } | null = null;
+    let distance = Infinity;
+    for (const crab of this.crabs) {
+      if (crab.def.kind !== kind) continue;
+      const d = Math.hypot(crab.x - x, crab.y - y);
+      if (d < distance) {
+        distance = d;
+        best = { x: crab.x, y: crab.y };
+      }
+    }
+    return best;
+  }
+
   /** What the browser test can see. */
   get snapshot(): { id: string; x: number; y: number; state: string; scattered?: number }[] {
     return [

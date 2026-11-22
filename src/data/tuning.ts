@@ -475,6 +475,20 @@ export const STORY = {
   notHere: 20,
 };
 
+/** Saving at rest (doc 02, "Saving"). Seconds. */
+export const SAVE = {
+  /** Still under cover this long is a rest, and the life is kept. */
+  rest: 3,
+  /** At least this long between two saves at rest. */
+  gap: 30,
+};
+
+/** The small line at the top right (doc 12, "What shows over play"). Seconds. */
+export const SMALL_LINE = {
+  hold: 4,
+  fade: 0.4,
+};
+
 /** Molting (doc 10, "Molting"). Seconds unless said. */
 export const MOLT = {
   shelter: 2,

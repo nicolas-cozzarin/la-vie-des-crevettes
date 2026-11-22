@@ -47,7 +47,9 @@ import { ShrimpRig } from '../entities/ShrimpRig';
 import { t } from '../i18n';
 import { debugRequested } from '../platform/address';
 import { loadArea, type CoverHandle, type LoadedArea } from '../systems/AreaLoader';
+import { Creatures, LIVE_KINDS } from '../systems/Creatures';
 import { MoodPresenter } from '../systems/MoodPresenter';
+import { Rim } from '../systems/Rim';
 import { ScentField } from '../systems/ScentField';
 import { Shoal } from '../systems/Shoal';
 import { WaterLight } from '../systems/WaterLight';
@@ -77,6 +79,8 @@ function discoverables(area: AreaDef): Discoverable[] {
       kind: 'creature',
       x: creature.x,
       y: creature.y,
+      // An animal that moves is found where it is now, not where it started.
+      ref: LIVE_KINDS.has(creature.kind) ? creature.id : undefined,
     });
   }
   for (const food of area.food ?? []) {
@@ -143,6 +147,9 @@ export class PlayScene extends Phaser.Scene {
   private shoal!: Shoal;
   /** How much brighter the other shrimp are drawn while the player is social (doc 10, "Screen"). */
   private lift = 0;
+  /** The crabs, snails and fish that move, and the pale rim on what the shrimp is curious about. */
+  private creatures!: Creatures;
+  private rim!: Rim;
 
   private hud: HudScene | null = null;
 
@@ -163,6 +170,8 @@ export class PlayScene extends Phaser.Scene {
 
     this.loaded = loadArea(this, area);
     this.bodyLengthPx = this.loaded.bodyLengthPx;
+    this.creatures = new Creatures(this, area, this.bodyLengthPx);
+    this.rim = new Rim();
     const obstacles = this.loaded.obstacles;
 
     const spawn = this.start ? { ...area.spawn, ...this.start } : area.spawn;
@@ -263,6 +272,7 @@ export class PlayScene extends Phaser.Scene {
     });
     debugState.scent = () => this.scent.snapshot;
     debugState.shrimp = () => this.shoal.snapshot;
+    debugState.creatures = () => ({ animals: this.creatures.snapshot, rim: this.rim.snapshot });
     debugState.feelings = () => ({
       values: { ...this.feelings.values },
       mood: this.feelings.mood,
@@ -286,6 +296,7 @@ export class PlayScene extends Phaser.Scene {
       debugState.feelings = null;
       debugState.scent = null;
       debugState.shrimp = null;
+      debugState.creatures = null;
       this.scent.destroy();
       this.shoal.destroy();
       this.rig.destroy();
@@ -311,6 +322,14 @@ export class PlayScene extends Phaser.Scene {
     let darted = false;
     let remaining = frame;
     let eating = false;
+    // The animals that move are found where they are now.
+    for (const thing of this.things) {
+      const now = thing.ref ? this.creatures.where(thing.ref) : null;
+      if (now) {
+        thing.x = now.x;
+        thing.y = now.y;
+      }
+    }
     while (remaining > 1e-6) {
       const dt = Math.min(remaining, FRAME.step);
       this.clock += dt;
@@ -348,6 +367,7 @@ export class PlayScene extends Phaser.Scene {
         this.feelings.stimulus('tailFlip');
         this.bus.emit('tailflip', { who: PLAYER });
         this.shoal.playerFlipped(this.clock, this.motion.x, this.motion.y);
+        this.creatures.flip(this.motion.x, this.motion.y);
       }
       darted = darted || moved.darted;
       dart = false;
@@ -356,6 +376,9 @@ export class PlayScene extends Phaser.Scene {
 
     this.enterZones();
     this.loaded.update(frame, this.motion.x, this.motion.y);
+    this.creatures.update(frame, this.motion);
+    this.rim.set(this.rimmed());
+    this.rim.update(frame);
     for (const [patch, image] of this.foodImages) image.setAlpha(0.15 + 0.85 * patch.amount);
     this.wiggleLeft = Math.max(0, this.wiggleLeft - frame);
     this.rig.update(frame, this.motion, this.feel(eating));
@@ -572,6 +595,17 @@ export class PlayScene extends Phaser.Scene {
       grazing: eating,
       wiggle: this.wiggleLeft > 0 ? 1 - this.wiggleLeft / GRAZE.wiggle : null,
     };
+  }
+
+  /** The pictures of what the shrimp is curious about, while it is curious (doc 10, "Screen"). */
+  private rimmed(): Phaser.GameObjects.Image[] {
+    const target = this.feelings.mood === 'curious' ? this.pull.target : null;
+    if (!target) return [];
+    if (target.ref) return this.creatures.imagesOf(target.ref);
+    const spot = this.loaded.spots.find(
+      (one) => one.id === target.id && one.x === target.x && one.y === target.y,
+    );
+    return spot?.images ?? [];
   }
 
   /** The nearest other shrimp within the company radius, for a social shrimp's antennae. */

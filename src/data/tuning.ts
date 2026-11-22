@@ -380,8 +380,8 @@ export const CREATURES = {
     deep: 0.8,
     sway: 0.12,
     burst: 5,
-    pull: 4,
-    drag: 3.2,
+    pull: 1.5,
+    drag: 2.4,
     reach: 5,
   },
   /** How bright the pale rim on a curiosity target is, and its width in pixels (doc 11, `fx.rim`). */

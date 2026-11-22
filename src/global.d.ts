@@ -1,6 +1,6 @@
 import type { Bindings } from './core/input/bindings';
 import type { Lang } from './core/i18n';
-import type { FeelingsSnapshot, PlayerSnapshot } from './debug';
+import type { CreaturesSnapshot, FeelingsSnapshot, PlayerSnapshot } from './debug';
 import type { ScentSnapshot } from './systems/ScentField';
 import type { ShrimpSnapshot } from './systems/Shoal';
 
@@ -18,6 +18,8 @@ export interface DebugHook {
   scent(): ScentSnapshot[] | null;
   /** The other shrimp: where they are, what they do, and the bond with each. */
   shrimp(): ShrimpSnapshot[] | null;
+  /** The animals that move, and the strength of the pale rim on the curious target. */
+  creatures(): CreaturesSnapshot | null;
 }
 
 declare global {

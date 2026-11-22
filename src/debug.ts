@@ -43,4 +43,12 @@ export const debugState: {
   feelings: (() => FeelingsSnapshot) | null;
   scent: (() => ScentSnapshot[]) | null;
   shrimp: (() => ShrimpSnapshot[]) | null;
-} = { player: null, feelings: null, scent: null, shrimp: null };
+  creatures: (() => CreaturesSnapshot) | null;
+} = { player: null, feelings: null, scent: null, shrimp: null, creatures: null };
+
+/** What the browser test can ask about the animals: where each is, and how strong the rim is. */
+export interface CreaturesSnapshot {
+  /** A school also says how far its fish are from their places, in BL. */
+  animals: { id: string; x: number; y: number; state: string; scattered?: number }[];
+  rim: number;
+}

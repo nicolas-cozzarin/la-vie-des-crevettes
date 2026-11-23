@@ -56,4 +56,5 @@ window.__lvdc = {
   drift: () => debugState.drift?.() ?? null,
   journal: () => debugState.journal?.() ?? null,
   progress: () => debugState.progress?.() ?? null,
+  audio: () => debugState.audio?.() ?? null,
 };

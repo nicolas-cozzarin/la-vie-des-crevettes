@@ -19,6 +19,8 @@ export interface KeeperOptions {
   author: boolean;
   /** Marks something found that has no place to be found at, such as the first other shrimp. */
   find: (id: string) => void;
+  /** A small line has come: ring its bells. */
+  ring?: (bells: 1 | 2) => void;
 }
 
 /** What the small line and the save need to show over play. */
@@ -36,6 +38,7 @@ export class ProgressKeeper {
   private readonly lines = new SmallLines(SMALL_LINE);
   private readonly stops: (() => void)[] = [];
   private lineNow: SmallLine | null = null;
+  private readonly ring: ((bells: 1 | 2) => void) | undefined;
 
   constructor(
     private readonly bus: EventBus<GameEvents>,
@@ -45,6 +48,7 @@ export class ProgressKeeper {
     options: KeeperOptions,
   ) {
     this.progress = new Progress(PROGRESS_DEFS, life, options.author);
+    this.ring = options.ring;
     const on = <K extends keyof GameEvents>(type: K, handler: (event: GameEvents[K]) => void) =>
       this.stops.push(bus.on(type, handler));
     const hear = (event: ProgressEvent) => this.hear(event);
@@ -129,7 +133,8 @@ export class ProgressKeeper {
   /** Once a frame: conditions that last, and the small line. */
   update(dt: number, held: Readonly<Record<string, boolean>>): void {
     this.report(this.progress.hold(dt, held));
-    const { line, alpha } = this.lines.step(dt);
+    const { line, alpha, began } = this.lines.step(dt);
+    if (began && line) this.ring?.(line.bells);
     this.lineNow = line;
     this.hud()?.smallLine(line, alpha);
   }

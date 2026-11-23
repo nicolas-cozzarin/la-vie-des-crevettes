@@ -53,10 +53,11 @@ import {
 } from '../data/tuning';
 import { debugState } from '../debug';
 import { ShrimpRig } from '../entities/ShrimpRig';
-import { t } from '../i18n';
+import { i18n, t } from '../i18n';
 import { debugRequested } from '../platform/address';
 import { loadArea, type CoverHandle, type LoadedArea } from '../systems/AreaLoader';
 import { Creatures, LIVE_KINDS } from '../systems/Creatures';
+import { AudioDirector } from '../systems/AudioDirector';
 import { MoodPresenter } from '../systems/MoodPresenter';
 import { Rim } from '../systems/Rim';
 import { keepLife } from '../systems/keep';
@@ -147,6 +148,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
   private things: Discoverable[] = [];
   private pull: Pull = { value: 0, target: null };
   private presenter!: MoodPresenter;
+  private audio!: AudioDirector;
 
   private patches: FoodPatch[] = [];
   private foodImages = new Map<FoodPatch, Phaser.GameObjects.Image>();
@@ -335,6 +337,13 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
 
     this.scene.launch('Hud', { larva: false });
     this.hud = this.scene.get('Hud') as HudScene;
+    this.audio = new AudioDirector(this, {
+      area: this.areaId,
+      bus: this.bus,
+      hud: () => this.hud,
+      walkSpeed: MOTION.walkSpeed * this.bodyLengthPx,
+      favourite: () => this.favourite,
+    });
 
     // What the journal counts. Explore mode counts too, in a life of its own that is never kept.
     this.keeper = new ProgressKeeper(this.bus, this.life, this.areaId, () => this.hud, {
@@ -343,6 +352,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
       find: (id) => {
         if (this.discovery.add(id)) this.found(id);
       },
+      ring: (bells) => this.audio.ring(bells),
     });
     this.keeper.progress.record.bonds = this.life.bonds;
     if (this.discovery.add(`place.${this.areaId}`)) this.found(`place.${this.areaId}`);
@@ -393,6 +403,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
     debugState.shrimp = () => this.shoal.snapshot;
     debugState.creatures = () => ({ animals: this.creatures.snapshot, rim: this.rim.snapshot });
     debugState.threat = () => this.threats.snapshot;
+    debugState.audio = () => this.audio.snapshot;
     debugState.feelings = () => ({
       values: { ...this.feelings.values },
       mood: this.feelings.mood,
@@ -425,6 +436,8 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
       debugState.shrimp = null;
       debugState.creatures = null;
       debugState.threat = null;
+      debugState.audio = null;
+      this.audio.destroy();
       this.life.hunger = this.feelings.values.hunger;
       this.teller?.destroy();
       this.keeper.destroy();
@@ -502,8 +515,9 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
       if (result.called) this.shoal.playerCalled(this.clock);
       eating = this.stepMeal(dt, before, result.eating);
       for (const patch of this.patches) patch.step(dt);
-      for (let alarm = this.shoal.takeAlarms().length; alarm > 0; alarm--) {
+      for (const alarm of this.shoal.takeAlarms()) {
         this.feelings.stimulus('alarm');
+        this.alarmedBy(alarm.from);
       }
       this.stepFeelings(dt, axis.x !== 0 || axis.y !== 0 || dart);
       this.shoal.step(dt, this.clock, {
@@ -562,6 +576,18 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
       y: this.motion.y,
       target: this.feelings.mood === 'curious' ? this.pull.target : null,
       sensing: this.activity.name === 'sensing',
+    });
+    this.audio.update(frame, {
+      mood: this.feelings.mood,
+      hidden: this.feelings.has('hidden'),
+      wary: this.feelings.has('wary'),
+      waryLeft: this.feelings.waryRemaining,
+      frozen: this.feelings.has('frozen'),
+      soft: this.feelings.has('soft'),
+      dark: this.threats.cornered.darkness,
+      mode: this.motion.mode,
+      speed: Math.hypot(this.motion.vx, this.motion.vy),
+      activity: this.activity.name,
     });
     this.follow(frame);
     this.hud?.track(frame, own.x !== 0 || own.y !== 0, darted && !locked);
@@ -893,6 +919,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
           this.creatures.cue(shadow.x, shadow.y);
           if (this.shoal.cueNoticed(this.clock, this.motion.x, this.motion.y)) {
             this.feelings.stimulus('alarm');
+            this.alarmedBy('nacre');
           }
         }
       } else if (event.type === 'strike') {
@@ -946,6 +973,12 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
     for (const { condition, on } of change.conditions) {
       this.bus.emit('condition:changed', { who: PLAYER, condition, on });
     }
+  }
+
+  /** A named shrimp's fright reached the player: its caption (doc 10, "Alarm"). */
+  private alarmedBy(id: string): void {
+    const key = `companion.${id}.name`;
+    if (i18n.has(key)) this.audio.alarmed(t(key));
   }
 
   private found(id: string): void {

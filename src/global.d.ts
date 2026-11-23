@@ -9,6 +9,7 @@ import type {
   ProgressSnapshot,
   ThreatSnapshot,
 } from './debug';
+import type { AudioSnapshot } from './systems/AudioDirector';
 import type { ScentSnapshot } from './systems/ScentField';
 import type { ShrimpSnapshot } from './systems/Shoal';
 
@@ -36,6 +37,8 @@ export interface DebugHook {
   journal(): JournalSnapshot | null;
   /** What the life has counted and earned, and the small line on screen. */
   progress(): ProgressSnapshot | null;
+  /** The sound: the mix's levels, the caption showing, the last sounds asked for. */
+  audio(): AudioSnapshot | null;
 }
 
 declare global {

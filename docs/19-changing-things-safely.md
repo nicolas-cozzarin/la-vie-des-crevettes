@@ -65,6 +65,11 @@ To undo a change that is already published, open the merged pull request on GitH
 | A pinned challenge's target | `CHALLENGE_TARGETS` in `src/data/challenges.ts` | Doc 12, "Pinning". T91 | `progress.test.ts` in `tests/content`: the target exists in an area |
 | How the journal looks and moves | `src/scenes/JournalScene.ts`. What it shows in `src/core/journal/journal.ts` | Doc 12, "The journal". T91 | `journal.test.ts`. The browser test. The game with J, by eye |
 | The small line | `SMALL_LINE` in `src/data/tuning.ts`, `SmallLines` in `src/core/progress/`, `smallLine` in `HudScene` | Doc 12, "What shows over play" | `smallLines.test.ts`. The browser test |
+| How the music follows the mood: levels, filters, fades | `SOUND.mix` in `src/data/tuning.ts`. The rules in `src/core/audio/mix.ts` | Docs 05 and 10, "Sound". T93 | `sound.test.ts`. The browser test "fear dulls the music and relief brings it back" |
+| Which sound answers which moment, and which has a caption | `src/core/audio/cues.ts`, heard by `src/systems/AudioDirector.ts`. A caption's words in doc 13 | Doc 05, "Sound effects" and "Captions". T93 | `sound.test.ts`. `sound.spec.ts` |
+| A sound file | `public/assets/audio/<file>.ogg` and `<file>.m4a`, and the name it plays for in `SOUND_FILES` in `src/data/sounds.ts`. Only CC0 or CC BY (doc 05) | A row in `CREDITS.md` for each file, in the same commit | `sounds.test.ts`: both encodings, listed both ways, credited. `rules.test.ts` |
+| An area's music and ambience | `AREA_SOUND` in `src/data/sounds.ts` | Doc 05, "Ambience" | `sounds.test.ts` |
+| How the browser plays sound: buses, volumes, crossfades | `SOUND.bus` in `src/data/tuning.ts`. `src/platform/SoundOut.ts` | Doc 05, "Levels" | By ear |
 | The way the coast runs | See "Turning the coast round" | | |
 
 ## What each check catches

@@ -375,6 +375,8 @@ Document: 05.
 - `src/systems/AudioDirector.ts` listens to `mood:changed`, `condition:changed`, `threat:stage` and the action events.
 - No sound file enters the repository without its row in `CREDITS.md`. The content test enforces it.
 - Start the search for music early. It is the slowest part.
+- As built (T93): the rules are in `src/core/audio/`, the browser's sound in `src/platform/SoundOut.ts`. A file is added in three places in one commit: the `.ogg` and `.m4a` under `public/assets/audio/`, its name in `SOUND_FILES` in `src/data/sounds.ts`, and its row in `CREDITS.md`. Convert with ffmpeg: `ffmpeg -i in.wav -c:a libvorbis -q:a 4 name.ogg` and `ffmpeg -i in.wav -c:a aac -b:a 112k name.m4a`, mono for effects.
+- `window.__lvdc.audio()` gives the mix's levels, the caption on screen and the last sounds asked for, so the browser test checks the mix with no file at all.
 
 ## Step 11. Finish and publish
 

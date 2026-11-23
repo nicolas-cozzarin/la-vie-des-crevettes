@@ -7,10 +7,13 @@ import { i18n, t } from './i18n';
 import { openBrowserStore } from './platform/browserStore';
 import { readLayoutMap } from './platform/keyboardLayout';
 import { KeyboardSource } from './platform/KeyboardSource';
+import { SoundOut } from './platform/SoundOut';
+import { SOUND_FILES } from './data/sounds';
+import { SOUND } from './data/tuning';
 
 /**
- * The parts of the game that outlive any one scene: settings, storage and the
- * keyboard. Scenes reach them through the `app` export.
+ * The parts of the game that outlive any one scene: settings, storage, the
+ * keyboard and the sound. Scenes reach them through the `app` export.
  */
 class App {
   readonly store: KeyValueStore;
@@ -19,6 +22,8 @@ class App {
   /** Actions for the game to read. Never read keys. */
   readonly actions: ActionState;
   readonly keyboard: KeyboardSource;
+  /** The browser's sound. Systems ask it for sounds by name. */
+  readonly sound: SoundOut;
 
   private current: SettingsV1;
   private layout: ReadonlyMap<string, string> | null = null;
@@ -44,6 +49,9 @@ class App {
     });
     this.keyboard.attach();
 
+    this.sound = new SoundOut((name) => SOUND_FILES[name] ?? null, SOUND, this.current.volume);
+    this.sound.attach();
+
     void readLayoutMap().then((layout) => {
       this.layout = layout;
     });
@@ -59,6 +67,7 @@ class App {
     if (patch.bindings) this.actions.setBindings(patch.bindings);
     if (patch.senseMode) this.actions.setMode('sense', patch.senseMode);
     if (patch.hideMode) this.actions.setMode('hide', patch.hideMode);
+    if (patch.volume) this.sound.setVolumes(patch.volume);
     if (patch.lang) {
       i18n.setLang(patch.lang);
       document.documentElement.lang = patch.lang;

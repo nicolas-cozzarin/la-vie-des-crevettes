@@ -10,7 +10,12 @@ import { textStyle } from '../ui/text';
 type Hint = 'move' | 'steer' | 'dart' | 'pause' | 'done';
 
 const HINT_Y = GAME_HEIGHT - 90;
-const WORD_Y = 96;
+/** The mood's name at the top left, the caption at the top middle (doc 12, "What shows over play"). */
+const WORD_X = 60;
+const WORD_Y = 70;
+const CAPTION_Y = 70;
+/** Captions show at 85%. */
+const CAPTION_ALPHA = 0.85;
 /** An activity's prompt sits above the line of hints. */
 const PROMPT_Y = HINT_Y - 72;
 /** The narration sits above the prompt (T82). */
@@ -47,6 +52,7 @@ export class HudScene extends Phaser.Scene {
   private promptText!: Phaser.GameObjects.Text;
   private promptPlate!: Phaser.GameObjects.Graphics;
   private narration!: Phaser.GameObjects.Text;
+  private captionText!: Phaser.GameObjects.Text;
   private place!: Phaser.GameObjects.Text;
   private lineText!: Phaser.GameObjects.Text;
   private lineIcon!: Phaser.GameObjects.Image;
@@ -102,7 +108,9 @@ export class HudScene extends Phaser.Scene {
     this.showHint();
 
     this.wordPlate = this.add.graphics().setAlpha(0);
-    this.word = this.add.text(centerX, WORD_Y, '', textStyle(30, COLORS.deepTeal)).setOrigin(0.5);
+    this.word = this.add
+      .text(WORD_X + 28, WORD_Y, '', textStyle(28, COLORS.deepTeal))
+      .setOrigin(0, 0.5);
     this.word.setAlpha(0);
     this.wordAge = -1;
 
@@ -121,6 +129,11 @@ export class HudScene extends Phaser.Scene {
       })
       .setOrigin(0.5)
       .setShadow(0, 2, '#000000', 10, false, true)
+      .setAlpha(0);
+    this.captionText = this.add
+      .text(centerX, CAPTION_Y, '', textStyle(26, COLORS.paper))
+      .setOrigin(0.5)
+      .setShadow(0, 2, '#000000', 8, false, true)
       .setAlpha(0);
     this.place = this.add
       .text(centerX, PLACE_Y, '', textStyle(56, COLORS.paper, FONTS.title))
@@ -181,7 +194,7 @@ export class HudScene extends Phaser.Scene {
     const width = this.word.width + 56;
     this.wordPlate.clear();
     this.wordPlate.fillStyle(TINTS.paper, 0.72);
-    this.wordPlate.fillRoundedRect(GAME_WIDTH / 2 - width / 2, WORD_Y - 28, width, 56, 28);
+    this.wordPlate.fillRoundedRect(WORD_X, WORD_Y - 28, width, 56, 28);
     // A word already showing is replaced where it stands, without going dark first.
     this.wordAge = this.wordAge >= 0 ? this.word.alpha * WORD_FADE : 0;
     this.wordHold = seconds;
@@ -192,6 +205,13 @@ export class HudScene extends Phaser.Scene {
     if (!this.ready) return;
     if (text !== null && text !== this.narration.text) this.narration.setText(text);
     this.narration.setAlpha(text === null ? 0 : alpha);
+  }
+
+  /** The caption of a sound that carries meaning, or null, and how visible it is. */
+  caption(text: string | null, alpha: number): void {
+    if (!this.ready) return;
+    if (text !== null && text !== this.captionText.text) this.captionText.setText(text);
+    this.captionText.setAlpha(text === null ? 0 : alpha * CAPTION_ALPHA);
   }
 
   /** A place's name, or null, and how visible it is. */

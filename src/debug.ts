@@ -3,6 +3,7 @@ import type { Mood } from './core/feelings/mood';
 import type { Condition, Feelings, ThreatStage } from './core/feelings/types';
 import type { ThreatKind } from './core/gameEvents';
 import type { MotionMode } from './core/movement/ShrimpMotion';
+import type { AudioSnapshot } from './systems/AudioDirector';
 import type { ScentSnapshot } from './systems/ScentField';
 import type { ShrimpSnapshot } from './systems/Shoal';
 
@@ -56,6 +57,7 @@ export const debugState: {
   drift: (() => DriftSnapshot) | null;
   journal: (() => JournalSnapshot) | null;
   progress: (() => ProgressSnapshot) | null;
+  audio: (() => AudioSnapshot) | null;
 } = {
   player: null,
   feelings: null,
@@ -66,6 +68,7 @@ export const debugState: {
   drift: null,
   journal: null,
   progress: null,
+  audio: null,
 };
 
 /** What the browser test can ask about the open journal. */

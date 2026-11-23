@@ -54,11 +54,12 @@ la-vie-des-crevettes/
 │     └─ fonts/
 ├─ src/
 │  ├─ main.ts                 game config and scene list
-│  ├─ app.ts                  settings, storage and keyboard, shared by every scene
+│  ├─ app.ts                  settings, storage, keyboard and sound, shared by every scene
 │  ├─ core/                   no Phaser imports
 │  │  ├─ feelings/            FeelingsModel, mood rules
 │  │  ├─ bonds/
 │  │  ├─ threat/              ThreatDirector state machine
+│  │  ├─ audio/               the mix, which sound answers which moment, captions
 │  │  ├─ progress/            story steps, challenges, achievements, journal
 │  │  ├─ input/               ActionInput, bindings, presets
 │  │  ├─ movement/            ShrimpMotion, collision with circles and rectangles
@@ -111,7 +112,7 @@ Boot -> Preload -> Title -> Play (with Hud on top)
 | `AreaLoader` | Builds an area from its data file: ground, obstacles, cover, food, spawn points, triggers |
 | `ShrimpRig` | Draws and animates a shrimp from parts. Takes a mood and a movement state |
 | `MoodPresenter` | Applies the player's mood to the screen: darkened edges, colour, view width |
-| `AudioDirector` | Mixes music, ambience and effects from mood and events |
+| `AudioDirector` | Mixes music, ambience and effects from mood and events. The rules are `SoundMix` and the cues in `core/audio`, the captions too. The browser's sound is `SoundOut` in `src/platform/` (T93) |
 | `ScentField` | Works out and draws scent ribbons while Sense is held |
 | `Narrator` | Shows one line of narration at a time, with a minimum gap |
 | `DayNight` | Runs the light cycle from chapter 2 |

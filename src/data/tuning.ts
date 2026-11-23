@@ -591,3 +591,37 @@ export const DRIFT = {
   /** Landfall: seconds to settle, how much nearer the view sinks, seconds of the fade. */
   landfall: { settle: 3, sink: 1.15, fade: 1.5 },
 };
+
+/**
+ * Sound (doc 05, "Levels", and doc 10, "Sound"). Gains are 1 as recorded,
+ * filters in Hz, times in seconds to reach most of a change.
+ */
+export const SOUND = {
+  mix: {
+    ease: 0.5,
+    fear: 1.5,
+    relief: 4,
+    layers: 1.5,
+    muffle: 0.6,
+    back: 3,
+    area: { normal: 1, content: 1.12, hungry: 0.8, afraid: 0.25 },
+    bright: { normal: 9000, content: 16000, afraid: 500 },
+    uneasy: { afraid: 0.8, wary: 0.15 },
+    chime: 0.5,
+    shimmer: 0.4,
+    open: 20000,
+    hidden: 900,
+    soft: { level: 0.5, bright: 1500 },
+    frozenAmbience: 1.4,
+  },
+  /**
+   * Each bus before its slider. Music sits about 6 dB under the effects and
+   * the ambience under the music. The last gain keeps every peak below -6 dBFS.
+   */
+  bus: { music: 0.5, ambience: 0.35, effects: 1, ceiling: 0.5 },
+  /** Seconds a new area's music and ambience take to cross over. */
+  crossfade: 2.5,
+  /** Seconds a lasting sound of the shrimp's own takes to come and go. */
+  loopEase: 0.15,
+  caption: { least: 2, fade: 0.3 },
+};

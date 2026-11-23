@@ -21,6 +21,7 @@ import { CAMERA, CURIOSITY, DRIFT, FEELINGS, FRAME, HUNGER, MOOD } from '../data
 import { debugState } from '../debug';
 import { t } from '../i18n';
 import { DriftTeller } from '../systems/DriftTeller';
+import { AudioDirector } from '../systems/AudioDirector';
 import { MoodPresenter } from '../systems/MoodPresenter';
 import { Narrator } from '../systems/Narrator';
 import { keepLife } from '../systems/keep';
@@ -90,6 +91,7 @@ export class DriftScene extends Phaser.Scene implements JournalHost {
   private things: Discoverable[] = [];
   private pull: Pull = { value: 0, target: null };
   private presenter!: MoodPresenter;
+  private audio!: AudioDirector;
   private rim!: Rim;
   private narrator: Narrator | null = null;
   private teller: DriftTeller | null = null;
@@ -302,6 +304,12 @@ export class DriftScene extends Phaser.Scene implements JournalHost {
 
     this.scene.launch('Hud', { larva: true });
     this.hud = this.scene.get('Hud') as HudScene;
+    this.audio = new AudioDirector(this, {
+      area: 'drift',
+      bus: this.bus,
+      hud: () => this.hud,
+      walkSpeed: 1,
+    });
 
     this.narrator = null;
     this.teller = null;
@@ -316,6 +324,7 @@ export class DriftScene extends Phaser.Scene implements JournalHost {
       arrived: true,
       author: debugRequested(),
       find: (id) => this.found(id),
+      ring: (bells) => this.audio.ring(bells),
     });
     this.hadYolk = true;
     if (!this.explore) keepLife(app.store, this.life, { area: 'drift', stage: 'larva', at: null });
@@ -341,6 +350,7 @@ export class DriftScene extends Phaser.Scene implements JournalHost {
       narration: this.narrator?.showing ?? null,
       nearestMote: this.nearestMote(),
     });
+    debugState.audio = () => this.audio.snapshot;
     debugState.feelings = () => ({
       values: { ...this.feelings.values },
       mood: this.feelings.mood,
@@ -357,6 +367,8 @@ export class DriftScene extends Phaser.Scene implements JournalHost {
       this.bus.clear();
       debugState.drift = null;
       debugState.feelings = null;
+      debugState.audio = null;
+      this.audio.destroy();
       this.teller?.destroy();
       this.keeper.destroy();
       this.narrator?.clear();
@@ -436,6 +448,19 @@ export class DriftScene extends Phaser.Scene implements JournalHost {
       y: this.motion.y,
       target: this.feelings.mood === 'curious' ? this.pull.target : null,
       sensing: false,
+    });
+    // The larva is carried by the water: only music and the water's bed, none of its own sounds.
+    this.audio.update(frame, {
+      mood: this.feelings.mood,
+      hidden: false,
+      wary: false,
+      waryLeft: 0,
+      frozen: false,
+      soft: false,
+      dark: 0,
+      mode: 'rest',
+      speed: 0,
+      activity: 'free',
     });
     this.follow(frame);
     this.hud?.track(frame, axis.y !== 0 || axis.x !== 0, false);

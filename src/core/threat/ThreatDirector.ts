@@ -141,6 +141,8 @@ export class ThreatDirector {
   private shadowFelt = new Set<string>();
   private seen = new Set<string>();
   private miss: { seq: number; x: number; y: number } | null = null;
+  /** Gentle mode: hunters pass by and never chase. The settings can change it during play. */
+  gentle: boolean;
   private missSeen = new Map<string, number>();
 
   constructor(
@@ -152,6 +154,7 @@ export class ThreatDirector {
   ) {
     this.nextRoll = tuning.gap;
     this.ambientLeft = options.ambient ?? Infinity;
+    this.gentle = options.gentle;
   }
 
   /** Where the predator is: its feet once it stands, else its shadow. */
@@ -357,7 +360,7 @@ export class ThreatDirector {
         : legs.heading + 0.6 * Math.sin(this.time * 0.5);
     this.headAim = rotateToward(this.headAim, aim, this.bird.headTurn * dt);
     this.notice = Math.max(0, Math.min(1, this.notice + this.noticeChange(dt, player, distance)));
-    if (this.notice >= 1 && !this.options.gentle) {
+    if (this.notice >= 1 && !this.gentle) {
       this.enter('chase', this.tuning.chase, events);
     } else if (this.stageTime >= this.stageLength) {
       this.release(events);

@@ -70,6 +70,10 @@ To undo a change that is already published, open the merged pull request on GitH
 | A sound file | `public/assets/audio/<file>.ogg` and `<file>.m4a`, and the name it plays for in `SOUND_FILES` in `src/data/sounds.ts`. Only CC0 or CC BY (doc 05) | A row in `CREDITS.md` for each file, in the same commit | `sounds.test.ts`: both encodings, listed both ways, credited. `rules.test.ts` |
 | An area's music and ambience | `AREA_SOUND` in `src/data/sounds.ts` | Doc 05, "Ambience" | `sounds.test.ts` |
 | How the browser plays sound: buses, volumes, crossfades | `SOUND.bus` in `src/data/tuning.ts`. `src/platform/SoundOut.ts` | Doc 05, "Levels" | By ear |
+| A setting: its row, its values, what Left and Right do | `SETTING_ROWS` and `changeSetting` in `src/core/save/settingsMenu.ts`. Its value and default in `SettingsV1` in `src/core/save/settings.ts`. Its words in doc 13 | Doc 03, "Settings". T95 | `settingsMenu.test.ts`. `finish.spec.ts` |
+| How the settings screen looks and where it goes back to | `src/scenes/SettingsScene.ts` | Doc 03. T95 | `finish.spec.ts`. The controls tests in `play.spec.ts` |
+| About: what it says and lists | `src/scenes/AboutScene.ts`. The sources from `SOURCES` in `src/data/journal.ts`. The credits from `CREDITS_SHOWN` in `src/data/credits.ts` | Doc 07, "About page". `CREDITS.md`. T96 | `credits.test.ts`: the credits shown are the rows of `CREDITS.md` |
+| A font | `public/assets/fonts/`, with its licence text. `src/platform/fonts.ts` and `FONTS` in `src/config.ts` | A row in `CREDITS.md` and in `CREDITS_SHOWN`, in the same commit. Doc 04. T97 | `credits.test.ts`. `rules.test.ts`: every file under `public/` is credited |
 | The way the coast runs | See "Turning the coast round" | | |
 
 ## What each check catches

@@ -467,6 +467,8 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
     // A slow frame is played as several short steps, so the shrimp covers the
     // same ground whatever the frame rate.
     const frame = Math.min(deltaMs / 1000, FRAME.longest);
+    // Gentle mode can be changed from the pause menu's settings.
+    this.threats.director.gentle = app.settings.gentleMode;
     // Cornered, and in the molt itself, the keys do nothing.
     const locked = this.threats.cornered.running || this.molting.molt.locked;
     const sequence = this.threats.cornered.update(frame);

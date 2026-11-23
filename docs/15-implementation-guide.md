@@ -212,7 +212,7 @@ Goes wrong: cover drawn below the shrimp. Depth is `DEPTH.cover`, above `bedAnim
 
 Built on 2026-11-16. What follows is how it was planned. What changed on the way is in T60 to T65: a `MoodPicker` object instead of `pickMood`, a fuller context, antennae by life stage, how the colour and the edges are made, the F9 key, and what curiosity pulls toward before food and saving exist.
 
-Not built yet, and left to the step that brings what it needs: the food ribbons at 30% when hungry (step 5), the stopped sway when afraid and the stutter of an afraid walk (step 7), the wary pause every few steps (step 7), the narration that names each mood the first time (step 8), the setting "Name feelings on screen" in a menu (step 11). The setting works already if it is stored.
+Not built yet, and left to the step that brings what it needs: the food ribbons at 30% when hungry (step 5), the stopped sway when afraid and the stutter of an afraid walk (step 7), the wary pause every few steps (step 7), the narration that names each mood the first time (step 8), the setting "Name feelings on screen" in a menu (step 11, built).
 
 Document: 10, all of it. 14 for the expressions.
 
@@ -384,6 +384,10 @@ Documents: 03 (settings), 07 (About), 06 (counter).
 
 - Settings scene, About scene, the keyboard notice, fonts hosted with the game, the counter.
 - Then five people play while someone watches without helping.
+- As built (T95 to T98): the rows of the settings screen and what Left, Right and Enter do to each are in `src/core/save/settingsMenu.ts`, with unit tests; the screen is `src/scenes/SettingsScene.ts`. A new setting is a row there, its value in `SettingsV1`, and its words in doc 13. About is `src/scenes/AboutScene.ts`; its credits come from `src/data/credits.ts`, kept equal to `CREDITS.md` by a content test. The fonts load in `src/platform/fonts.ts`, the touch-only check is `src/platform/device.ts`.
+- `window.__lvdc.settings()` gives the settings as kept, so the browser test (`tests/e2e/finish.spec.ts`) checks each change and that it survives a reload. The phone test uses Playwright's device traits, not a second browser.
+- The Escape that leaves Settings or Controls must not also close the pause menu it returns to: `back()` calls `app.actions.clearQueued()` first.
+- Not built yet: the counter, which waits for the author's GoatCounter code (D32a).
 
 ## Later releases
 

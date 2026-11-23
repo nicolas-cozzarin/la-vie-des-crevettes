@@ -198,11 +198,25 @@ test.describe('explore', () => {
 });
 
 test.describe('controls', () => {
-  /** From the title: Controls is the second entry. Tail flip is the fifth row. */
+  /**
+   * From the title: Settings is the second entry, and Controls the second row
+   * of the settings. Tail flip is the fifth row of the controls.
+   */
   async function openControls(page: Page): Promise<void> {
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
+    await waitForScene(page, 'Settings');
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
     await waitForScene(page, 'Controls');
+  }
+
+  /** Escape leaves the controls for the settings, and the settings for the title. */
+  async function backToTitle(page: Page): Promise<void> {
+    await page.keyboard.press('Escape');
+    await waitForScene(page, 'Settings');
+    await page.keyboard.press('Escape');
+    await waitForScene(page, 'Title');
   }
 
   async function chooseTailFlip(page: Page): Promise<void> {
@@ -256,8 +270,7 @@ test.describe('controls', () => {
     expect(await tailFlipKeys(page)).toEqual(['Space', null]);
     await waitForScene(page, 'Controls');
 
-    await page.keyboard.press('Escape');
-    await waitForScene(page, 'Title');
+    await backToTitle(page);
   });
 
   test('Escape still opens pause after the pause key is changed', async ({ page }) => {
@@ -275,8 +288,7 @@ test.describe('controls', () => {
     await page.keyboard.press('KeyG');
     expect(await page.evaluate(() => window.__lvdc?.bindings().pause)).toEqual(['Escape', 'KeyG']);
 
-    await page.keyboard.press('Escape');
-    await waitForScene(page, 'Title');
+    await backToTitle(page);
     await startDrift(page);
     await page.keyboard.press('Escape');
     await waitForScene(page, 'Pause');

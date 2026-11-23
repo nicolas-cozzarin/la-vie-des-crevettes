@@ -1,5 +1,6 @@
 import type { Bindings } from './core/input/bindings';
 import type { Lang } from './core/i18n';
+import type { SettingsV1 } from './core/save/settings';
 import type {
   CreaturesSnapshot,
   DriftSnapshot,
@@ -19,6 +20,8 @@ export interface DebugHook {
   scenes(): string[];
   lang(): Lang;
   bindings(): Bindings;
+  /** Every setting, as kept. */
+  settings(): Readonly<SettingsV1>;
   /** The player's shrimp, or null outside play. */
   player(): PlayerSnapshot | null;
   /** The player's feelings, mood and conditions, or null outside play. */

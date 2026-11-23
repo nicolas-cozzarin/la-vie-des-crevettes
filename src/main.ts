@@ -10,6 +10,8 @@ import { HudScene } from './scenes/HudScene';
 import { JournalScene } from './scenes/JournalScene';
 import { PauseScene } from './scenes/PauseScene';
 import { PlayScene } from './scenes/PlayScene';
+import { SettingsScene } from './scenes/SettingsScene';
+import { AboutScene } from './scenes/AboutScene';
 import { TitleScene } from './scenes/TitleScene';
 
 const game = new Phaser.Game({
@@ -37,6 +39,8 @@ const game = new Phaser.Game({
     PauseScene,
     JournalScene,
     ControlsScene,
+    SettingsScene,
+    AboutScene,
   ],
 });
 
@@ -47,6 +51,7 @@ window.__lvdc = {
   scenes: () => game.scene.getScenes(true).map((scene) => scene.scene.key),
   lang: () => i18n.lang,
   bindings: () => app.settings.bindings,
+  settings: () => app.settings,
   player: () => debugState.player?.() ?? null,
   feelings: () => debugState.feelings?.() ?? null,
   scent: () => debugState.scent?.() ?? null,

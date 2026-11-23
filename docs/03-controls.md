@@ -28,7 +28,7 @@ The settings screen and all prompts show the letter printed on the player's own 
 
 ## Rebinding
 
-Location: Pause > Settings > Controls. Also reachable from the title screen. Until the Settings screen exists (roadmap step 11), Controls sits directly in the pause menu.
+Location: Pause > Settings > Controls, and Title > Settings > Controls. Escape goes back to Settings (T95).
 
 The screen lists every action with its two slots.
 

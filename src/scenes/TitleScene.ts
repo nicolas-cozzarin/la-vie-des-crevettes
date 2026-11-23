@@ -1,11 +1,11 @@
 import Phaser from 'phaser';
 import { app } from '../app';
 import { COLORS, FONTS, GAME_HEIGHT, GAME_WIDTH, TINTS } from '../config';
-import { LANGS } from '../core/i18n';
 import { newLife, type Life } from '../core/progress/life';
 import { lifeOf, loadSave, type SaveV1 } from '../core/save/save';
 import { isPlayableArea } from '../data/areas/index';
 import { t } from '../i18n';
+import { touchOnly } from '../platform/device';
 import { MenuList } from '../ui/MenuList';
 import { onMenuKey } from '../ui/menuKeys';
 import { textStyle } from '../ui/text';
@@ -30,6 +30,12 @@ export class TitleScene extends Phaser.Scene {
       .setOrigin(0.5);
     this.add.text(centerX, 420, t('title.tagline'), textStyle(40, COLORS.paleGreen)).setOrigin(0.5);
 
+    // A device with no keyboard sees the title and one line (doc 03).
+    if (touchOnly()) {
+      this.add.text(centerX, 640, t('notice.keyboard'), textStyle(36, COLORS.paper)).setOrigin(0.5);
+      return;
+    }
+
     // With a life kept, it goes on from there, or a new one begins.
     const save = loadSave(app.store);
     const life = save
@@ -44,8 +50,8 @@ export class TitleScene extends Phaser.Scene {
       save ? 580 : 610,
       [
         ...life,
-        { label: t('title.menu.controls'), run: () => this.toControls() },
-        { label: t('title.menu.language'), run: () => this.nextLanguage() },
+        { label: t('title.menu.settings'), run: () => this.toScene('Settings') },
+        { label: t('title.menu.about'), run: () => this.toScene('About') },
       ],
       { size: 44, gap: save ? 76 : 84, color: COLORS.paper, marker: TINTS.paleGreen },
     );
@@ -114,17 +120,9 @@ export class TitleScene extends Phaser.Scene {
     }
   }
 
-  private toControls(): void {
+  private toScene(key: 'Settings' | 'About'): void {
     if (this.leaving) return;
     this.leaving = true;
-    this.scene.start('Controls', { returnTo: 'Title' });
-  }
-
-  private nextLanguage(): void {
-    if (this.leaving) return;
-    this.leaving = true;
-    const next = LANGS[(LANGS.indexOf(app.settings.lang) + 1) % LANGS.length] ?? 'en';
-    app.update({ lang: next });
-    this.scene.restart();
+    this.scene.start(key, { from: 'Title' });
   }
 }

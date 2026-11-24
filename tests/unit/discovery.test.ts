@@ -21,6 +21,15 @@ describe('curiosity pull', () => {
   it('names the thing that pulls hardest', () => {
     expect(curiosityPull(700, 0, [crab, pod], new Set(), TUNING, BL).target).toBe(pod);
   });
+
+  it("is pulled by a pinned challenge's target at 0.6, even once it is known", () => {
+    const pinned = { thing: crab, weight: CURIOSITY.pinned };
+    const pull = curiosityPull(0, 0, [crab], new Set([crab.id]), TUNING, BL, pinned);
+    expect(pull.value).toBeCloseTo(0.6);
+    expect(pull.target).toBe(crab);
+    // Something not yet known still pulls harder.
+    expect(curiosityPull(900, 0, [pod], new Set(), TUNING, BL, pinned).target).toBe(pod);
+  });
 });
 
 describe('the discovery tracker', () => {

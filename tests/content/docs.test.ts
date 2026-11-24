@@ -88,7 +88,22 @@ describe('the documents', () => {
 describe('the script in doc 13', () => {
   const script = read('docs/13-script.md');
   const rows = new Map<string, [string, string]>();
+  // The tables of challenges and achievements give an id, then two texts in each language.
+  const paired: Record<string, [string, string]> = {
+    Challenges: ['challenge', 'what'],
+    Achievements: ['ach', 'how'],
+  };
+  let section = '';
   for (const line of script.split('\n')) {
+    if (line.startsWith('## ')) section = line.slice(3).trim();
+    const pair = paired[section];
+    const four = /^\| `([^`]+)` \| (.*?) \| (.*?) \| (.*?) \| (.*?) \|$/.exec(line);
+    if (pair && four?.[1]) {
+      const [prefix, second] = pair;
+      rows.set(`${prefix}.${four[1]}.name`, [four[2] ?? '', four[4] ?? '']);
+      rows.set(`${prefix}.${four[1]}.${second}`, [four[3] ?? '', four[5] ?? '']);
+      continue;
+    }
     const match = /^\| `([^`]+)` \| (.*?) \| (.*?) \|/.exec(line);
     if (match?.[1] && match[2] !== undefined && match[3] !== undefined) {
       rows.set(match[1], [match[2], match[3]]);

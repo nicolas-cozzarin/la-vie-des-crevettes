@@ -1,8 +1,11 @@
 import Phaser from 'phaser';
 import { app } from '../app';
 import { COLORS, FONTS, GAME_HEIGHT, GAME_WIDTH, TINTS } from '../config';
-import { LANGS } from '../core/i18n';
+import { newLife, type Life } from '../core/progress/life';
+import { lifeOf, loadSave, type SaveV1 } from '../core/save/save';
+import { isPlayableArea } from '../data/areas/index';
 import { t } from '../i18n';
+import { touchOnly } from '../platform/device';
 import { MenuList } from '../ui/MenuList';
 import { onMenuKey } from '../ui/menuKeys';
 import { textStyle } from '../ui/text';
@@ -27,16 +30,30 @@ export class TitleScene extends Phaser.Scene {
       .setOrigin(0.5);
     this.add.text(centerX, 420, t('title.tagline'), textStyle(40, COLORS.paleGreen)).setOrigin(0.5);
 
+    // A device with no keyboard sees the title and one line (doc 03).
+    if (touchOnly()) {
+      this.add.text(centerX, 640, t('notice.keyboard'), textStyle(36, COLORS.paper)).setOrigin(0.5);
+      return;
+    }
+
+    // With a life kept, it goes on from there, or a new one begins.
+    const save = loadSave(app.store);
+    const life = save
+      ? [
+          { label: t('title.menu.continue'), run: () => this.carryOn(save) },
+          { label: t('title.menu.newLife'), run: () => this.begin(save) },
+        ]
+      : [{ label: t('title.menu.play'), run: () => this.begin(null) }];
     const menu = new MenuList(
       this,
       centerX,
-      610,
+      save ? 580 : 610,
       [
-        { label: t('title.menu.play'), run: () => this.leave('Play') },
-        { label: t('title.menu.controls'), run: () => this.leave('Controls') },
-        { label: t('title.menu.language'), run: () => this.nextLanguage() },
+        ...life,
+        { label: t('title.menu.settings'), run: () => this.toScene('Settings') },
+        { label: t('title.menu.about'), run: () => this.toScene('About') },
       ],
-      { size: 44, gap: 84, color: COLORS.paper, marker: TINTS.paleGreen },
+      { size: 44, gap: save ? 76 : 84, color: COLORS.paper, marker: TINTS.paleGreen },
     );
     onMenuKey(this, (key) => menu.handle(key));
 
@@ -55,23 +72,57 @@ export class TitleScene extends Phaser.Scene {
       .setAlpha(0.6);
   }
 
-  private leave(to: 'Play' | 'Controls'): void {
+  /**
+   * A life begins in the Drift. A new life keeps the carnet: what was found,
+   * the challenges, achievements and cards. Nothing is ever taken away (doc 12).
+   */
+  private begin(save: SaveV1 | null): void {
     if (this.leaving) return;
     this.leaving = true;
-    if (to === 'Play') {
-      // The key that chose Play must not also act inside the game.
-      app.actions.clearQueued();
-      this.scene.start('Play');
+    let life: Life = newLife();
+    if (save) {
+      const kept = lifeOf(save);
+      life = {
+        ...newLife(),
+        discoveries: kept.discoveries,
+        challenges: kept.challenges,
+        achievements: kept.achievements,
+        cards: kept.cards,
+        stats: kept.stats,
+        generation: kept.generation,
+        promptsShown: kept.promptsShown,
+        playSeconds: kept.playSeconds,
+        journalSeen: kept.journalSeen,
+      };
+      // Counted for one life only.
+      life.stats.cornered = 0;
+    }
+    // The key that chose must not also act inside the game.
+    app.actions.clearQueued();
+    this.scene.start('Drift', { life });
+  }
+
+  /** Back to the life where it was kept: the Drift from its start, or a place at the last rest. */
+  private carryOn(save: SaveV1): void {
+    if (this.leaving) return;
+    this.leaving = true;
+    app.actions.clearQueued();
+    const life = lifeOf(save);
+    if (save.area !== 'drift' && isPlayableArea(save.area)) {
+      this.scene.start('Play', {
+        area: save.area,
+        life,
+        resume: true,
+        at: save.at ?? undefined,
+      });
     } else {
-      this.scene.start('Controls', { returnTo: 'Title' });
+      this.scene.start('Drift', { life });
     }
   }
 
-  private nextLanguage(): void {
+  private toScene(key: 'Settings' | 'About'): void {
     if (this.leaving) return;
     this.leaving = true;
-    const next = LANGS[(LANGS.indexOf(app.settings.lang) + 1) % LANGS.length] ?? 'en';
-    app.update({ lang: next });
-    this.scene.restart();
+    this.scene.start(key, { from: 'Title' });
   }
 }

@@ -28,8 +28,10 @@ export interface ScentWorld {
   shrimp: readonly ShrimpSource[];
   /** Where a predator passed in the last 30 s. */
   dangers: readonly ScentSource[];
-  /** Things not yet in the journal, and the pinned challenge's target. */
+  /** Things not yet in the journal. */
   unknown: readonly ScentSource[];
+  /** The pinned challenge's target: a white ribbon too, over and above the others. */
+  pinned?: ScentSource | null;
 }
 
 export interface Ribbon {
@@ -57,7 +59,8 @@ export const EMPTY_WORLD: ScentWorld = { foods: [], shrimp: [], dangers: [], unk
 /**
  * The ribbons to show from (x, y), with a range in design pixels. One per
  * food kind, to its nearest patch that has food. One per shrimp. One per
- * danger mark. One per unknown thing, at most `maxUnknown`. All within range.
+ * danger mark. One per unknown thing, at most `maxUnknown`, and one to the
+ * pinned challenge's target. All within range.
  */
 export function ribbons(
   x: number,
@@ -117,6 +120,14 @@ export function ribbons(
     .slice(0, tuning.maxUnknown);
   for (const { source, distance } of unknown) {
     found.push({ kind: 'unknown', ...pick(source), distance, strength: strength(distance) });
+  }
+  const pinned = world.pinned;
+  // Where a white ribbon already leads, one is enough.
+  const led = (source: ScentSource) =>
+    unknown.some((entry) => Math.hypot(entry.source.x - source.x, entry.source.y - source.y) < 1);
+  if (pinned && away(pinned) <= range && !led(pinned)) {
+    const distance = away(pinned);
+    found.push({ kind: 'unknown', ...pick(pinned), distance, strength: strength(distance) });
   }
   return found;
 }

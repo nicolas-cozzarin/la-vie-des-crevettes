@@ -24,7 +24,7 @@ type Cell =
   | { kind: 'reset'; button: Button }
   | { kind: 'back'; button: Button };
 
-type ReturnTo = 'Title' | 'Pause';
+type ReturnTo = 'Title' | 'Pause' | 'Settings';
 
 const PANEL = { x: 250, y: 34, w: 1420, h: 1012 };
 const LABEL_X = 330;
@@ -51,8 +51,12 @@ export class ControlsScene extends Phaser.Scene {
     super('Controls');
   }
 
-  init(data: { returnTo?: ReturnTo }): void {
+  /** Opened from the settings: where the settings themselves go back to. */
+  private settingsFrom: 'Title' | 'Pause' = 'Title';
+
+  init(data: { returnTo?: ReturnTo; settingsFrom?: 'Title' | 'Pause' }): void {
     this.returnTo = data.returnTo ?? 'Title';
+    this.settingsFrom = data.settingsFrom ?? 'Title';
   }
 
   create(): void {
@@ -65,7 +69,9 @@ export class ControlsScene extends Phaser.Scene {
     this.leaving = false;
 
     const centerX = GAME_WIDTH / 2;
-    if (this.returnTo === 'Pause') {
+    const overGame =
+      this.returnTo === 'Pause' || (this.returnTo === 'Settings' && this.settingsFrom === 'Pause');
+    if (overGame) {
       // The paused game stays visible behind.
       this.add.rectangle(centerX, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, TINTS.deepTeal, 0.5);
     } else {
@@ -336,6 +342,12 @@ export class ControlsScene extends Phaser.Scene {
   private back(): void {
     if (this.leaving) return;
     this.leaving = true;
-    this.scene.start(this.returnTo);
+    // The Escape that goes back must not also close the pause menu.
+    app.actions.clearQueued();
+    if (this.returnTo === 'Settings') {
+      this.scene.start('Settings', { from: this.settingsFrom, at: 1 });
+    } else {
+      this.scene.start(this.returnTo);
+    }
   }
 }

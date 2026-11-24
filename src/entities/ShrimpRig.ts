@@ -49,6 +49,10 @@ export interface RigFeel {
   wiggle?: number | null;
   /** One antenna is drawn down through the front legs, then the other (doc 10, "grooming"). */
   grooming?: boolean;
+  /** 0 to 1: the body arches, as in the molt (doc 14, "Molt"). */
+  arch?: number;
+  /** A rear leg reaches up over the carapace and rubs (doc 14, "Premolt scratch"). */
+  scratch?: boolean;
 }
 
 /** The expression as the rig holds it: `fan` always a number, and how firmly it is held. */
@@ -174,6 +178,11 @@ export class ShrimpRig {
   private groomPhase = 0;
   /** How much brighter the body is drawn: other shrimp when the player is social (doc 10). */
   private lift = 0;
+  /** 0 to 1: how far the body arches, and how far the rear leg reaches up to scratch. */
+  private arch = 0;
+  private scratch = 0;
+  /** How much larger the body is drawn after a molt, 1 for none. */
+  private growth = 1;
   private target: { x: number; y: number } | null = null;
   private readonly look: RigLook;
 
@@ -246,6 +255,16 @@ export class ShrimpRig {
     this.root.destroy(true);
   }
 
+  /** How see-through the whole shrimp is: 0.85 while soft, 0.35 for a shed shell. */
+  setAlpha(alpha: number): void {
+    if (this.root.alpha !== alpha) this.root.setAlpha(alpha);
+  }
+
+  /** Drawn larger by this factor: the growth of a molt (doc 10, "Molting"). */
+  setGrowth(factor: number): void {
+    this.growth = factor;
+  }
+
   /** Shown or hidden: a shrimp far out of view is not drawn. */
   setVisible(visible: boolean): void {
     if (this.root.visible !== visible) this.root.setVisible(visible);
@@ -263,7 +282,8 @@ export class ShrimpRig {
     this.clock += dt;
     this.swim += ((swimming ? 1 : 0) - this.swim) * approach(dt, 0.18);
     this.tuck += ((swimming || darting || gliding ? 1 : 0) - this.tuck) * approach(dt, 0.12);
-    this.fold += ((darting ? 1 : 0) - this.fold) * approach(dt, darting ? 0.03 : 0.14);
+    const folded = Math.max(darting ? 1 : 0, 0.55 * this.arch);
+    this.fold += (folded - this.fold) * approach(dt, darting ? 0.03 : 0.14);
 
     let spreadTarget = 0.5 + 0.08 * Math.sin(this.clock * 0.9);
     if (darting) spreadTarget = 1;
@@ -280,7 +300,7 @@ export class ShrimpRig {
     this.flutter += TAU * dt * lerp(1.1, 8.5, this.swim);
 
     // Rising off the bed brings the shrimp a little closer to the eye.
-    const bl = this.bodyLengthPx * (1 + 0.05 * Math.min(pose.height, 1.6));
+    const bl = this.bodyLengthPx * this.growth * (1 + 0.05 * Math.min(pose.height, 1.6));
     this.sweepPhase += e.antennaSweepRate * dt;
     this.flickPhase += e.antennuleRate * dt;
     this.swayPhase += 1.4 * dt;
@@ -299,7 +319,7 @@ export class ShrimpRig {
 
     this.lines.clear();
     this.lineShadows.clear();
-    const stroke = this.bodyLengthPx / 110;
+    const stroke = (this.bodyLengthPx * this.growth) / 110;
     this.drawLegs(pose, bl, stroke, speed, fx, fy);
     this.drawSwimmerets(bl, stroke);
     this.drawAntennules(pose, bl, stroke, fx, fy, rx, ry);
@@ -326,6 +346,8 @@ export class ShrimpRig {
     // One pick of both front pairs every half second.
     this.pickPhase += (TAU / 0.5) * dt;
     this.wiggle = feel?.wiggle ?? -1;
+    this.arch += ((feel?.arch ?? 0) - this.arch) * approach(dt, 0.4);
+    this.scratch += ((feel?.scratch ? 1 : 0) - this.scratch) * approach(dt, 0.08);
   }
 
   /** Where the body is drawn: leaning toward what it looks at, flinching, trembling, rocking. */
@@ -518,14 +540,17 @@ export class ShrimpRig {
         const pick = front
           ? this.picking * Math.max(0, Math.sin(this.pickPhase + (index % 2) * Math.PI)) * 0.7
           : 0;
+        // The premolt scratch: the last leg on the right reaches forward over the carapace.
+        const scratching = index === 0 && side > 0 ? this.scratch : 0;
         const forward = lerp(
-          (LEG_ANGLES[index] as number) * spreadOut + swing + pick,
-          -1.15,
-          this.tuck,
+          lerp((LEG_ANGLES[index] as number) * spreadOut + swing + pick, -1.15, this.tuck),
+          2.3,
+          scratching,
         );
+        const legReach = reach * (1 + 0.5 * scratching);
         const direction = heading + side * (Math.PI / 2 - forward);
-        const kneeX = rootX + Math.cos(direction) * reach * 0.58;
-        const kneeY = rootY + Math.sin(direction) * reach * 0.58;
+        const kneeX = rootX + Math.cos(direction) * legReach * 0.58;
+        const kneeY = rootY + Math.sin(direction) * legReach * 0.58;
         const shin = direction + side * 0.55;
         this.stroke(
           [
@@ -533,8 +558,8 @@ export class ShrimpRig {
             rootY,
             kneeX,
             kneeY,
-            kneeX + Math.cos(shin) * reach * 0.5,
-            kneeY + Math.sin(shin) * reach * 0.5,
+            kneeX + Math.cos(shin) * legReach * 0.5,
+            kneeY + Math.sin(shin) * legReach * 0.5,
           ],
           width,
           LEG_COLOR,

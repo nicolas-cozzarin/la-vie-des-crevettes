@@ -6,6 +6,9 @@ import { MenuList } from '../ui/MenuList';
 import { onMenuKey } from '../ui/menuKeys';
 import { textStyle } from '../ui/text';
 
+/** The scenes the pause menu can be laid over. */
+const GAMES = ['Drift', 'Play'] as const;
+
 /** The pause menu, laid over the paused game. Escape always brings it up. */
 export class PauseScene extends Phaser.Scene {
   private leaving = false;
@@ -36,13 +39,14 @@ export class PauseScene extends Phaser.Scene {
     const menu = new MenuList(
       this,
       centerX,
-      centerY - 50,
+      centerY - 75,
       [
         { label: t('pause.resume'), run: () => this.resume() },
-        { label: t('pause.controls'), run: () => this.leave('Controls') },
+        { label: t('pause.journal'), run: () => this.leave('Journal') },
+        { label: t('pause.settings'), run: () => this.leave('Settings') },
         { label: t('pause.quit'), run: () => this.leave('Title') },
       ],
-      { size: 40, gap: 84, color: COLORS.ink, marker: TINTS.deepTeal },
+      { size: 40, gap: 80, color: COLORS.ink, marker: TINTS.deepTeal },
     );
     onMenuKey(this, (key) => {
       if (key === 'back') this.resume();
@@ -60,18 +64,25 @@ export class PauseScene extends Phaser.Scene {
     this.leaving = true;
     // Keys pressed in the menu must not act inside the game.
     app.actions.clearQueued();
-    this.scene.resume('Play');
+    this.scene.resume(this.paused());
     this.scene.stop();
   }
 
-  private leave(to: 'Controls' | 'Title'): void {
+  private leave(to: 'Journal' | 'Settings' | 'Title'): void {
     if (this.leaving) return;
     this.leaving = true;
-    if (to === 'Controls') {
-      this.scene.start('Controls', { returnTo: 'Pause' });
+    if (to === 'Journal') {
+      this.scene.start('Journal', { game: this.paused(), from: 'pause' });
+    } else if (to === 'Settings') {
+      this.scene.start('Settings', { from: 'Pause' });
     } else {
-      this.scene.stop('Play');
+      this.scene.stop(this.paused());
       this.scene.start('Title');
     }
+  }
+
+  /** The game under the menu: the Drift or Play. */
+  private paused(): (typeof GAMES)[number] {
+    return GAMES.find((key) => this.scene.isPaused(key)) ?? 'Play';
   }
 }

@@ -16,17 +16,23 @@ The design is settled in docs 01 to 14. This document adds no rules of play. If 
 
 ## What exists
 
-After steps 0 to 6 and the art and design work of 2026-11-14 to 16.
+After steps 0 to 9 and the art and design work of 2026-11-14 to 16.
 
 | Path | What it is |
 |------|------------|
-| `src/main.ts` | Game config, scene list, the `window.__lvdc` hook for browser tests. `__lvdc.player()` gives the shrimp's place, mode, area, activity and zones. `__lvdc.feelings()` gives the five values, the mood, the forced mood, the conditions, wariness left, what has been found and what the shrimp is curious about. `__lvdc.scent()` gives the ribbons drawn now. `__lvdc.shrimp()` gives each other shrimp's place, behaviour, activity, mood, fear and bond. `__lvdc.creatures()` gives where each moving animal is and what it does, and the strength of the pale rim |
+| `src/main.ts` | Game config, scene list, the `window.__lvdc` hook for browser tests. `__lvdc.player()` gives the shrimp's place, mode, area, activity and zones. `__lvdc.feelings()` gives the five values, the mood, the forced mood, the conditions, wariness left, what has been found and what the shrimp is curious about. `__lvdc.scent()` gives the ribbons drawn now. `__lvdc.shrimp()` gives each other shrimp's place, behaviour, activity, mood, fear and bond. `__lvdc.creatures()` gives where each moving animal is and what it does, and the strength of the pale rim. `__lvdc.threat()` gives the threat's stage, kind, notice, strikes, strike ring, where the predator is, and whether the player is cornered. `__lvdc.player()` also gives the molt, the molts, the story steps done and the line on screen. `__lvdc.drift()` gives the larva in the Drift: where, its shape, zone, yolk, motes eaten, larvae touched and left, landfall, and the nearest mote. `__lvdc.progress()` gives the counts, challenges, achievements, cards, finds, the pinned challenge and the small line on screen. `__lvdc.journal()` gives the open journal's page, entry, entries and dots |
 | `src/app.ts` | Settings, storage and keyboard, shared by all scenes as `app` |
 | `src/config.ts` | Design size, colours, fonts, `DEPTH` layers |
 | `src/core/events.ts` | `EventBus`, typed. Play creates one bus of `GameEvents` and sends the mood, condition, tail flip and discovery events on it |
 | `src/core/gameEvents.ts` | `GameEvents`, the list below |
 | `src/core/input/` | Actions, bindings, presets, key labels, `ActionState` |
 | `src/core/movement/ShrimpMotion.ts` | Walk, swim, dart, glide, tiring, height. Takes `{ x, y, dart }` and a `Mover` |
+| `src/core/movement/DriftMotion.ts` | The larva in the Drift: carried by the flow, steered up and down, leaning with or against it, pushing in beats by shape (T84) |
+| `src/core/drift/` | `plankton.ts`: the clouds of motes, `Motes` (drift, eat, nearest) and `Larvae`, the other larvae that thin out out of sight (T54). `drifters.ts`: copepods that hop, bells that breathe and that the larva slides round |
+| `src/core/narration/NarrationQueue.ts` | One line at a time, must lines that wait, the 20 s gap, lines once a life or each time with their `every` |
+| `src/core/progress/` | `Story`: the story steps from what the game does, and the first step not done. `life.ts`: the `Life` record a life carries from place to place and keeps in the save. `Progress`: counts what the game does into stats and reports challenges moving or done, achievements and cards (T90). `SmallLines`: the queue of the small line |
+| `src/core/journal/journal.ts` | What the journal shows: the cursor, the chapters reached, the challenge lines, pinning, the companion lines, the marks of "new" (T91) |
+| `src/core/molt/Molt.ts` | The molt's phases: signal, shelter, molt, soft, hardened, and the scratching, the arch and the growth (T86) |
 | `src/core/movement/collision.ts` | `moveCircle` against circles, rectangles and bounds |
 | `src/core/world/cover.ts`, `zones.ts` | `nearestCover`, `isUnder`, `tuckPoint`. `zoneAt`, `ZoneTracker` with enter and leave |
 | `src/core/activity/Activity.ts` | The activity state machine of doc 10: `free`, `hiding`, `grazing`, `sensing`, `greeting` and `calling` so far. `grazeable` says whether Interact would start a graze, `greetable` whether Greet would start a greeting. Other shrimp use it too |
@@ -34,14 +40,15 @@ After steps 0 to 6 and the art and design work of 2026-11-14 to 16.
 | `src/core/scent/ribbons.ts` | `ribbons(x, y, world, range, tuning)`: which ribbons to show. `RibbonMemory` for `ribbon:followed` |
 | `src/data/foods.ts` | `FOODS`: hunger removed, seconds and regrowth for each food |
 | `src/core/movement/angles.ts` | `approach`, `angleDiff`, `rotateToward`, `wrapAngle` |
-| `src/core/save/` | Settings with versions. `KeyValueStore` |
+| `src/core/save/` | Settings with versions. `KeyValueStore`. `save.ts`: `SaveV1`, `saveOf`, `lifeOf` and `loadSave` with defaults. `RestSaver`: when a rest is long enough to save (T89) |
 | `src/core/i18n/`, `src/i18n.ts`, `src/locales/` | `t('key', params)` |
 | `src/core/random.ts` | `seededRandom`, and `seedOf(text)` for a seed from a name |
 | `src/core/bonds/Bonds.ts` | Bond values, gains with their limits, stages. A bond never falls |
 | `src/core/npc/` | The mind of another shrimp. `behaviours.ts` scores and chooses, `steer.ts` finds a way round roots, `alarm.ts` passes a fright on, `shoal.ts` gives the shoal's pulls, `NpcMind.ts` puts them together and returns what to press |
-| `src/core/creatures/` | `Crab`, `Snail` and `School`: how the animals of the mangrove move |
+| `src/core/creatures/` | `Crab`, `Snail`, `Hermit` and `School`: how the animals of the mangrove move (T92) |
+| `src/core/threat/` | `ThreatDirector`: stages, the gap, the ambient roll, notice, gentle mode, and what each shrimp feels. `bird.ts`: where the bird stands, its legs, the aim and the hit. `cornered.ts`: the shelter to wake in |
 | `src/data/shrimp.ts` | `COMPANIONS` (Brise, Nacre, Écume) and `UNNAMED`: temperament, favourite food, size and look |
-| `src/data/tuning.ts` | `MOTION`, `FRAME`, `CAMERA`, `SHADOW`, `WORLD`, `HIDE`, `COVER`, `WATER_LIGHT`, and for the feelings `HUNGER`, `FEAR`, `COMFORT`, `CURIOSITY`, `COMPANY`, `WARY` (together `FEELINGS`), `MOOD`, `MOOD_SCREEN`, `GRAZE`, `SENSE`, and for step 6 `GREET`, `BOND`, `NPC`, `STEER`, `ALARM`, `SHOAL`, `CREATURES` |
+| `src/data/tuning.ts` | `MOTION`, `FRAME`, `CAMERA`, `SHADOW`, `WORLD`, `HIDE`, `COVER`, `WATER_LIGHT`, and for the feelings `HUNGER`, `FEAR`, `COMFORT`, `CURIOSITY`, `COMPANY`, `WARY` (together `FEELINGS`), `MOOD`, `MOOD_SCREEN`, `GRAZE`, `SENSE`, for step 6 `GREET`, `BOND`, `NPC`, `STEER`, `ALARM`, `SHOAL`, `CREATURES`, for step 7 `THREAT`, `BIRD`, `CORNERED`, and for step 8 `NARRATION`, `PLACE_NAME`, `STORY`, `MOLT`, `DRIFT` |
 | `src/core/world/kinds.ts` | `FOOD_KINDS`, the closed list of foods, `AREA_IDS` and `LIFE_STAGES` |
 | `src/core/world/discovery.ts` | `curiosityPull` and `DiscoveryTracker`: what pulls curiosity, and when a thing is found |
 | `src/core/feelings/mood.ts` | `MOODS`, the `Mood` type and `MoodPicker`: enter and leave levels, the two timers (T60) |
@@ -52,6 +59,9 @@ After steps 0 to 6 and the art and design work of 2026-11-14 to 16.
 | `src/data/areas/index.ts` | `AREAS`, the areas that can be played, `areaFor(id)`, `pointFor` (the coast's mirror) and `STAGE_IN`, the life stage of each area (T61) |
 | `src/data/areas/mirror.ts` | `mirrorArea`, doc 19 |
 | `src/data/areas/sandFlat.ts` | The test area of step 2. The game no longer loads it |
+| `src/data/drift.ts` | The Drift as data, `DRIFT_AREA`: zones A to E, the water's colours, the clouds, copepods, bells, shafts, root shadows, haze and landfall. `driftFor()` turns it round with the coast (T83) |
+| `src/data/story.ts` | `STORY_STEPS` for chapters 0 and 1, and `NARRATION_LINES`, each line's weight |
+| `src/data/challenges.ts`, `achievements.ts`, `journal.ts`, `discoveries.ts`, `progress.ts` | The goals of doc 12 and what each reads, `CHAPTERS`, the pinned targets, the cards and their sources, the Discoveries page, all put together as `PROGRESS_DEFS` |
 | `src/art/painters/` | Every painter, by family. `index.ts` lists them all as `PAINTERS` |
 | `src/art/TextureFactory.ts` | `ensureTexture(scene, name)` |
 | `src/art/fit.ts` | `imageFit(name)`: which part of a picture is solid, which pictures are tiles, cover or light |
@@ -63,12 +73,19 @@ After steps 0 to 6 and the art and design work of 2026-11-14 to 16.
 | `src/systems/MoodPresenter.ts` | The mood on the screen: a colour matrix on the play camera, the zoom, the lean of the view, the dimming of Sense, and the HUD's edges and word (T62) |
 | `src/systems/ScentField.ts` | Draws the ribbons with `Rope`, bending the `scent.*` strokes, and fades them in and out (T67) |
 | `src/systems/Shoal.ts` | The other shrimp of an area: steps them, passes the alarm, keeps them apart, gives the bonds, draws them. The shoal's pulls start from chapter 2 |
-| `src/systems/Creatures.ts` | The crabs, snails and fish that move, drawn from their pictures. `LIVE_KINDS` lists them |
+| `src/systems/Creatures.ts` | The crabs, snails, hermit crabs and fish that move, drawn from their pictures. `LIVE_KINDS` lists them |
 | `src/systems/Rim.ts` | The pale rim on what the shrimp is curious about (T76) |
+| `src/systems/Threats.ts` | The threats of a place: the director, the bird, the cornered sequence and the triggers that start a scripted threat |
+| `src/systems/CorneredSequence.ts` | The blur, the dark, the one flip and the return (T79) |
+| `src/systems/Narrator.ts` | The narration and the place names on the HUD, by the rules of `NarrationQueue` (T82) |
+| `src/systems/StoryTeller.ts`, `DriftTeller.ts` | The story of the mangrove and of the Drift: they hear the game, mark the steps done and say each line when its moment comes |
+| `src/systems/Molting.ts` | The player's molt on screen: the scratching, the arch, backing out, the pale shell left behind, the growth |
+| `src/systems/ProgressKeeper.ts` | One per scene that plays a place: hears the game's events, feeds `Progress`, sends `challenge:*`, `achievement` and `card:unlocked`, and steps the small line. `keep.ts` writes the save |
+| `src/entities/Bird.ts` | The wading bird drawn from what the director says: shadow, head, feet, ripples, strike ring, beak and splash (T78) |
 | `src/entities/NpcShrimp.ts` | Another shrimp: motion, feelings, activity, mind and rig together |
 | `src/entities/ShrimpRig.ts` | The shrimp drawn from parts. Takes a look (with a tint, and a paler tail fan for Nacre), and on each frame an expression, a target to look at, the startle, the grazing legs, grooming and the first-taste wiggle. `setLift` brightens it |
-| `src/scenes/` | Boot, Title, Play, Hud, Pause, Controls. Play takes `{ area, explore, at }`, steps the feelings in its loop and finds things. Hud draws the edges, fear's edges, the mood's name and an activity's prompt |
-| `src/platform/` | The only code that touches the browser's keyboard, storage and address. `address.ts` reads `?explore=`, `&at=` and `?debug`. `KeyboardSource.onDebugKey` hears F9 (T63) |
+| `src/scenes/` | Boot, Title, Drift, Play, Hud, Pause, Journal, Controls. Title offers Continue and New life when a life is kept. Journal is the carnet over the paused game (T91). Title's Play opens the Drift, and landfall opens the mangrove with the life so far. Drift takes `{ explore, at }`. Play takes `{ area, explore, at, life }`, steps the feelings in its loop and finds things. Hud draws the edges, fear's edges, the mood's name, an activity's prompt, the narration and the place names, and fades the hints while cornered. Pause resumes whichever of Drift and Play it lies over |
+| `src/platform/` | The only code that touches the browser's keyboard, storage and address. `address.ts` reads `?explore=`, `&at=` and `?debug`. `?explore=drift` opens the Drift. `KeyboardSource.onDebugKey` hears F8 (T86), F9 (T63) and F10 (T77) |
 | `src/ui/` | Buttons, menu list, text styles |
 | `tests/unit/`, `tests/content/`, `tests/e2e/` | Vitest and Playwright. `tests/content/areas.test.ts` checks every area file: images have painters, things are inside the area and not inside each other, strip ends are closed |
 
@@ -108,6 +125,8 @@ Phaser 4 ships its own guides in `node_modules/phaser/skills/`, one folder per s
 | Colour matrix | Methods moved onto a property: `filter.colorMatrix.saturate(...)` |
 | Geometry | `Point` is replaced by `Vector2` |
 | Still there | `TileSprite`, `Container`, `Layer`, `Graphics`, `Rope`, `RenderTexture`, `ParticleEmitter`, tweens, scenes |
+| Scene fields | A scene already has `time`, `sys`, `add` and others. A field of the same name breaks the scene's type |
+| Launching a scene | `scene.launch(key)` with no data hands the scene the data it had last time. Pass the data every time, as Play and the Drift do for the HUD |
 
 Not yet tried in this project, so check before relying on them: filters on the main camera together with a second scene on top, particles in number, `Rope` for the scent ribbons, sound.
 
@@ -193,7 +212,7 @@ Goes wrong: cover drawn below the shrimp. Depth is `DEPTH.cover`, above `bedAnim
 
 Built on 2026-11-16. What follows is how it was planned. What changed on the way is in T60 to T65: a `MoodPicker` object instead of `pickMood`, a fuller context, antennae by life stage, how the colour and the edges are made, the F9 key, and what curiosity pulls toward before food and saving exist.
 
-Not built yet, and left to the step that brings what it needs: the food ribbons at 30% when hungry (step 5), the stopped sway when afraid and the stutter of an afraid walk (step 7), the wary pause every few steps (step 7), the narration that names each mood the first time (step 8), the setting "Name feelings on screen" in a menu (step 11). The setting works already if it is stored.
+Not built yet, and left to the step that brings what it needs: the food ribbons at 30% when hungry (step 5), the stopped sway when afraid and the stutter of an afraid walk (step 7), the wary pause every few steps (step 7), the narration that names each mood the first time (step 8), the setting "Name feelings on screen" in a menu (step 11, built).
 
 Document: 10, all of it. 14 for the expressions.
 
@@ -289,6 +308,8 @@ Tests: flee thresholds by temperament. Bond gains and their once-per limits. Sta
 
 ## Step 7. The bird
 
+Built on 2026-11-22. What follows is how it was planned. What changed on the way is in T77 to T81. `Threats` in `src/systems/` holds the director, the bird and the cornered sequence for the play scene. The director also says what each other shrimp feels, so the shoal reads the same threat as the player.
+
 Document: 10 ("Threats").
 
 | File | Job |
@@ -310,6 +331,8 @@ Goes wrong: a strike landing on a player under cover. A second threat starting d
 
 ## Step 8. A life with a shape
 
+Built on 2026-11-22. What follows is how it was planned. What changed on the way is in T82 to T87: the Drift is its own scene with its own data (T83), its rules are in `src/core/drift/` beside `DriftMotion`, the story is `src/core/progress/Story.ts` with a `StoryTeller` for the mangrove and a `DriftTeller` for the Drift, and the move from the Drift to the mangrove is a fade to black between the two scenes.
+
 Documents: 11 (Drift), 12 (story steps), 13 (narration), 10 (molt).
 
 | File | Job |
@@ -327,6 +350,8 @@ Notes:
 - `end.continued` is shown at the creek mouth after the molt, in release 0.1 only.
 
 ## Step 9. Journal, challenges, achievements, saving
+
+Built on 2026-11-22. What follows is how it was planned. What changed on the way is in T88 to T92: the small line's queue is `src/core/progress/SmallLines.ts`, drawn by the HUD, and a `ProgressKeeper` in each scene feeds `Progress`. The hermit crab came in so that "Slowly" can be done in chapter 1 (T92).
 
 Document: 12.
 
@@ -350,6 +375,8 @@ Document: 05.
 - `src/systems/AudioDirector.ts` listens to `mood:changed`, `condition:changed`, `threat:stage` and the action events.
 - No sound file enters the repository without its row in `CREDITS.md`. The content test enforces it.
 - Start the search for music early. It is the slowest part.
+- As built (T93): the rules are in `src/core/audio/`, the browser's sound in `src/platform/SoundOut.ts`. A file is added in three places in one commit: the `.ogg` and `.m4a` under `public/assets/audio/`, its name in `SOUND_FILES` in `src/data/sounds.ts`, and its row in `CREDITS.md`. Convert with ffmpeg: `ffmpeg -i in.wav -c:a libvorbis -q:a 4 name.ogg` and `ffmpeg -i in.wav -c:a aac -b:a 112k name.m4a`, mono for effects.
+- `window.__lvdc.audio()` gives the mix's levels, the caption on screen and the last sounds asked for, so the browser test checks the mix with no file at all.
 
 ## Step 11. Finish and publish
 
@@ -357,6 +384,10 @@ Documents: 03 (settings), 07 (About), 06 (counter).
 
 - Settings scene, About scene, the keyboard notice, fonts hosted with the game, the counter.
 - Then five people play while someone watches without helping.
+- As built (T95 to T98): the rows of the settings screen and what Left, Right and Enter do to each are in `src/core/save/settingsMenu.ts`, with unit tests; the screen is `src/scenes/SettingsScene.ts`. A new setting is a row there, its value in `SettingsV1`, and its words in doc 13. About is `src/scenes/AboutScene.ts`; its credits come from `src/data/credits.ts`, kept equal to `CREDITS.md` by a content test. The fonts load in `src/platform/fonts.ts`, the touch-only check is `src/platform/device.ts`.
+- `window.__lvdc.settings()` gives the settings as kept, so the browser test (`tests/e2e/finish.spec.ts`) checks each change and that it survives a reload. The phone test uses Playwright's device traits, not a second browser.
+- The Escape that leaves Settings or Controls must not also close the pause menu it returns to: `back()` calls `app.actions.clearQueued()` first.
+- Not built yet: the counter, which waits for the author's GoatCounter code (D32a).
 
 ## Later releases
 

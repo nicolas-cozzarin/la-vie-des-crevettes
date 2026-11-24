@@ -6,11 +6,14 @@ type MenuHandler = (key: MenuKey) => void;
 type CaptureHandler = (code: string) => void;
 
 /**
- * The debug key. It is not a game action, so it is not in the bindings and
- * cannot be rebound. It does something only while a handler listens, which
- * the play scene does only with `?debug` (doc 15, step 4).
+ * The debug keys. They are not game actions, so they are not in the bindings
+ * and cannot be rebound. They do something only while a handler listens,
+ * which the play scene does only with `?debug` (doc 15, steps 4 and 7).
  */
-const DEBUG_KEY = 'F9';
+const DEBUG_KEYS = { F8: 'molt', F9: 'mood', F10: 'threat' } as const;
+
+/** What a debug key does: F8 brings the molt signal (step 8), F9 cycles the mood, F10 calls a threat now (step 7). */
+export type DebugKey = (typeof DEBUG_KEYS)[keyof typeof DEBUG_KEYS];
 
 export interface KeyboardSourceOptions {
   /** The bindings in use right now. */
@@ -26,7 +29,7 @@ export interface KeyboardSourceOptions {
 export class KeyboardSource {
   private readonly menuHandlers = new Set<MenuHandler>();
   private readonly blurHandlers = new Set<() => void>();
-  private readonly debugHandlers = new Set<() => void>();
+  private readonly debugHandlers = new Set<(key: DebugKey) => void>();
   private captureHandler: CaptureHandler | null = null;
   private attached = false;
 
@@ -65,8 +68,8 @@ export class KeyboardSource {
     return () => this.blurHandlers.delete(handler);
   }
 
-  /** Hear the debug key. Returns a function that stops listening. */
-  onDebugKey(handler: () => void): () => void {
+  /** Hear the debug keys. Returns a function that stops listening. */
+  onDebugKey(handler: (key: DebugKey) => void): () => void {
     this.debugHandlers.add(handler);
     return () => this.debugHandlers.delete(handler);
   }
@@ -102,9 +105,10 @@ export class KeyboardSource {
       return;
     }
 
-    if (code === DEBUG_KEY && this.debugHandlers.size > 0) {
+    const debug = (DEBUG_KEYS as Record<string, DebugKey>)[code];
+    if (debug && this.debugHandlers.size > 0) {
       event.preventDefault();
-      if (!event.repeat) for (const handler of [...this.debugHandlers]) handler();
+      if (!event.repeat) for (const handler of [...this.debugHandlers]) handler(debug);
       return;
     }
 

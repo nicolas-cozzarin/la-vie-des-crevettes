@@ -1,4 +1,4 @@
-import { CRAB_CLAW_JOINT } from './painters/creatures';
+import { CRAB_CLAW_JOINT, HERMIT_LEGS_JOINT, HERMIT_SHELL_MOUTH } from './painters/creatures';
 import {
   HUNTER_TAIL_JOINT,
   HUNTER_TAIL_OWN_JOINT,
@@ -36,6 +36,7 @@ const TURTLE_SHELL_LENGTH = 784;
 export const STILL_REACH: Readonly<Record<CreatureDef['kind'], number>> = {
   fiddlerCrab: 1.7,
   snail: 0.7,
+  hermitCrab: 0.8,
   smallFish: 3.4,
   turtle: 5.6,
   huntingFish: 3.2,
@@ -141,6 +142,24 @@ export function makeStills(paintImage: ImageOf): Stills {
       }
       ctx.restore();
       drawCentred(ctx, 'snail.shell', creature.x, creature.y, width, heading);
+    } else if (creature.kind === 'hermitCrab') {
+      // The shell, with the legs and claws out of its mouth, as in play.
+      const shell = paintImage('snail.shell');
+      const legs = paintImage('hermit.legs');
+      const mouth = HERMIT_SHELL_MOUTH.x - shell.width / 2;
+      const scale = (0.9 * bl) / (shell.width / 2 + mouth + legs.width - HERMIT_LEGS_JOINT.x);
+      softShadow(ctx, creature.x + 3, creature.y + 5, 0.9 * bl, 0.45 * bl, 0.4, heading);
+      ctx.save();
+      ctx.translate(creature.x, creature.y);
+      ctx.rotate(heading);
+      ctx.scale(scale, scale);
+      ctx.drawImage(shell, -shell.width / 2, -shell.height / 2);
+      ctx.drawImage(
+        legs,
+        mouth - HERMIT_LEGS_JOINT.x,
+        HERMIT_SHELL_MOUTH.y - shell.height / 2 - HERMIT_LEGS_JOINT.y,
+      );
+      ctx.restore();
     } else if (creature.kind === 'smallFish') {
       const random = seededRandom(creature.x * 7 + creature.y);
       const count = creature.count ?? 12;

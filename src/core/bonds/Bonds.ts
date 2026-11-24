@@ -62,6 +62,13 @@ export class Bonds {
     return this.bonds.get(id)?.value ?? 0;
   }
 
+  /** Bonds kept in the save. */
+  load(values: Readonly<Record<string, number>>): void {
+    for (const [id, value] of Object.entries(values)) {
+      this.bond(id).value = Math.min(1, Math.max(0, value));
+    }
+  }
+
   /** The stage, with an unnamed shrimp that has been greeted counted as Familiar. */
   stage(id: string): BondStage {
     const stage = stageOf(this.value(id), this.tuning.stages);

@@ -482,7 +482,7 @@ The same for every threat. No contact is ever drawn.
 | Time | What happens |
 |------|--------------|
 | 0.00 s | The instant before contact. The picture blurs and darkens over 0.25 s. With reduced motion: a plain fade |
-| 0.25 s | The shrimp darts away by itself, three flips, already half lost in the blur |
+| 0.25 s | The shrimp darts away by itself, one tail flip (T79), already half lost in the blur |
 | 0.60 s | Dark. Sound drops out |
 | 1.80 s | The picture returns over 1.5 s. The shrimp is tucked in the nearest shelter that the predator is not within 6 BL of. Sound returns slowly |
 | 3.30 s | Control returns. Fear is 0.9 and holds for 3 s. `wary` will last 40 s |

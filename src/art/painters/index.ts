@@ -3,6 +3,7 @@ import { channelPainters } from './channel';
 import { creaturePainters } from './creatures';
 import { driftPainters } from './drift';
 import { effectPainters } from './effects';
+import { iconPainters } from './icons';
 import { lagoonPainters } from './lagoon';
 import { lagoonAnimalPainters } from './lagoonAnimals';
 import { mangrovePainters } from './mangrove';
@@ -22,6 +23,7 @@ export const PAINTERS: Readonly<Record<string, Painter>> = {
   ...channelPainters,
   ...wastePainters,
   ...effectPainters,
+  ...iconPainters,
 };
 
 /** Painters by family, for the atelier. `ground` is the colour shown behind them. */
@@ -48,4 +50,5 @@ export const PAINTER_GROUPS: PainterGroup[] = [
   { id: 'channel', title: 'Channel', ground: '#33434A', names: Object.keys(channelPainters) },
   { id: 'waste', title: 'Litter (D43)', ground: '#A89C7C', names: Object.keys(wastePainters) },
   { id: 'effects', title: 'Effects', ground: '#3F4E52', names: Object.keys(effectPainters) },
+  { id: 'icons', title: 'Journal marks', ground: '#F6F1E4', names: Object.keys(iconPainters) },
 ];

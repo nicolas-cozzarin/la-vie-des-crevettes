@@ -160,6 +160,8 @@ export const CURIOSITY = {
   /** BL. The Sense range, which is also how far curiosity reaches. */
   range: { juvenile: 8, subAdult: 11, adult: 14 },
   weights: { creature: 1, thing: 1, food: 0.8 },
+  /** The target of the challenge pinned in the journal. */
+  pinned: 0.6,
   /** BL and seconds to find each kind of thing. */
   find: {
     creature: { distance: 2.5, seconds: 2 },
@@ -376,6 +378,18 @@ export const CREATURES = {
     trailStep: 0.06,
     trailPoints: 40,
   },
+  /** Doc 11, "Hermit crab". */
+  hermit: {
+    speed: 0.5,
+    run: { min: 0.3, max: 0.7 },
+    pause: { min: 1, max: 3 },
+    turn: 1.2,
+    home: 2,
+    rushed: 1.5,
+    calm: 4,
+    outTime: 1,
+    gentle: 1,
+  },
   fish: {
     spread: 1.9,
     wide: 1.3,
@@ -388,4 +402,226 @@ export const CREATURES = {
   },
   /** How bright the pale rim on a curiosity target is, and its width in pixels (doc 11, `fx.rim`). */
   rim: { color: 0xf4f1e4, strength: 0.35, width: 6 },
+};
+
+/** The threat director (doc 10, "Threats"). Seconds unless said. */
+export const THREAT = {
+  gap: 60,
+  roll: 10,
+  meanWait: 150,
+  /** BL. */
+  coverWithin: 5,
+  cue: { min: 2, max: 3 },
+  presence: { min: 5, max: 10 },
+  chase: 12,
+  cornered: 3.3,
+  release: { min: 3, max: 4 },
+  notice: { hidden: -1, still: -0.3, walk: 0.35, swim: 0.6, flip: 0.5, far: 0.5, first: 0.5 },
+};
+
+/** The wading bird (doc 10, "The wading bird"). Distances in BL, times in seconds. */
+export const BIRD = {
+  shadowSpeed: 3,
+  pass: 1,
+  crossBeforeEnd: 1,
+  step: 2,
+  stepSeconds: 1.2,
+  stance: 2.6,
+  stand: { min: 4, max: 6, clear: 2 },
+  reach: 5,
+  ring: { radius: 1, warn: 1, firstWarn: 1.3 },
+  lead: 0.25,
+  hit: 0.7,
+  strikes: 3,
+  strikeGap: 2,
+  giveUp: { hidden: 2, far: 8, seconds: 12 },
+  liftGap: 0.6,
+  range: 6,
+  sight: 8,
+  shadowReach: 3,
+  missReach: 3,
+  headTurn: 1.6,
+  /** The way the first bird's shadow comes from: the north-east, before the coast is turned. */
+  firstFrom: -Math.PI / 4,
+};
+
+/** Being cornered (doc 10, "Cornered"). Seconds from the instant before contact. */
+export const CORNERED = {
+  blurred: 0.25,
+  flips: 0.25,
+  dark: 0.6,
+  back: 1.8,
+  control: 3.3,
+  /** BL. */
+  away: 6,
+};
+
+/** The narration line (doc 12, "What shows over play"). Seconds. */
+export const NARRATION = {
+  gap: 20,
+  fadeIn: 0.6,
+  hold: 4,
+  perLetter: 0.06,
+  fadeOut: 0.8,
+};
+
+/** A place's name when it is first entered (doc 13, "Places"). Seconds. */
+export const PLACE_NAME = {
+  fade: 0.6,
+  hold: 3,
+};
+
+/** When the story's lines come (doc 12, "Story steps"; doc 13, "Narration"). Seconds, and BL. */
+export const STORY = {
+  /** After the shrimp is full, the Sense hint and its prompt. */
+  senseHint: 5,
+  /** After the first greeting, once the bird has gone, the molt signal. */
+  moltAfterGreet: 60,
+  /** After the molt hardens, the taste of salt. */
+  saltAfterHard: 10,
+  /** The first calm must last this long to be named. */
+  calmFor: 10,
+  /** Into the first wary time, its line. */
+  waryLine: 8,
+  /** The first shrimp this close is met. BL. */
+  meet: 4,
+  /** Into the wait for the molt, out in the open, the body asks for cover. */
+  notHere: 20,
+};
+
+/** Saving at rest (doc 02, "Saving"). Seconds. */
+export const SAVE = {
+  /** Still under cover this long is a rest, and the life is kept. */
+  rest: 3,
+  /** At least this long between two saves at rest. */
+  gap: 30,
+};
+
+/** The small line at the top right (doc 12, "What shows over play"). Seconds. */
+export const SMALL_LINE = {
+  hold: 4,
+  fade: 0.4,
+};
+
+/** Molting (doc 10, "Molting"). Seconds unless said. */
+export const MOLT = {
+  shelter: 2,
+  molt: 6,
+  soft: 30,
+  hardened: 3,
+  scratch: 0.6,
+  scratchGap: [3, 5] as [number, number],
+  softSpeed: 0.5,
+  /** The body grows by this share at each molt. */
+  growth: 0.12,
+  /** Hunger added as the new shell hardens. */
+  hunger: 0.2,
+  /** The view eases out to this share of the zoom by each molt: 1.40, 1.30, 1.20, 1.10 (doc 10). */
+  viewByMolts: [1.4, 1.3, 1.2, 1.1],
+  /** How far the body backs out of the old shell, in BL. */
+  backOut: 0.9,
+  /** Seconds the empty shell takes to drift off, and how far it goes, in BL. */
+  shellDrift: 60,
+  shellAway: 3,
+  /** How see-through the empty shell is. */
+  shellAlpha: 0.35,
+  /** How see-through the soft body is. */
+  softAlpha: 0.85,
+};
+
+/** The Drift, chapter 0 (doc 11, "Chapter 0. Drift"; doc 10, "The larva"). Pixels and seconds. */
+export const DRIFT = {
+  motion: {
+    /** About 75 px per second: the crossing takes about two minutes. */
+    flow: 75,
+    steer: 110,
+    lean: 45,
+    response: 0.35,
+    /** Jerks for the first shape, small pulses for the second, a steady swim for the last. */
+    beat: {
+      early: { rate: 2.2, depth: 0.8 },
+      mid: { rate: 3, depth: 0.5 },
+      late: { rate: 3.5, depth: 0.15 },
+    },
+    margin: 90,
+    tilt: 0.5,
+  },
+  /** Seconds the larva lives on its yolk: it cannot eat and hunger waits (FAO). */
+  yolk: 10,
+  /** The larva's length in each shape (doc 11). */
+  length: { early: 44, mid: 56, late: 70 },
+  /** Seconds one shape takes to become the next. */
+  change: 1.2,
+  /** How far along the Drift the larva takes its last shape: early in the shafts. */
+  lateAt: 5300,
+  motes: {
+    cloud: [6, 12] as [number, number],
+    spread: 110,
+    size: [14, 36] as [number, number],
+    drift: 0.35,
+    wobble: 18,
+  },
+  /** BL: motes brighten within this of the larva. */
+  brighten: 1.5,
+  /** BL: how far the mouth reaches beyond a mote's edge. */
+  reach: 0.15,
+  larvae: {
+    count: 12,
+    settlers: 3,
+    pace: [0.85, 1.15] as [number, number],
+    /** BL a settler keeps from the player, from and to. */
+    keep: [2.5, 6] as [number, number],
+    steer: 40,
+    /** BL two larvae keep apart. */
+    apart: 1.2,
+    reachHaze: 1 / 3,
+    /** Their length, as a share of the player's: 40 to 70 px at the middle shape. */
+    size: [0.8, 1.2] as [number, number],
+    /** BL: touching another larva. */
+    touch: 0.8,
+  },
+  copepod: { every: [2, 4] as [number, number], hop: 84, hopTime: 0.25, drift: 0.35 },
+  bell: { breathe: 5, drift: 0.25, open: 0.12 },
+  /** Specks: how many, and the share of the flow each of the three layers drifts at. */
+  specks: { count: 150, layers: [0.15, 0.35, 0.55] },
+  /** The view looks ahead along the flow, as a share of its width. */
+  ahead: 0.16,
+  /** The brown haze at its thickest. */
+  haze: 0.55,
+  /** Landfall: seconds to settle, how much nearer the view sinks, seconds of the fade. */
+  landfall: { settle: 3, sink: 1.15, fade: 1.5 },
+};
+
+/**
+ * Sound (doc 05, "Levels", and doc 10, "Sound"). Gains are 1 as recorded,
+ * filters in Hz, times in seconds to reach most of a change.
+ */
+export const SOUND = {
+  mix: {
+    ease: 0.5,
+    fear: 1.5,
+    relief: 4,
+    layers: 1.5,
+    muffle: 0.6,
+    back: 3,
+    area: { normal: 1, content: 1.12, hungry: 0.8, afraid: 0.25 },
+    bright: { normal: 9000, content: 16000, afraid: 500 },
+    uneasy: { afraid: 0.8, wary: 0.15 },
+    chime: 0.5,
+    shimmer: 0.4,
+    open: 20000,
+    hidden: 900,
+    soft: { level: 0.5, bright: 1500 },
+    frozenAmbience: 1.4,
+  },
+  /**
+   * Each bus before its slider. Music sits about 6 dB under the effects and
+   * the ambience under the music. The last gain keeps every peak below -6 dBFS.
+   */
+  bus: { music: 0.5, ambience: 0.35, effects: 1, ceiling: 0.5 },
+  /** Seconds a new area's music and ambience take to cross over. */
+  crossfade: 2.5,
+  /** Seconds a lasting sound of the shrimp's own takes to come and go. */
+  loopEase: 0.15,
+  caption: { least: 2, fade: 0.3 },
 };

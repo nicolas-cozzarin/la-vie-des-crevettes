@@ -1,16 +1,31 @@
 import Phaser from 'phaser';
 import { app } from '../app';
 import { ensureTexture } from '../art/TextureFactory';
-import { COLORS, GAME_HEIGHT, GAME_WIDTH, TINTS } from '../config';
+import { COLORS, FONTS, GAME_HEIGHT, GAME_WIDTH, TINTS } from '../config';
 import { t } from '../i18n';
+import type { SmallLine } from '../core/progress/SmallLines';
 import { textStyle } from '../ui/text';
 
-type Hint = 'move' | 'dart' | 'pause' | 'done';
+/** The larva of the Drift only steers: its first hint is that, and it has no tail flip. */
+type Hint = 'move' | 'steer' | 'dart' | 'pause' | 'done';
 
 const HINT_Y = GAME_HEIGHT - 90;
-const WORD_Y = 96;
+/** The mood's name at the top left, the caption at the top middle (doc 12, "What shows over play"). */
+const WORD_X = 60;
+const WORD_Y = 70;
+const CAPTION_Y = 70;
+/** Captions show at 85%. */
+const CAPTION_ALPHA = 0.85;
 /** An activity's prompt sits above the line of hints. */
 const PROMPT_Y = HINT_Y - 72;
+/** The narration sits above the prompt (T82). */
+const NARRATION_Y = PROMPT_Y - 100;
+/** A place's name, alone, high in the view. */
+const PLACE_Y = 300;
+/** The small line's right edge and middle (doc 12, "What shows over play"). */
+const LINE_RIGHT = GAME_WIDTH - 60;
+const LINE_Y = 70;
+const LINE_ICON = 48;
 /** Seconds the mood's name takes to come and to go. */
 const WORD_FADE = 0.5;
 /** The colour fear's edges are drawn in: the deep water, almost black. */
@@ -24,6 +39,7 @@ const FEAR_EDGE = 0x0a1418;
  */
 export class HudScene extends Phaser.Scene {
   private ready = false;
+  private larva = false;
   private hint: Hint = 'move';
   private hintText!: Phaser.GameObjects.Text;
   private hintPlate!: Phaser.GameObjects.Graphics;
@@ -35,18 +51,37 @@ export class HudScene extends Phaser.Scene {
   private wordPlate!: Phaser.GameObjects.Graphics;
   private promptText!: Phaser.GameObjects.Text;
   private promptPlate!: Phaser.GameObjects.Graphics;
+  private narration!: Phaser.GameObjects.Text;
+  private captionText!: Phaser.GameObjects.Text;
+  private place!: Phaser.GameObjects.Text;
+  private lineText!: Phaser.GameObjects.Text;
+  private lineIcon!: Phaser.GameObjects.Image;
+  private linePlate!: Phaser.GameObjects.Graphics;
+  private lineNow: SmallLine | null = null;
+  /** Where the small line's plate begins, for the caption to keep clear of it. */
+  private lineLeft = GAME_WIDTH;
+  private captionLow = false;
+  /** The hints and the prompt, together, so the dark of being cornered can take them away. */
+  private lines!: Phaser.GameObjects.Container;
   /** The prompt's alpha, eased toward 1 while one is asked for. */
   private promptShown = 0;
   private promptWanted = false;
   /** Seconds since the word came, or -1 when none shows. */
   private wordAge = -1;
   private wordHold = 0;
+  /** "Text size" in the settings: 1, 1.25 or 1.5. */
+  private textScale = 1;
 
   constructor() {
     super('Hud');
   }
 
+  init(data: { larva?: boolean }): void {
+    this.larva = data.larva === true;
+  }
+
   create(): void {
+    this.textScale = app.settings.textScale;
     const centerX = GAME_WIDTH / 2;
     const centerY = GAME_HEIGHT / 2;
 
@@ -69,27 +104,63 @@ export class HudScene extends Phaser.Scene {
       .setTileScale(2)
       .setAlpha(0.07);
 
-    this.hint = 'move';
+    this.hint = this.larva ? 'steer' : 'move';
     this.movedFor = 0;
     this.hintClock = 0;
     this.hintPlate = this.add.graphics();
     this.hintText = this.add
-      .text(centerX, HINT_Y, '', textStyle(30, COLORS.deepTeal))
+      .text(centerX, HINT_Y, '', textStyle(30 * this.textScale, COLORS.deepTeal))
       .setOrigin(0.5);
     this.showHint();
 
     this.wordPlate = this.add.graphics().setAlpha(0);
-    this.word = this.add.text(centerX, WORD_Y, '', textStyle(30, COLORS.deepTeal)).setOrigin(0.5);
+    this.word = this.add
+      .text(WORD_X + 28, WORD_Y, '', textStyle(28 * this.textScale, COLORS.deepTeal))
+      .setOrigin(0, 0.5);
     this.word.setAlpha(0);
     this.wordAge = -1;
 
     this.promptPlate = this.add.graphics().setAlpha(0);
     this.promptText = this.add
-      .text(centerX, PROMPT_Y, '', textStyle(30, COLORS.deepTeal))
+      .text(centerX, PROMPT_Y, '', textStyle(30 * this.textScale, COLORS.deepTeal))
       .setOrigin(0.5)
       .setAlpha(0);
     this.promptShown = 0;
     this.promptWanted = false;
+    this.narration = this.add
+      .text(centerX, NARRATION_Y, '', {
+        ...textStyle(36 * this.textScale, COLORS.paper, FONTS.title),
+        align: 'center',
+        wordWrap: { width: 1400 },
+      })
+      .setOrigin(0.5)
+      .setShadow(0, 2, '#000000', 10, false, true)
+      .setAlpha(0);
+    this.captionText = this.add
+      .text(centerX, CAPTION_Y, '', textStyle(26 * this.textScale, COLORS.paper))
+      .setOrigin(0.5)
+      .setShadow(0, 2, '#000000', 8, false, true)
+      .setAlpha(0);
+    this.place = this.add
+      .text(centerX, PLACE_Y, '', textStyle(56 * this.textScale, COLORS.paper, FONTS.title))
+      .setOrigin(0.5)
+      .setShadow(0, 2, '#000000', 12, false, true)
+      .setAlpha(0);
+
+    this.linePlate = this.add.graphics().setAlpha(0);
+    this.lineIcon = this.add.image(0, LINE_Y, ensureTexture(this, 'icon.type.find')).setAlpha(0);
+    this.lineText = this.add
+      .text(LINE_RIGHT - 24, LINE_Y, '', textStyle(26 * this.textScale, COLORS.ink))
+      .setOrigin(1, 0.5)
+      .setAlpha(0);
+    this.lineNow = null;
+
+    this.lines = this.add.container(0, 0, [
+      this.hintPlate,
+      this.hintText,
+      this.promptPlate,
+      this.promptText,
+    ]);
 
     this.ready = true;
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
@@ -101,9 +172,9 @@ export class HudScene extends Phaser.Scene {
   track(dt: number, moving: boolean, darted: boolean): void {
     if (!this.ready) return;
     this.hintClock += dt;
-    if (this.hint === 'move') {
+    if (this.hint === 'move' || this.hint === 'steer') {
       if (moving) this.movedFor += dt;
-      if (this.movedFor > 2.5) this.nextHint('dart');
+      if (this.movedFor > 2.5) this.nextHint(this.larva ? 'pause' : 'dart');
     } else if (this.hint === 'dart') {
       if (darted && this.hintClock > 1) this.nextHint('pause');
     } else if (this.hint === 'pause') {
@@ -129,10 +200,76 @@ export class HudScene extends Phaser.Scene {
     const width = this.word.width + 56;
     this.wordPlate.clear();
     this.wordPlate.fillStyle(TINTS.paper, 0.72);
-    this.wordPlate.fillRoundedRect(GAME_WIDTH / 2 - width / 2, WORD_Y - 28, width, 56, 28);
+    const h = 56 * this.textScale;
+    this.wordPlate.fillRoundedRect(WORD_X, WORD_Y - h / 2, width, h, h / 2);
     // A word already showing is replaced where it stands, without going dark first.
     this.wordAge = this.wordAge >= 0 ? this.word.alpha * WORD_FADE : 0;
     this.wordHold = seconds;
+  }
+
+  /** The line of narration, or null, and how visible it is. The narrator decides when. */
+  narrate(text: string | null, alpha: number): void {
+    if (!this.ready) return;
+    if (text !== null && text !== this.narration.text) this.narration.setText(text);
+    this.narration.setAlpha(text === null ? 0 : alpha);
+  }
+
+  /** The caption of a sound that carries meaning, or null, and how visible it is. */
+  caption(text: string | null, alpha: number): void {
+    if (!this.ready) return;
+    if (text !== null && text !== this.captionText.text) this.captionText.setText(text);
+    this.captionText.setAlpha(text === null ? 0 : alpha * CAPTION_ALPHA);
+    // A long caption beside a small line goes just under it, so the two never overlap.
+    const lineShown = this.lineNow !== null && this.linePlate.alpha > 0;
+    const clash = lineShown && this.captionText.getBounds().right > this.lineLeft - 24;
+    // Once lowered, it stays there until it goes, rather than jumping back.
+    this.captionLow = text !== null && (this.captionLow || clash);
+    this.captionText.setY(this.captionLow ? CAPTION_Y + 80 * this.textScale : CAPTION_Y);
+  }
+
+  /** A place's name, or null, and how visible it is. */
+  placeName(text: string | null, alpha: number): void {
+    if (!this.ready) return;
+    if (text !== null && text !== this.place.text) this.place.setText(text);
+    this.place.setAlpha(text === null ? 0 : alpha);
+  }
+
+  /**
+   * The small line at the top right, or null, and how visible it is: a
+   * paper tag with its mark and a few words. The queue decides which.
+   */
+  smallLine(line: SmallLine | null, alpha: number): void {
+    if (!this.ready) return;
+    if (line !== this.lineNow) {
+      this.lineNow = line;
+      if (line) {
+        this.lineText.setText(line.text);
+        const iconRoom = line.icon ? LINE_ICON + 14 : 0;
+        const width = this.lineText.width + 48 + iconRoom;
+        this.lineLeft = LINE_RIGHT - width;
+        if (line.icon) {
+          this.lineIcon
+            .setTexture(ensureTexture(this, line.icon))
+            .setDisplaySize(LINE_ICON, LINE_ICON)
+            .setPosition(LINE_RIGHT - 24 - this.lineText.width - 14 - LINE_ICON / 2, LINE_Y);
+        }
+        this.lineIcon.setVisible(line.icon !== null);
+        this.linePlate.clear();
+        this.linePlate.fillStyle(TINTS.paper, 0.9);
+        const h = 68 * this.textScale;
+        this.linePlate.fillRoundedRect(LINE_RIGHT - width, LINE_Y - h / 2, width, h, 10);
+      }
+    }
+    const shown = line ? alpha : 0;
+    this.linePlate.setAlpha(shown);
+    this.lineIcon.setAlpha(shown);
+    this.lineText.setAlpha(shown);
+  }
+
+  /** How dark the picture is, from 0 to 1: the hints and the prompt go with it. */
+  hush(dark: number): void {
+    if (!this.ready) return;
+    this.lines.setAlpha(1 - dark);
   }
 
   /**
@@ -147,11 +284,13 @@ export class HudScene extends Phaser.Scene {
     const width = this.promptText.width + 56;
     this.promptPlate.clear();
     this.promptPlate.fillStyle(TINTS.paper, 0.72);
-    this.promptPlate.fillRoundedRect(GAME_WIDTH / 2 - width / 2, PROMPT_Y - 28, width, 56, 28);
+    const h = 56 * this.textScale;
+    this.promptPlate.fillRoundedRect(GAME_WIDTH / 2 - width / 2, PROMPT_Y - h / 2, width, h, h / 2);
   }
 
   override update(_time: number, deltaMs: number): void {
     if (!this.ready) return;
+    if (app.settings.textScale !== this.textScale) this.rescale(app.settings.textScale);
     const dt = deltaMs / 1000;
     const prompt = this.promptWanted ? 1 : 0;
     if (this.promptShown !== prompt) {
@@ -173,6 +312,24 @@ export class HudScene extends Phaser.Scene {
     if (out >= WORD_FADE) this.wordAge = -1;
   }
 
+  /** "Text size" changed from the pause menu's settings: every line takes its new size. */
+  private rescale(scale: number): void {
+    this.textScale = scale;
+    this.hintText.setFontSize(Math.max(20, 30 * scale));
+    this.word.setFontSize(Math.max(20, 28 * scale));
+    this.promptText.setFontSize(Math.max(20, 30 * scale));
+    this.narration.setFontSize(Math.max(20, 36 * scale));
+    this.captionText.setFontSize(Math.max(20, 26 * scale));
+    this.place.setFontSize(Math.max(20, 56 * scale));
+    this.lineText.setFontSize(Math.max(20, 26 * scale));
+    // The plates are drawn again at their new size when next shown.
+    this.lineNow = null;
+    const prompt = this.promptText.text;
+    this.promptText.setText('');
+    if (this.promptWanted) this.prompt(prompt);
+    if (this.hint !== 'done') this.showHint();
+  }
+
   /** Prompts always name the player's own keys. */
   private hintLine(): string {
     if (this.hint === 'move') {
@@ -182,6 +339,9 @@ export class HudScene extends Phaser.Scene {
         down: app.actionKey('moveDown'),
         right: app.actionKey('moveRight'),
       });
+    }
+    if (this.hint === 'steer') {
+      return t('prompt.steer', { up: app.actionKey('moveUp'), down: app.actionKey('moveDown') });
     }
     if (this.hint === 'dart') return t('play.hint.dart', { key: app.actionKey('tailFlip') });
     if (this.hint === 'pause') return t('play.hint.pause', { key: app.actionKey('pause') });
@@ -195,7 +355,8 @@ export class HudScene extends Phaser.Scene {
     if (line !== '') {
       const width = this.hintText.width + 56;
       this.hintPlate.fillStyle(TINTS.paper, 0.72);
-      this.hintPlate.fillRoundedRect(GAME_WIDTH / 2 - width / 2, HINT_Y - 28, width, 56, 28);
+      const h = 56 * this.textScale;
+      this.hintPlate.fillRoundedRect(GAME_WIDTH / 2 - width / 2, HINT_Y - h / 2, width, h, h / 2);
     }
     this.hintText.setAlpha(0);
     this.hintPlate.setAlpha(0);

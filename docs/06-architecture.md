@@ -54,11 +54,12 @@ la-vie-des-crevettes/
 │     └─ fonts/
 ├─ src/
 │  ├─ main.ts                 game config and scene list
-│  ├─ app.ts                  settings, storage and keyboard, shared by every scene
+│  ├─ app.ts                  settings, storage, keyboard and sound, shared by every scene
 │  ├─ core/                   no Phaser imports
 │  │  ├─ feelings/            FeelingsModel, mood rules
 │  │  ├─ bonds/
 │  │  ├─ threat/              ThreatDirector state machine
+│  │  ├─ audio/               the mix, which sound answers which moment, captions
 │  │  ├─ progress/            story steps, challenges, achievements, journal
 │  │  ├─ input/               ActionInput, bindings, presets
 │  │  ├─ movement/            ShrimpMotion, collision with circles and rectangles
@@ -79,7 +80,7 @@ la-vie-des-crevettes/
 │  ├─ systems/                AreaLoader, MoodPresenter, AudioDirector, ScentField, DayNight, Shoal, Narrator, Counter
 │  ├─ art/                    TextureFactory and the painters: code-drawn images (doc 14)
 │  ├─ atelier/                the code of atelier.html. No Phaser
-│  ├─ platform/               the browser: keyboard events, storage, keyboard layout
+│  ├─ platform/               the browser: keyboard events, storage, keyboard layout, sound, fonts, touch-only devices
 │  └─ ui/                     prompts, panels, rebind dialog
 ├─ tests/
 │  ├─ unit/
@@ -98,6 +99,8 @@ Boot -> Preload -> Title -> Play (with Hud on top)
                             Journal
 ```
 
+Settings opens from the title and from Pause, and goes back to where it was opened. Controls opens from Settings (T95). About opens from the title only (T96). Boot waits up to 3 s for the fonts before the title (T97).
+
 `Play` is one scene for every area. It is given an area name, loads that area's data and runs it. Moving to the next chapter restarts `Play` with the next area. The free life uses the same scene with story steps switched off.
 
 ## Systems
@@ -111,7 +114,7 @@ Boot -> Preload -> Title -> Play (with Hud on top)
 | `AreaLoader` | Builds an area from its data file: ground, obstacles, cover, food, spawn points, triggers |
 | `ShrimpRig` | Draws and animates a shrimp from parts. Takes a mood and a movement state |
 | `MoodPresenter` | Applies the player's mood to the screen: darkened edges, colour, view width |
-| `AudioDirector` | Mixes music, ambience and effects from mood and events |
+| `AudioDirector` | Mixes music, ambience and effects from mood and events. The rules are `SoundMix` and the cues in `core/audio`, the captions too. The browser's sound is `SoundOut` in `src/platform/` (T93) |
 | `ScentField` | Works out and draws scent ribbons while Sense is held |
 | `Narrator` | Shows one line of narration at a time, with a minimum gap |
 | `DayNight` | Runs the light cycle from chapter 2 |
@@ -169,6 +172,18 @@ export interface SaveV1 {
   achievements: string[];
   stats: Record<string, number>;        // tail flips, times cornered, and so on
   playSeconds: number;
+  // Added in step 9 with defaults (T89):
+  at: { x: number; y: number } | null;  // where the shrimp rested, or null for the area's start
+  pinned: string | null;
+  moodsNamed: Mood[];
+  promptsShown: Record<string, number>;
+  cardsUnlocked: string[];
+  narrated: string[];                   // lines already said
+  placesSeen: AreaId[];
+  molts: number;
+  hunger: number | null;
+  favourite: FoodKind | null;
+  journalSeen: string[];                // what the journal showed when last opened
 }
 
 export interface SettingsV1 {

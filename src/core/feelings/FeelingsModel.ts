@@ -48,6 +48,8 @@ export class FeelingsModel {
   /** The fright that is happening now ended in a cornering. */
   private corneredThisFright = false;
   private softLeft = 0;
+  /** A larva still living on its yolk: hunger does not rise (doc 10, "The larva"). */
+  private yolk = false;
 
   constructor(
     private readonly tuning: FeelingsTuning,
@@ -91,9 +93,25 @@ export class FeelingsModel {
     return CONDITIONS.filter((condition) => this.conditions.has(condition));
   }
 
-  /** For the molt, in a later step: soft for this many seconds. */
+  /** For the molt: soft for this many seconds. */
   setSoft(seconds: number): void {
     this.softLeft = seconds;
+  }
+
+  /** For the molt: waiting to molt, from the signal until the molt begins. */
+  setPremolt(on: boolean): void {
+    if (on) this.conditions.add('premolt');
+    else this.conditions.delete('premolt');
+  }
+
+  /** The first seconds of the Drift: the larva lives on its yolk and hunger waits. */
+  setYolk(on: boolean): void {
+    this.yolk = on;
+  }
+
+  /** A new shell costs food: hunger rises by this much. */
+  hungerUp(amount: number): void {
+    this.feelings.hunger = clamp(this.feelings.hunger + amount);
   }
 
   /** How much more a fright bites right now. */
@@ -183,7 +201,7 @@ export class FeelingsModel {
   private stepHunger(dt: number, context: FeelingsContext): void {
     const t = this.tuning.hunger;
     let rate = t.walkRate;
-    if (context.activity === 'drifting') rate = t.larvaRate;
+    if (context.activity === 'drifting') rate = this.yolk ? 0 : t.larvaRate;
     else if (context.hidden || context.activity === 'resting') rate *= t.stillFactor;
     else if (context.motion === 'rest') rate *= t.restFactor;
     else if (context.motion !== 'walk') rate *= t.swimFactor;

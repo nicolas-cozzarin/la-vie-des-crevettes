@@ -79,6 +79,30 @@ describe('ribbons', () => {
     expect(found.map((ribbon) => ribbon.id)).toEqual(['thing.100', 'thing.200', 'thing.300']);
   });
 
+  it("adds a white ribbon to the pinned challenge's target, over the three, within range", () => {
+    const unknown = [100, 200, 300].map((x) => ({ id: `thing.${x}`, x, y: 0 }));
+    const pinned = { id: 'pinned.c1.crab', x: 0, y: 600 };
+    const found = ribbons(0, 0, { ...EMPTY_WORLD, unknown, pinned }, RANGE, TUNING);
+    expect(found.map((ribbon) => ribbon.id)).toEqual([
+      'thing.100',
+      'thing.200',
+      'thing.300',
+      'pinned.c1.crab',
+    ]);
+    expect(found.at(-1)?.kind).toBe('unknown');
+    // Where a white ribbon already leads, there is no second one.
+    const same = ribbons(
+      0,
+      0,
+      { ...EMPTY_WORLD, unknown, pinned: { ...pinned, x: 200, y: 0 } },
+      RANGE,
+      TUNING,
+    );
+    expect(same).toHaveLength(3);
+    const far = { id: 'pinned.c1.crab', x: 0, y: 900 };
+    expect(ribbons(0, 0, { ...EMPTY_WORLD, pinned: far }, RANGE, TUNING)).toEqual([]);
+  });
+
   it('one ribbon per shrimp and per danger mark', () => {
     const found = ribbons(
       0,

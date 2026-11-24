@@ -267,8 +267,9 @@ A place name shows alone for 3 s, in Fraunces 56 px, when the player first enter
 | `name.thing.sandVolcano` | Sand mound | Petit volcan de sable |
 | `name.thing.shedShell` | A shed shell | Une mue |
 | `name.thing.longSound` | A long call | Un long appel |
+| `name.creature.seaStar` | Sea star | Étoile de mer |
 
-The bird and the fish are named as the shrimp knows them. The last nine belong to the new things in doc 11.
+The bird and the fish are named as the shrimp knows them. The last nine belong to the new things in doc 11. The sea star was added to the lagoon later (doc 11); its name is proposed, for the author to confirm (T90).
 
 ### Companions
 
@@ -283,17 +284,21 @@ The bird and the fish are named as the shrimp knows them. The last nine belong t
 | `companion.ecume.look` | Smaller than the others, and quicker. | Plus petite que les autres, et plus vive. |
 | `companion.ecume.way` | She wanders off. She comes back. | Elle s'éloigne. Elle revient. |
 | `companion.ecume.more` | Nothing new stays unknown to her for long. | Rien de nouveau ne lui reste longtemps inconnu. |
+| `companion.brise.name` | Brise | Brise |
+| `companion.nacre.name` | Nacre | Nacre |
+| `companion.ecume.name` | Écume | Écume |
 | `companion.met` | Met: {place} | Rencontrée : {place} |
 | `companion.favourite` | Likes best: {food} | Préfère : {food} |
 | `companion.memory.fled` | You fled {threat} together. | Vous avez fui {threat} ensemble. |
 | `companion.memory.yourMolt` | She stayed while you were soft. | Elle est restée quand tu étais molle. |
 | `companion.memory.herMolt` | You stayed while she was soft. | Tu es restée quand elle était molle. |
+| `companion.memory.threat.bird` | the shadow with legs | l'ombre à pattes |
 | `bond.stranger` | Stranger | Inconnue |
 | `bond.familiar` | Familiar | Familière |
 | `bond.companion` | Companion | Compagne |
 | `bond.close` | Close | Proche |
 
-In `companion.memory.fled`, `{threat}` takes the creature's name with a lower-case article: "the shadow with legs", "l'ombre à pattes". Keep a second key per creature for that form if the article cannot be made by code.
+In `companion.memory.fled`, `{threat}` takes the creature's name with a lower-case article: "the shadow with legs", "l'ombre à pattes". Keep a second key per creature for that form if the article cannot be made by code: `companion.memory.threat.<kind>`, one per threat as it is built.
 
 ## Challenges
 
@@ -382,6 +387,68 @@ The word "shrimp" appears here. That is allowed: this is the journal speaking, n
 | `journal.later` | Later in the life | Plus tard dans la vie |
 | `journal.help` | Arrows to move. {pin} to pin. {close} to close. | Flèches pour se déplacer. {pin} pour épingler. {close} pour fermer. |
 
+## Journal cards
+
+The cards of "What shrimp feel" built so far, copied word for word from doc 07 and from doc 18's drafts. `card.<id>.name` is the title and `card.<id>.text` the card. What unlocks each, and its sources, are in doc 12 and `src/data/journal.ts`. A card is shown to players only when all its sources are read (doc 07, "Before release"). With `?debug` all of them unlock, for the author to read (T88).
+
+The titles of the five cards from doc 18 are proposed: doc 18 gives English names only, and the French titles are new, for the author to confirm (T88).
+
+| Key | English | Français |
+|-----|---------|----------|
+| `card.toLight.name` | To the light | Vers la lumière |
+| `card.toLight.text` | A whiteleg shrimp hatches as a nauplius. It lives on its yolk and swims toward light. | La crevette à pattes blanches naît sous forme de nauplius. Elle vit sur ses réserves et nage vers la lumière. |
+| `card.shapes.name` | Twelve stages | Douze stades |
+| `card.shapes.text` | Before it looks like a shrimp, a larva passes through twelve stages: six as a nauplius, three as a protozoea, three as a mysis. | Avant de ressembler à une crevette, la larve passe par douze stades : six de nauplius, trois de protozoé, trois de mysis. |
+| `card.rideTide.name` | Carried in | Portée par la marée |
+| `card.rideTide.text` | Young pink shrimp in Florida rose into the water at night when the tide ran toward the coast, and rested near the bottom when it ran back. The tide did the travelling. | En Floride, de jeunes crevettes roses montaient dans l'eau, la nuit, quand la marée portait vers la côte, et se posaient près du fond quand elle repartait. C'est la marée qui faisait le voyage. |
+| `card.scent.name` | Scent | L'odorat |
+| `card.scent.text` | A shrimp's antennae are covered in sensors that taste the water. They lead it to food in the dark, and in a 2024 study they let males know a female by the taste of her shell. | Les antennes d'une crevette sont couvertes de capteurs qui goûtent l'eau. Elles la guident vers sa nourriture dans le noir, et dans une étude de 2024, elles permettaient aux mâles de reconnaître une femelle au goût de sa carapace. |
+| `card.heart.name` | A skipped beat | Un battement manqué |
+| `card.heart.text` | When something startles a crayfish, its heart slows for a few beats, then races. Researchers read the heart to know that an animal has noticed something, even when it does not move. | Quand quelque chose surprend une écrevisse, son cœur ralentit le temps de quelques battements, puis s'emballe. Les chercheurs lisent le cœur pour savoir qu'un animal a remarqué quelque chose, même s'il ne bouge pas. |
+| `card.fear.name` | Fear | La peur |
+| `card.fear.text` | Crabs and hermit crabs learn to avoid a place where something hurt them, and will give up a good shelter to stay away from it. | Les crabes et les bernard-l'ermite apprennent à éviter un endroit où quelque chose leur a fait mal, quitte à abandonner un bon abri. |
+| `card.wary.name` | Still wary | Encore inquiète |
+| `card.wary.text` | After a bad moment, crayfish keep to dark corners for a while. Given a medicine that eases anxiety in people, they go exploring again. | Après un mauvais moment, les écrevisses restent un temps dans les coins sombres. Avec un médicament qui calme l'anxiété chez l'humain, elles repartent explorer. |
+| `card.tailflip.name` | The tail flip | Le coup de queue |
+| `card.tailflip.text` | One snap of the tail throws a shrimp backward faster than most hunters can follow. It is tiring, so it is kept for emergencies. | D'un coup de queue, une crevette se projette en arrière plus vite que la plupart des chasseurs. C'est épuisant, alors elle le garde pour les urgences. |
+| `card.grooming.name` | Grooming | La toilette |
+| `card.grooming.text` | Shrimp clean their antennae often. In a 2008 study, prawns rubbed and groomed one antenna for a long time after an irritant touched it, and far less when given a local anaesthetic. | Les crevettes nettoient souvent leurs antennes. Dans une étude de 2008, des crevettes ont longuement frotté et nettoyé une antenne touchée par un produit irritant, et beaucoup moins sous anesthésique local. |
+| `card.molt.name` | A new shell | Une nouvelle carapace |
+| `card.molt.text` | To grow, a shrimp leaves its shell behind. The new one is soft for a few hours, and the shrimp hides until it hardens. | Pour grandir, une crevette quitte sa carapace. La nouvelle reste molle quelques heures, et la crevette se cache le temps qu'elle durcisse. |
+| `card.balance.name` | A grain of sand | Un grain de sable |
+| `card.balance.text` | A shrimp keeps its balance with grains of sand held in a small pocket at the base of its short antennae. They leave with the old shell and are put back after each molt. | Une crevette tient son équilibre grâce à des grains de sable logés dans une petite poche à la base de ses antennules. Ils partent avec l'ancienne carapace et sont remis après chaque mue. |
+| `card.seeThrough.name` | See-through | Presque transparente |
+| `card.seeThrough.text` | A whiteleg shrimp is nearly transparent. Its tint shifts with the ground beneath it and the water around it. | La crevette à pattes blanches est presque transparente. Sa teinte change selon le fond et l'eau qui l'entoure. |
+| `card.journey.name` | The journey | Le voyage |
+| `card.journey.text` | Whiteleg shrimp are born in the open ocean. The larvae drift to the coast, grow up in lagoons and mangroves, and return to sea as adults at six or seven months. | Les crevettes à pattes blanches naissent en pleine mer. Les larves dérivent vers la côte, grandissent dans les lagunes et les mangroves, puis regagnent le large, adultes, à six ou sept mois. |
+| `card.nextOnes.name` | The next ones | Les suivantes |
+| `card.nextOnes.text` | A female releases between 100,000 and 250,000 eggs at a time. They hatch about sixteen hours later. | Une femelle libère entre 100 000 et 250 000 œufs à la fois. Ils éclosent environ seize heures plus tard. |
+| `card.feel.name` | Able to feel | Capable de ressentir |
+| `card.feel.text` | In 2021, researchers in London reviewed more than 300 studies and found strong evidence that decapods, the group that includes shrimp, crabs and lobsters, can feel. The United Kingdom wrote this into law the next year. | En 2021, des chercheurs londoniens ont passé en revue plus de 300 études et trouvé des preuves solides que les décapodes, le groupe des crevettes, des crabes et des homards, peuvent ressentir. Le Royaume-Uni l'a inscrit dans sa loi l'année suivante. |
+| `card.howMany.name` | How many | Combien |
+| `card.howMany.text` | According to Rethink Priorities, shrimp are the animals most often killed for food: about 440 billion farmed shrimp each year. | Selon Rethink Priorities, les crevettes sont les animaux les plus tués pour l'alimentation : environ 440 milliards de crevettes d'élevage chaque année. |
+
+## Sources shown
+
+The line under a card, `journal.source`, names its sources. Each is `source.<key>`, with the keys of doc 07 and doc 18. Several are joined with "; ".
+
+| Key | English | Français |
+|-----|---------|----------|
+| `source.LSE2021` | Birch and others (2021), London School of Economics | Birch et al. (2021), London School of Economics |
+| `source.BARR2008` | Barr and others (2008), Animal Behaviour | Barr et al. (2008), Animal Behaviour |
+| `source.RP2023` | Waldhorn and Autric (2023), Rethink Priorities | Waldhorn et Autric (2023), Rethink Priorities |
+| `source.FAO` | FAO, fact sheet on Penaeus vannamei | FAO, fiche sur Penaeus vannamei |
+| `source.UK2022` | Animal Welfare (Sentience) Act 2022, United Kingdom | Animal Welfare (Sentience) Act 2022, Royaume-Uni |
+| `source.FOSSAT2014` | Fossat and others (2014), Science | Fossat et al. (2014), Science |
+| `source.ELWOOD2009` | Elwood and Appel (2009), Animal Behaviour | Elwood et Appel (2009), Animal Behaviour |
+| `source.ARNOTT1998` | Arnott, Neil and Ansell (1998), Journal of Experimental Biology | Arnott, Neil et Ansell (1998), Journal of Experimental Biology |
+| `source.MAGEE2013` | Magee and Elwood (2013), Journal of Experimental Biology | Magee et Elwood (2013), Journal of Experimental Biology |
+| `source.CHEMO2020` | Eap and others (2020), The Biological Bulletin | Eap et al. (2020), The Biological Bulletin |
+| `source.GUTIERREZ2024` | Gutiérrez-Vera and others (2024), Animals | Gutiérrez-Vera et al. (2024), Animals |
+| `source.CRIALES2011` | Criales and others (2011), Journal of Crustacean Biology | Criales et al. (2011), Journal of Crustacean Biology |
+| `source.SCHAPKER2002` | Schapker and others (2002), Comparative Biochemistry and Physiology | Schapker et al. (2002), Comparative Biochemistry and Physiology |
+| `source.KREIDL1893` | Kreidl (1893) | Kreidl (1893) |
+
 ## Menus and settings
 
 Keys that exist already (`title.*`, `pause.*`, `controls.*`, `action.*`, `key.*`, `notice.notKept`) are not repeated.
@@ -440,11 +507,13 @@ Keys that exist already (`title.*`, `pause.*`, `controls.*`, `action.*`, `key.*`
 | Small lines | 6 |
 | Captions | 12 |
 | Mood words | 6 |
-| Names | 37 |
-| Companions and bonds | 18 |
+| Names | 38 |
+| Companions and bonds | 21 |
 | Challenges | 23, two texts each |
 | Achievements | 24, two texts each |
 | Journal | 19 |
+| Journal cards | 16, two texts each |
+| Sources shown | 14 |
 | Menus and settings | 40 |
 
 With the 20 s gap, a life of twenty minutes has room for sixty lines at the very most. In practice a player sees the 28 must lines and perhaps fifteen of the others: about one line every thirty seconds, most of them in the first two chapters.

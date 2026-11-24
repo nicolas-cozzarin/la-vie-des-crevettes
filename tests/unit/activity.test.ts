@@ -85,6 +85,32 @@ describe('Activity', () => {
     activity.update(input(340, 0, true, { tailFlip: true }), [tangle]);
     expect(activity.name).toBe('free');
   });
+
+  it('after being cornered, wakes tucked in and stays until the shrimp moves', () => {
+    const activity = new Activity(TUNING, BL, GRAZE, GREET);
+    activity.tuckInto(tangle, { x: 90, y: 0 });
+    const still = { axis: { x: 0, y: 0 } };
+    for (let frame = 0; frame < 30; frame += 1) {
+      const { axis } = activity.update(input(90, 0, false, still), [tangle]);
+      expect(axis).toEqual({ x: 0, y: 0 });
+    }
+    expect(activity.name).toBe('hiding');
+    expect(activity.tucked).toBe(true);
+    activity.update(input(90, 0, false), [tangle]);
+    expect(activity.name).toBe('free');
+  });
+
+  it('after being cornered, Hide held keeps it tucked as an ordinary hide', () => {
+    const activity = new Activity(TUNING, BL, GRAZE, GREET);
+    activity.tuckInto(tangle, { x: 90, y: 0 });
+    activity.update(input(90, 0, true), [tangle]);
+    expect(activity.tucked).toBe(true);
+    activity.update(input(90, 0, false), [tangle]);
+    expect(activity.name).toBe('free');
+    activity.tuckInto(tangle, { x: 90, y: 0 });
+    activity.update(input(90, 0, false, { tailFlip: true, axis: { x: 0, y: 0 } }), [tangle]);
+    expect(activity.name).toBe('free');
+  });
 });
 
 describe('Activity, grazing and sensing', () => {

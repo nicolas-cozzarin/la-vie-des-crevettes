@@ -497,7 +497,7 @@ const DRIFT_VIEWS: DriftView[] = [
   },
 ];
 
-/** Views of the Drift. There is no data file for it yet: these are composed by hand. */
+/** Views of the Drift, composed by hand. The game reads it from `src/data/drift.ts`. */
 export function driftCanvases(): {
   canvas: HTMLCanvasElement;
   id: string;

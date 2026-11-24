@@ -23,8 +23,8 @@ export const TINTS = {
 
 /** Stand-in until Fraunces and Atkinson Hyperlegible are added to the repository. */
 export const FONTS = {
-  title: 'Georgia, "Times New Roman", serif',
-  text: 'system-ui, "Segoe UI", Helvetica, Arial, sans-serif',
+  title: 'Fraunces, Georgia, "Times New Roman", serif',
+  text: '"Atkinson Hyperlegible", system-ui, "Segoe UI", Helvetica, Arial, sans-serif',
 } as const;
 
 /** The layers of the picture, from the bed up. See docs/04-art-direction.md. */

@@ -17,7 +17,7 @@ ensureTexture(scene, 'mangrove.root.a')
 |------|-------|
 | `src/art/TextureFactory.ts` | `ensureTexture`, for the game |
 | `src/art/painters/index.ts` | `PAINTERS`: every painter by image name. `PAINTER_GROUPS`: the same, by family |
-| `src/art/painters/*.ts` | One file per family: `shrimp`, `world`, `drift`, `mangrove`, `lagoon`, `creatures` (the mangrove's animals), `lagoonAnimals`, `channel`, `effects`. `icons` to come |
+| `src/art/painters/*.ts` | One file per family: `shrimp`, `world`, `drift`, `mangrove`, `lagoon`, `creatures` (the mangrove's animals), `lagoonAnimals`, `channel`, `effects`, `icons` |
 | `src/art/paint.ts` | Shared helpers: colours, washes, `blob`, `speckle`, `patches`, `glow`, `softFill`, `band` for a root or a branch, `traceLeaf`, `wrapped` for tiles, `onLayer` for a part that must fade |
 | `src/art/fit.ts` | `imageFit(name)`: how the solid part of a picture sits inside the picture. See "From data to picture" |
 | `src/art/expressions.ts` | `RigExpression`, `RigLook`, and `MOOD_EXPRESSIONS`, the table below as code |
@@ -399,10 +399,11 @@ Release 1.1. Realistic and bare, without gloss and without horror (D41). The shr
 |------|------|--------|
 | `ui.paper` | 1024, tile | To paint |
 | `ui.keycap` | 96 | To paint |
-| `icon.tab.discoveries`, `.companions`, `.feel`, `.challenges`, `.achievements` | 64 | To paint |
-| `icon.type.taste`, `.reach`, `.watch`, `.escape`, `.meet`, `.find` | 64 | To paint |
-| `icon.bond.stranger`, `.familiar`, `.companion`, `.close` | 80 | To paint |
-| `icon.ach.<id>`, 24 of them | 192 | To paint |
+| `icon.tab.discoveries`, `.companions`, `.feel`, `.challenges`, `.achievements` | 64 | Built. A leaf, three small shrimp, an antenna tip with ripples, a spiral, a stamp ring |
+| `icon.type.taste`, `.reach`, `.watch`, `.escape`, `.meet`, `.find` | 64 | Built. Drawn with a heavier line, to read at 48 px on the small line |
+| `icon.bond.stranger`, `.familiar`, `.companion`, `.close` | 80 | Built. Two shrimp from above, closer at each stage; washed from Companion |
+| `icon.companion.brise`, `.nacre`, `.ecume` | 128 | Built. Each companion from above, heading up, with her mark: Brise's short left antenna with a blunt tip, Nacre's almost white fan, Écume smaller with a darker gut line (T55) |
+| `icon.ach.landfall`, `.newShell`, `.fullGrown`, `.antenna`, `.familiar`, `.shoal`, `.everyTaste`, `.nose`, `.quickTail`, `.unseen`, `.neverCornered`, `.underGrid`, `.nightGrazer`, `.neighbour`, `.slowCompany`, `.openWater`, `.nextOnes`, `.secondTide`, `.fifthTide`, `.fullCarnet`, `.allOfIt`, `.cleanAntennae`, `.stoneStill`, `.gentle` | 192 | Built. The stamps of doc 12, each a double ring, a wash by group and its drawing |
 
 ## The atelier
 
@@ -414,7 +415,7 @@ A page that shows the art without starting the game. It is how the author looks 
 
 | Section | Address | Shows |
 |---------|---------|-------|
-| Drift scenes | `?show=driftscenes` | Four views of chapter 0, composed by hand because the Drift has no data file yet: the dark, the green, the shafts, the haze. Each shows the larva in the shape it has there |
+| Drift scenes | `?show=driftscenes` | Four views of chapter 0, composed by hand: the dark, the green, the shafts, the haze. Each shows the larva in the shape it has there. The game reads the Drift from `src/data/drift.ts`; `?explore=drift` shows it in play |
 | Mangrove scenes | `?show=scenes` | Ten views drawn from `src/data/areas/mangrove.ts`, each the size of the game's screen: arriving, grazing, hidden under a tangle, the bird, meeting Nacre, the crabs, the leaf bed, the hollow, the sunken branch, and a map of the whole area with its zones |
 | Lagoon scenes | `?show=lagoonscenes` | Nine views drawn from `src/data/areas/lagoon.ts`: out of the creek, dug in on the flat, the turtle in the meadow, the shoal at dusk, the goby and the pistol shrimp, plankton at night, the hunting fish in the pass, the north-west rocks, and a map |
 | The six moods | `?show=moods` | The shrimp held still in each posture of the table above |

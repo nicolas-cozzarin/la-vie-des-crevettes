@@ -1,3 +1,4 @@
+import type { ThreatKind } from '../../core/gameEvents';
 import type { Obstacle } from '../../core/movement/collision';
 import type { AreaId, FoodKind } from '../../core/world/kinds';
 
@@ -107,7 +108,7 @@ export interface LandmarkDef {
 }
 
 export type CreatureKind =
-  'fiddlerCrab' | 'snail' | 'smallFish' | 'turtle' | 'pistolAndGoby' | 'huntingFish';
+  'fiddlerCrab' | 'snail' | 'hermitCrab' | 'smallFish' | 'turtle' | 'pistolAndGoby' | 'huntingFish';
 
 export interface CreatureDef {
   id: string;
@@ -190,6 +191,8 @@ export interface AreaDef {
   currents?: CurrentDef[];
   zones?: NamedZone[];
   triggers?: TriggerDef[];
+  /** The threats that may come here, by doc 11's "Threat" line. Only those built so far. */
+  threats?: ThreatKind[];
   exits?: ExitDef[];
   light?: LightDef;
   dayCycle?: boolean;

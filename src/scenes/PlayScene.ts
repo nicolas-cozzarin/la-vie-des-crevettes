@@ -10,14 +10,20 @@ import { FeelingsModel, type FeelingsChange } from '../core/feelings/FeelingsMod
 import { MOODS, type Mood } from '../core/feelings/mood';
 import type { FeelingsContext } from '../core/feelings/types';
 import type { GameEvents } from '../core/gameEvents';
+import type { MoltEvent } from '../core/molt/Molt';
 import { approach, rotateToward } from '../core/movement/angles';
 import { moveCircle, type Bounds } from '../core/movement/collision';
 import { seededRandom } from '../core/random';
 import { RibbonMemory, ribbons, type Ribbon } from '../core/scent/ribbons';
 import { ShrimpMotion, type Mover } from '../core/movement/ShrimpMotion';
+import type { ThreatEvent } from '../core/threat/ThreatDirector';
+import { distanceToCover, isUnder } from '../core/world/cover';
 import { DiscoveryTracker, type Discoverable, type Pull } from '../core/world/discovery';
+import { CHALLENGE_TARGETS } from '../data/challenges';
 import { FOOD_KINDS, type FoodKind } from '../core/world/kinds';
-import { ZoneTracker } from '../core/world/zones';
+import { inRect, ZoneTracker } from '../core/world/zones';
+import { newLife, type Life } from '../core/progress/life';
+import { RestSaver } from '../core/save/RestSaver';
 import {
   areaFor,
   FIRST_AREA,
@@ -39,29 +45,43 @@ import {
   HIDE,
   HUNGER,
   MOOD,
+  MOLT,
   MOOD_SCREEN,
   MOTION,
+  SAVE,
   SENSE,
 } from '../data/tuning';
 import { debugState } from '../debug';
 import { ShrimpRig } from '../entities/ShrimpRig';
-import { t } from '../i18n';
+import { i18n, t } from '../i18n';
 import { debugRequested } from '../platform/address';
 import { loadArea, type CoverHandle, type LoadedArea } from '../systems/AreaLoader';
 import { Creatures, LIVE_KINDS } from '../systems/Creatures';
+import { AudioDirector } from '../systems/AudioDirector';
 import { MoodPresenter } from '../systems/MoodPresenter';
 import { Rim } from '../systems/Rim';
+import { keepLife } from '../systems/keep';
+import { Molting } from '../systems/Molting';
+import { ProgressKeeper } from '../systems/ProgressKeeper';
+import { Narrator } from '../systems/Narrator';
+import { StoryTeller } from '../systems/StoryTeller';
+import { Threats } from '../systems/Threats';
 import { ScentField } from '../systems/ScentField';
 import { Shoal } from '../systems/Shoal';
 import { WaterLight } from '../systems/WaterLight';
 import type { HudScene } from './HudScene';
+import type { JournalHost } from './JournalScene';
 
 export interface PlayData {
   area?: string;
   /** Opened by `?explore=`: one place, no story. */
   explore?: boolean;
-  /** Explore mode only: where to start instead of the area's spawn. */
+  /** Explore mode, or coming back from a save: where to start instead of the area's spawn, as the data file writes it. */
   at?: { x: number; y: number };
+  /** The life so far, from the place before or from the save. A new one when left out. */
+  life?: Life;
+  /** Coming back to this place from the save, rather than arriving in it. */
+  resume?: boolean;
 }
 
 /** The player's shrimp on the event bus. */
@@ -105,9 +125,10 @@ function discoverables(area: AreaDef): Discoverable[] {
  * chooses the area, comes in step 8. Until then Play opens the mangrove, and
  * `?explore=<area>` opens any area that has data.
  */
-export class PlayScene extends Phaser.Scene {
+export class PlayScene extends Phaser.Scene implements JournalHost {
   private areaId: PlayableArea = FIRST_AREA;
   private explore = false;
+  private resume = false;
   private start: { x: number; y: number } | null = null;
   private area!: AreaDef;
   private loaded!: LoadedArea;
@@ -127,6 +148,7 @@ export class PlayScene extends Phaser.Scene {
   private things: Discoverable[] = [];
   private pull: Pull = { value: 0, target: null };
   private presenter!: MoodPresenter;
+  private audio!: AudioDirector;
 
   private patches: FoodPatch[] = [];
   private foodImages = new Map<FoodPatch, Phaser.GameObjects.Image>();
@@ -139,11 +161,16 @@ export class PlayScene extends Phaser.Scene {
   private wiggleLeft = 0;
   /** The player's favourite food, chosen at random for each life (T35). */
   private favourite: FoodKind = 'algaeFilm';
-  /** How many times each prompt has shown, and the one showing now. */
-  private prompts = new Map<string, number>();
+  /** The prompt showing now. How many times each has shown is kept in the life. */
   private promptNow: string | null = null;
+  /** What the journal counts, the small line, and when to keep the life at rest. */
+  private keeper!: ProgressKeeper;
+  private restSaver!: RestSaver;
+  /** Last frame's activity and tuck, to tell when Sense or cover is left. */
+  private wasSensing = 0;
+  private wasTucked = false;
 
-  /** The other shrimp, and the player's bonds with them. Bonds last as long as the scene until saving (step 9). */
+  /** The other shrimp, and the player's bonds with them. Bonds are kept in the life. */
   private bonds!: Bonds;
   private shoal!: Shoal;
   /** How much brighter the other shrimp are drawn while the player is social (doc 10, "Screen"). */
@@ -151,8 +178,20 @@ export class PlayScene extends Phaser.Scene {
   /** The crabs, snails and fish that move, and the pale rim on what the shrimp is curious about. */
   private creatures!: Creatures;
   private rim!: Rim;
+  /** The bird and what it does, and the cornered sequence (step 7). */
+  private threats!: Threats;
+  /** The player's molt (step 8), and how far the view has eased out with it. */
+  private molting!: Molting;
+  private viewScale = 1;
+  private viewFrom = 1;
 
   private hud: HudScene | null = null;
+
+  /** The life this place is part of. In explore mode, a life of its own. */
+  private life: Life = newLife();
+  /** The story and its narration. None in explore mode. */
+  private narrator: Narrator | null = null;
+  private teller: StoryTeller | null = null;
 
   constructor() {
     super('Play');
@@ -161,7 +200,10 @@ export class PlayScene extends Phaser.Scene {
   init(data: PlayData): void {
     this.areaId = data.area !== undefined && isPlayableArea(data.area) ? data.area : FIRST_AREA;
     this.explore = data.explore === true;
-    this.start = this.explore && data.at ? pointFor(this.areaId, data.at.x, data.at.y) : null;
+    this.resume = !this.explore && data.resume === true;
+    this.start =
+      (this.explore || this.resume) && data.at ? pointFor(this.areaId, data.at.x, data.at.y) : null;
+    this.life = data.life ?? newLife();
   }
 
   create(): void {
@@ -189,13 +231,16 @@ export class PlayScene extends Phaser.Scene {
     // Feelings. What is found lives only as long as the scene until saving
     // comes in step 9.
     this.bus = new EventBus<GameEvents>();
-    const hunger = (HUNGER.start as Record<string, number>)[area.id] ?? HUNGER.start.other;
+    const hunger =
+      this.life.hunger ?? (HUNGER.start as Record<string, number>)[area.id] ?? HUNGER.start.other;
     this.feelings = new FeelingsModel(FEELINGS, MOOD, { hunger });
     const range = stage === 'larva' ? CURIOSITY.range.juvenile : CURIOSITY.range[stage];
     this.discovery = new DiscoveryTracker(
       { range, weights: CURIOSITY.weights, find: CURIOSITY.find },
       this.bodyLengthPx,
+      this.life.discoveries,
     );
+    this.bus.on('discovery', ({ id }) => this.life.discoveries.add(id));
     this.things = discoverables(area);
     this.pull = { value: 0, target: null };
     this.enterZones();
@@ -223,12 +268,17 @@ export class PlayScene extends Phaser.Scene {
     this.wiggleLeft = 0;
     const likes = FOOD_KINDS.filter((kind) => kind !== 'microalgae');
     this.favourite =
-      likes[Math.floor(seededRandom(Date.now() >>> 0)() * likes.length)] ?? 'algaeFilm';
-    this.prompts = new Map();
+      this.life.favourite ??
+      likes[Math.floor(seededRandom(Date.now() >>> 0)() * likes.length)] ??
+      'algaeFilm';
+    this.life.favourite = this.favourite;
     this.promptNow = null;
+    this.wasSensing = 0;
+    this.wasTucked = false;
 
     // Other shrimp. From chapter 2 they keep together as a shoal.
     this.bonds = new Bonds(BOND);
+    this.bonds.load(this.life.bonds);
     this.shoal = new Shoal(this, {
       area,
       stage,
@@ -245,6 +295,35 @@ export class PlayScene extends Phaser.Scene {
     this.lift = 0;
 
     const camera = this.cameras.main;
+    const story = !this.explore;
+    const life = this.life;
+    this.threats = new Threats(this, {
+      area,
+      loaded: this.loaded,
+      bodyLengthPx: this.bodyLengthPx,
+      camera,
+      gentle: app.settings.gentleMode,
+      reducedMotion: () => app.settings.reducedMotion,
+      seed: Date.now() >>> 0,
+      // In the story the first bird waits for Sense, and one ambient bird may follow it.
+      // Once it has gone, it does not come again on coming back from the save.
+      armed: story
+        ? (id) =>
+            id !== 'bird.first' ||
+            (life.stepsDone.has('s1.sense') && !life.stepsDone.has('s1.bird'))
+        : undefined,
+      ambient: story ? (life.stepsDone.has('s1.bird') ? 1 : 0) : undefined,
+    });
+    this.shoal.watch(this.threats);
+    this.molting = new Molting(
+      this,
+      this.bodyLengthPx,
+      DEPTH.bedAnimals,
+      STAGE_LOOKS[stage],
+      Date.now() >>> 0,
+    );
+    this.viewScale = 1;
+    this.viewFrom = 1;
     camera.setBackgroundColor(COLORS.deepTeal);
     this.presenter = new MoodPresenter(camera, {
       hud: () => this.hud,
@@ -256,8 +335,53 @@ export class PlayScene extends Phaser.Scene {
     this.lead = { x: 0, y: 0 };
     this.aim();
 
-    this.scene.launch('Hud');
+    this.scene.launch('Hud', { larva: false });
     this.hud = this.scene.get('Hud') as HudScene;
+    this.audio = new AudioDirector(this, {
+      area: this.areaId,
+      bus: this.bus,
+      hud: () => this.hud,
+      walkSpeed: MOTION.walkSpeed * this.bodyLengthPx,
+      favourite: () => this.favourite,
+    });
+
+    // What the journal counts. Explore mode counts too, in a life of its own that is never kept.
+    this.keeper = new ProgressKeeper(this.bus, this.life, this.areaId, () => this.hud, {
+      arrived: !this.resume,
+      author: debugRequested(),
+      find: (id) => {
+        if (this.discovery.add(id)) this.found(id);
+      },
+      ring: (bells) => this.audio.ring(bells),
+    });
+    this.keeper.progress.record.bonds = this.life.bonds;
+    if (this.discovery.add(`place.${this.areaId}`)) this.found(`place.${this.areaId}`);
+    this.restSaver = new RestSaver(SAVE);
+    if (this.resume) {
+      // The body keeps the size of its molts, and the view with it.
+      this.molting.restore(this.life.molts);
+      const by = MOLT.viewByMolts;
+      this.viewScale = (by[this.life.molts] ?? by[by.length - 1] ?? 1) / (by[0] ?? 1);
+      this.viewFrom = this.viewScale;
+    } else if (story) {
+      // Each chapter's start is kept (doc 02, "Saving").
+      keepLife(app.store, this.life, { area: this.areaId, stage, at: null });
+      this.restSaver.savedNow();
+    }
+
+    // The story of this place, told one line at a time.
+    this.narrator = null;
+    this.teller = null;
+    if (story) {
+      const narrator = new Narrator(() => this.hud, life.narrated, life.placesSeen);
+      this.narrator = narrator;
+      this.teller = new StoryTeller(this.bus, narrator, life, this.areaId, this.favourite);
+      this.bus.on('step:done', ({ id }) => {
+        if (id === 's1.bird') this.threats.director.ambientLeft = 1;
+      });
+      narrator.enter(this.areaId);
+      narrator.say('narr.c1.arrive');
+    }
 
     debugState.player = () => ({
       x: this.motion.x,
@@ -270,10 +394,16 @@ export class PlayScene extends Phaser.Scene {
       activity: this.activity.name,
       tucked: this.activity.tucked,
       zones: [...this.zones.current],
+      molt: this.molting.molt.stage,
+      molts: this.life.molts,
+      steps: [...this.life.stepsDone],
+      narration: this.narrator?.showing ?? null,
     });
     debugState.scent = () => this.scent.snapshot;
     debugState.shrimp = () => this.shoal.snapshot;
     debugState.creatures = () => ({ animals: this.creatures.snapshot, rim: this.rim.snapshot });
+    debugState.threat = () => this.threats.snapshot;
+    debugState.audio = () => this.audio.snapshot;
     debugState.feelings = () => ({
       values: { ...this.feelings.values },
       mood: this.feelings.mood,
@@ -284,8 +414,15 @@ export class PlayScene extends Phaser.Scene {
       curiousAbout: this.pull.target?.id ?? null,
     });
 
-    // `?debug`: a key cycles the forced mood, to look at each one.
-    const stopDebug = debugRequested() ? app.keyboard.onDebugKey(() => this.cycleMood()) : null;
+    // `?debug`: F9 cycles the forced mood, to look at each one. F10 calls
+    // the bird at once. F8 brings the molt signal.
+    const stopDebug = debugRequested()
+      ? app.keyboard.onDebugKey((key) => {
+          if (key === 'mood') this.cycleMood();
+          else if (key === 'threat') this.threats.callBird();
+          else this.answerMolt(this.molting.signal());
+        })
+      : null;
 
     // If the tab loses focus, the game pauses.
     const stopBlur = app.keyboard.onBlur(() => this.openPause());
@@ -298,6 +435,15 @@ export class PlayScene extends Phaser.Scene {
       debugState.scent = null;
       debugState.shrimp = null;
       debugState.creatures = null;
+      debugState.threat = null;
+      debugState.audio = null;
+      this.audio.destroy();
+      this.life.hunger = this.feelings.values.hunger;
+      this.teller?.destroy();
+      this.keeper.destroy();
+      this.narrator?.clear();
+      this.threats.destroy();
+      this.molting.destroy();
       this.scent.destroy();
       this.shoal.destroy();
       this.rig.destroy();
@@ -313,13 +459,34 @@ export class PlayScene extends Phaser.Scene {
       this.openPause();
       return;
     }
+    if (actions.justPressed('journal')) {
+      this.openJournal();
+      return;
+    }
 
     // A slow frame is played as several short steps, so the shrimp covers the
     // same ground whatever the frame rate.
     const frame = Math.min(deltaMs / 1000, FRAME.longest);
-    const own = actions.axis();
-    const tailFlip = actions.justPressed('tailFlip');
+    // Gentle mode can be changed from the pause menu's settings.
+    this.threats.director.gentle = app.settings.gentleMode;
+    // Cornered, and in the molt itself, the keys do nothing.
+    const locked = this.threats.cornered.running || this.molting.molt.locked;
+    const sequence = this.threats.cornered.update(frame);
+    // Soft after a molt, the shrimp moves at half speed.
+    const slow = this.molting.molt.speed;
+    const axisNow = actions.axis();
+    const own = locked ? { x: 0, y: 0 } : { x: axisNow.x * slow, y: axisNow.y * slow };
+    const tailFlip = !locked && actions.justPressed('tailFlip');
     let dart = tailFlip;
+    if (sequence.flip) dart = this.flipAway();
+    if (sequence.place) {
+      this.wake();
+      this.teller?.woke();
+    }
+    if (sequence.done) {
+      this.feelings.stimulus('cornered');
+      this.bus.emit('cornered', { kind: this.threats.director.kind ?? 'bird' });
+    }
     let darted = false;
     let remaining = frame;
     let eating = false;
@@ -337,7 +504,7 @@ export class PlayScene extends Phaser.Scene {
       // Hiding and grazing walk the body by themselves; otherwise the player's own direction.
       const before = this.activity.name;
       const result = this.activity.update(
-        this.activityInput(dt, own, dart),
+        this.activityInput(dt, own, dart, locked),
         this.loaded.covers,
         this.patches,
       );
@@ -350,8 +517,9 @@ export class PlayScene extends Phaser.Scene {
       if (result.called) this.shoal.playerCalled(this.clock);
       eating = this.stepMeal(dt, before, result.eating);
       for (const patch of this.patches) patch.step(dt);
-      for (let alarm = this.shoal.takeAlarms().length; alarm > 0; alarm--) {
+      for (const alarm of this.shoal.takeAlarms()) {
         this.feelings.stimulus('alarm');
+        this.alarmedBy(alarm.from);
       }
       this.stepFeelings(dt, axis.x !== 0 || axis.y !== 0 || dart);
       this.shoal.step(dt, this.clock, {
@@ -364,30 +532,45 @@ export class PlayScene extends Phaser.Scene {
         eating,
       });
       const moved = this.motion.step(dt, { x: axis.x, y: axis.y, dart }, this.mover);
+      this.stepMolt(dt);
       if (moved.darted) {
         this.feelings.stimulus('tailFlip');
         this.bus.emit('tailflip', { who: PLAYER });
-        this.shoal.playerFlipped(this.clock, this.motion.x, this.motion.y);
+        if (this.shoal.playerFlipped(this.clock, this.motion.x, this.motion.y)) {
+          this.teller?.startledStranger();
+        }
         this.creatures.flip(this.motion.x, this.motion.y);
       }
       darted = darted || moved.darted;
+      this.answerThreat(this.threats.step(dt, this.threatPlayer(moved.darted)));
+      for (const kind of this.threats.felt(PLAYER, this.motion.x, this.motion.y)) {
+        this.feelings.stimulus(kind);
+      }
       dart = false;
       remaining -= dt;
     }
 
     this.enterZones();
+    this.threats.enter(this.motion.x, this.motion.y);
+    this.threats.draw(frame);
     this.loaded.update(frame, this.motion.x, this.motion.y);
-    this.creatures.update(frame, this.motion);
+    // Walking up to a hermit crab without sending it into its shell (doc 12, "Slowly").
+    if (this.creatures.update(frame, this.motion) > 0) this.keeper.count('gentle.hermitCrab');
     this.rim.set(this.rimmed());
     this.rim.update(frame);
     for (const [patch, image] of this.foodImages) image.setAlpha(0.15 + 0.85 * patch.amount);
     this.wiggleLeft = Math.max(0, this.wiggleLeft - frame);
+    this.molting.draw(frame);
+    this.rig.setGrowth(this.molting.growth);
+    this.rig.setAlpha(this.feelings.has('soft') ? MOLT.softAlpha : 1);
     this.rig.update(frame, this.motion, this.feel(eating));
     const lift = this.feelings.mood === 'social' ? MOOD_SCREEN.socialLift : 0;
     this.lift += (lift - this.lift) * approach(frame, MOOD.screen);
     this.shoal.draw(frame, this.cameras.main.worldView, this.lift);
     this.showScent(frame);
-    this.showPrompt(own);
+    this.tellStory(frame);
+    this.showPrompt(own, locked);
+    this.hud?.hush(this.threats.cornered.darkness);
     this.presenter.update(frame, {
       mood: this.feelings.mood,
       waryLeft: this.feelings.waryRemaining,
@@ -396,26 +579,84 @@ export class PlayScene extends Phaser.Scene {
       target: this.feelings.mood === 'curious' ? this.pull.target : null,
       sensing: this.activity.name === 'sensing',
     });
+    this.audio.update(frame, {
+      mood: this.feelings.mood,
+      hidden: this.feelings.has('hidden'),
+      wary: this.feelings.has('wary'),
+      waryLeft: this.feelings.waryRemaining,
+      frozen: this.feelings.has('frozen'),
+      soft: this.feelings.has('soft'),
+      dark: this.threats.cornered.darkness,
+      mode: this.motion.mode,
+      speed: Math.hypot(this.motion.vx, this.motion.vy),
+      activity: this.activity.name,
+    });
     this.follow(frame);
-    this.hud?.track(frame, own.x !== 0 || own.y !== 0, darted);
+    this.hud?.track(frame, own.x !== 0 || own.y !== 0, darted && !locked);
+    this.keep(frame, own, locked);
   }
 
-  private activityInput(dt: number, own: { x: number; y: number }, dart: boolean) {
+  /**
+   * What the journal counts on each frame, Sense and cover as they are left,
+   * and keeping the life at each rest under cover (doc 02, "Saving").
+   */
+  private keep(frame: number, own: { x: number; y: number }, locked: boolean): void {
+    const { x, y } = this.motion;
+    const bl = this.bodyLengthPx;
+    const sensing = this.activity.name === 'sensing';
+    if (sensing) this.wasSensing += frame;
+    else if (this.wasSensing > 0) {
+      this.bus.emit('sense:used', { seconds: this.wasSensing });
+      this.wasSensing = 0;
+    }
+    const tucked = this.activity.tucked;
+    if (tucked !== this.wasTucked) {
+      const coverId = this.activity.cover?.id ?? '';
+      if (tucked) this.bus.emit('cover:entered', { who: PLAYER, coverId });
+      else this.bus.emit('cover:left', { who: PLAYER, coverId, wary: this.feelings.has('wary') });
+      this.wasTucked = tucked;
+    }
+    this.life.playSeconds += frame;
+    this.keeper.update(frame, {
+      watchWave: this.creatures.wavingNear(x, y, 3 * bl),
+      hiddenTogether: tucked && this.shoal.hiddenNear(x, y, 1.5 * bl),
+    });
+    if (this.explore) return;
+    const resting =
+      tucked &&
+      own.x === 0 &&
+      own.y === 0 &&
+      !locked &&
+      this.threats.director.stage === 'idle' &&
+      this.molting.molt.stage === 'none';
+    if (this.restSaver.step(frame, resting)) {
+      this.life.hunger = this.feelings.values.hunger;
+      const at = pointFor(this.areaId, x, y);
+      if (keepLife(app.store, this.life, { area: this.areaId, stage: STAGE_IN[this.areaId], at })) {
+        this.keeper.say('saved', t('notice.saved'));
+      }
+    }
+  }
+
+  private activityInput(dt: number, own: { x: number; y: number }, dart: boolean, locked = false) {
     const actions = app.actions;
+    const held = (action: 'hide' | 'interact' | 'sense' | 'greet') =>
+      !locked && actions.isDown(action);
     return {
       dt,
       x: this.motion.x,
       y: this.motion.y,
       heading: this.motion.heading,
-      hide: actions.isDown('hide'),
-      interact: actions.isDown('interact'),
-      sense: actions.isDown('sense'),
+      // Through the molt itself the body stays tucked in, whatever the keys do.
+      hide: held('hide') || this.molting.molt.locked,
+      interact: held('interact'),
+      sense: held('sense'),
       tailFlip: dart,
       axis: own,
       hunger: this.feelings.values.hunger,
       fear: this.feelings.values.fear,
       tasted: (kind: FoodKind) => this.discovery.known.has(`food.${kind}`),
-      greet: actions.isDown('greet'),
+      greet: held('greet'),
       others: this.shoal.greetable,
     };
   }
@@ -465,10 +706,12 @@ export class PlayScene extends Phaser.Scene {
       const unknown = this.things
         .filter((thing) => thing.kind !== 'food' && !this.discovery.known.has(thing.id))
         .map((thing, index) => ({ id: `${thing.id}#${index}`, x: thing.x, y: thing.y }));
+      // The pinned challenge's target has a white ribbon too (doc 12, "Pinning").
+      const pinned = this.pinnedTarget();
       const found = ribbons(
         x,
         y,
-        { foods: this.patches, shrimp: this.shoal.sources, dangers: [], unknown },
+        { foods: this.patches, shrimp: this.shoal.sources, dangers: [], unknown, pinned },
         range,
         SENSE,
       );
@@ -487,14 +730,49 @@ export class PlayScene extends Phaser.Scene {
     this.scent.update(dt, x, y, shown);
   }
 
+  /** What the story needs from this frame, and the narration's own step. */
+  private tellStory(dt: number): void {
+    const teller = this.teller;
+    if (teller) {
+      const { x, y } = this.motion;
+      const has = this.feelings.has.bind(this.feelings);
+      let nearest = Infinity;
+      for (const other of this.shoal.greetable) {
+        nearest = Math.min(nearest, Math.hypot(other.x - x, other.y - y) / this.bodyLengthPx);
+      }
+      teller.update({
+        dt,
+        hunger: this.feelings.values.hunger,
+        mood: this.feelings.mood,
+        sensing: this.activity.name === 'sensing',
+        tucked: this.activity.tucked,
+        wary: has('wary'),
+        tired: this.motion.tired,
+        frozen: has('frozen'),
+        veryHungry: has('veryHungry'),
+        visit: this.threats.director.stage !== 'idle',
+        nearestShrimp: nearest,
+        atWayOut: (this.area.exits ?? []).some((exit) => inRect(x, y, exit.zone)),
+        premolt: this.molting.molt.premolt,
+      });
+      if (teller.takeMoltDue()) this.answerMolt(this.molting.signal());
+    }
+    this.narrator?.update(dt);
+  }
+
   /**
    * "Hold E to graze" when a graze could start, "F to greet" when another
-   * shrimp is close enough, the first three times each (doc 03).
+   * shrimp is close enough, the first three times each (doc 03). In the
+   * story, "Hold Q to sense the water" comes with the Sense hint.
    */
-  private showPrompt(own: { x: number; y: number }): void {
+  private showPrompt(own: { x: number; y: number }, locked: boolean): void {
     let key: string | null = null;
-    let action: 'interact' | 'greet' = 'interact';
-    if (this.activity.name === 'free' && own.x === 0 && own.y === 0) {
+    let action: 'interact' | 'greet' | 'sense' = 'interact';
+    // The story's Sense hint brings its prompt, until Sense is used.
+    if (!locked && this.activity.name === 'free' && this.teller?.wantsSense) {
+      key = 'prompt.sense';
+      action = 'sense';
+    } else if (!locked && this.activity.name === 'free' && own.x === 0 && own.y === 0) {
       const input = this.activityInput(0, own, false);
       const food = this.activity.grazeable(input, this.patches);
       if (food) {
@@ -513,9 +791,10 @@ export class PlayScene extends Phaser.Scene {
     }
     if (key !== this.promptNow) {
       if (key !== null) {
-        const times = this.prompts.get(key) ?? 0;
+        const shown = this.life.promptsShown;
+        const times = shown[key] ?? 0;
         if (times >= 3) key = null;
-        else this.prompts.set(key, times + 1);
+        else shown[key] = times + 1;
       }
       this.promptNow = key;
       this.hud?.prompt(key === null ? null : t(key, { key: app.actionKey(action) }));
@@ -526,7 +805,13 @@ export class PlayScene extends Phaser.Scene {
   private stepFeelings(dt: number, moving: boolean): void {
     const { x, y } = this.motion;
     for (const id of this.discovery.step(dt, x, y, this.things)) this.found(id);
-    this.pull = this.discovery.pull(x, y, this.things);
+    const pinned = this.pinnedTarget();
+    this.pull = this.discovery.pull(
+      x,
+      y,
+      this.things,
+      pinned ? { thing: pinned, weight: CURIOSITY.pinned } : null,
+    );
 
     const context: FeelingsContext = {
       motion: this.motion.mode,
@@ -540,11 +825,143 @@ export class PlayScene extends Phaser.Scene {
       companionWithin2: this.shoal.companionNear(x, y),
       restingAgainstClose: false,
       curiosityPull: this.pull.value,
-      threat: null,
+      threat: this.threats.view(x, y, true),
       inCurrent: false,
       dayPhase: null,
     };
     this.report(this.feelings.step(dt, context));
+  }
+
+  /** One step of the molt: its phases, and the body backing out of the old shell. */
+  private stepMolt(dt: number): void {
+    const { events, back } = this.molting.step(dt, this.activity.tucked, this.motion);
+    if (back > 0) {
+      const heading = this.motion.heading;
+      const after = this.mover(
+        this.motion.x,
+        this.motion.y,
+        -Math.cos(heading) * back,
+        -Math.sin(heading) * back,
+      );
+      this.motion.x = after.x;
+      this.motion.y = after.y;
+    }
+    this.answerMolt(events);
+    // The view eases out as the new shell hardens (doc 10, "Molting").
+    const hardening = this.molting.molt.hardening;
+    if (hardening > 0) {
+      const by = MOLT.viewByMolts;
+      const molts = this.life.molts;
+      const ratio = (by[molts + 1] ?? by[by.length - 1] ?? 1) / (by[molts] ?? 1);
+      this.viewScale = this.viewFrom * (1 + (ratio - 1) * hardening);
+    }
+  }
+
+  /** What each phase of the molt does to the feelings, the story and the body. */
+  private answerMolt(events: readonly MoltEvent[]): void {
+    for (const event of events) {
+      if (event.type === 'done') {
+        this.life.molts += 1;
+        this.viewFrom = this.viewScale;
+        this.bus.emit('molt:done', { who: PLAYER, molts: this.life.molts });
+        // A companion close by as the shell comes off stays in the journal.
+        for (const id of this.shoal.companionsNear(this.motion.x, this.motion.y)) {
+          this.keeper.count(`softWith.${id}`);
+        }
+        continue;
+      }
+      const phase = event.phase;
+      this.feelings.setPremolt(phase === 'signal' || phase === 'shelter');
+      if (phase === 'molt' || phase === 'soft') {
+        // Tucked in for the molt, and still tucked in when it ends, until the player moves.
+        const cover = this.activity.cover;
+        if (cover) this.activity.tuckInto(cover, { x: this.motion.x, y: this.motion.y });
+      }
+      if (phase === 'soft') this.feelings.setSoft(MOLT.soft);
+      if (phase === 'hardened') this.feelings.hungerUp(MOLT.hunger);
+      if (phase !== 'none' && phase !== 'hardened') {
+        this.bus.emit('molt:phase', { who: PLAYER, phase });
+      }
+      this.teller?.moltPhase(phase);
+    }
+  }
+
+  /** What the threat director needs from the player on this step. */
+  private threatPlayer(darted: boolean) {
+    const { x, y } = this.motion;
+    let coverGap = Infinity;
+    let underCover = false;
+    for (const cover of this.loaded.covers) {
+      coverGap = Math.min(coverGap, distanceToCover(x, y, cover));
+      if (isUnder(x, y, cover)) underCover = true;
+    }
+    return {
+      x,
+      y,
+      vx: this.motion.vx,
+      vy: this.motion.vy,
+      mode: this.motion.mode,
+      hidden: this.activity.tucked,
+      underCover,
+      darted,
+      // No threat may start from the shelter of a molt until the shell is hard.
+      soft: this.feelings.has('soft') || this.molting.molt.guarded,
+      coverGap: coverGap / this.bodyLengthPx,
+    };
+  }
+
+  /** What the scene does when the threat moves on. */
+  private answerThreat(events: readonly ThreatEvent[]): void {
+    for (const event of events) {
+      if (event.type === 'stage') {
+        this.bus.emit('threat:stage', { kind: event.kind, stage: event.stage });
+        // At the cue, the crabs go down and the schools burst; Nacre notices first.
+        if (event.stage === 'cue') {
+          const shadow = this.threats.director.shadow;
+          this.creatures.cue(shadow.x, shadow.y);
+          if (this.shoal.cueNoticed(this.clock, this.motion.x, this.motion.y)) {
+            this.feelings.stimulus('alarm');
+            this.alarmedBy('nacre');
+          }
+        }
+      } else if (event.type === 'strike') {
+        this.bus.emit('threat:strike', {
+          kind: this.threats.director.kind ?? 'bird',
+          hit: event.hit,
+        });
+        if (event.hit) this.threats.cornered.start();
+      } else if (event.type === 'escaped') {
+        this.bus.emit('threat:escaped', {
+          kind: event.kind,
+          clean: event.clean,
+          still: event.still,
+        });
+        for (const id of this.shoal.escapedTogether(this.motion.x, this.motion.y)) {
+          this.keeper.count(`fledWith.${id}.${event.kind}`);
+        }
+      }
+    }
+  }
+
+  /** Cornered: the body flips away from the bird. A tail flip goes backward, so it faces the bird first. */
+  private flipAway(): boolean {
+    const danger = this.threats.danger;
+    this.motion.heading = Math.atan2(danger.y - this.motion.y, danger.x - this.motion.x);
+    return true;
+  }
+
+  /** Cornered, in the dark: the shrimp wakes tucked in the nearest safe shelter. */
+  private wake(): void {
+    const shelter = this.threats.shelter({ x: this.motion.x, y: this.motion.y });
+    this.motion.x = shelter.x;
+    this.motion.y = shelter.y;
+    this.motion.vx = 0;
+    this.motion.vy = 0;
+    this.motion.speed = 0;
+    if (shelter.cover) this.activity.tuckInto(shelter.cover, shelter);
+    this.view = { x: shelter.x, y: shelter.y };
+    this.lead = { x: 0, y: 0 };
+    this.aim();
   }
 
   private report(change: FeelingsChange): void {
@@ -558,6 +975,12 @@ export class PlayScene extends Phaser.Scene {
     for (const { condition, on } of change.conditions) {
       this.bus.emit('condition:changed', { who: PLAYER, condition, on });
     }
+  }
+
+  /** A named shrimp's fright reached the player: its caption (doc 10, "Alarm"). */
+  private alarmedBy(id: string): void {
+    const key = `companion.${id}.name`;
+    if (i18n.has(key)) this.audio.alarmed(t(key));
   }
 
   private found(id: string): void {
@@ -595,6 +1018,8 @@ export class PlayScene extends Phaser.Scene {
       startled: has('startled'),
       grazing: eating,
       wiggle: this.wiggleLeft > 0 ? 1 - this.wiggleLeft / GRAZE.wiggle : null,
+      arch: this.molting.molt.arch,
+      scratch: this.molting.molt.scratching,
     };
   }
 
@@ -654,6 +1079,35 @@ export class PlayScene extends Phaser.Scene {
     this.scene.launch('Pause');
   }
 
+  /**
+   * Where the pinned challenge leads, if it has a place in this area and is
+   * not done: the nearest animal of its kind, or its landmark.
+   */
+  private pinnedTarget(): Discoverable | null {
+    const id = this.life.pinned;
+    if (!id || this.keeper.progress.isDone(id)) return null;
+    const target = CHALLENGE_TARGETS[id];
+    if (!target) return null;
+    const { x, y } = this.motion;
+    if ('creature' in target) {
+      const near = this.creatures.nearest(target.creature, x, y);
+      return near ? { id: `pinned.${id}`, kind: 'creature', x: near.x, y: near.y } : null;
+    }
+    const thing = this.things.find((one) => one.id === target.discovery);
+    return thing ? { id: `pinned.${id}`, kind: thing.kind, x: thing.x, y: thing.y } : null;
+  }
+
+  /** The journal, over the paused game (doc 12, "The journal"). */
+  private openJournal(): void {
+    if (!this.scene.isActive()) return;
+    this.scene.pause();
+    this.scene.launch('Journal', { game: 'Play', from: 'game' });
+  }
+
+  journalLife() {
+    return { life: this.life, area: this.areaId, unreleased: debugRequested() };
+  }
+
   /** The view trails the shrimp a little and looks slightly ahead of it. */
   private follow(dt: number): void {
     const motion = this.motion;
@@ -681,7 +1135,7 @@ export class PlayScene extends Phaser.Scene {
   /** Point the camera at the view, kept inside the area, and lay the bed under it. */
   private aim(): void {
     // Fear zooms in a little (MoodPresenter).
-    const zoom = CAMERA.zoom * this.presenter.zoom;
+    const zoom = CAMERA.zoom * this.presenter.zoom * this.viewScale;
     this.cameras.main.setZoom(zoom);
     const halfW = GAME_WIDTH / zoom / 2;
     const halfH = GAME_HEIGHT / zoom / 2;

@@ -157,3 +157,124 @@ test.describe('burrowing and resting', () => {
     expect(errors).toEqual([]);
   });
 });
+
+const threat = (page: Page) => page.evaluate(() => window.__lvdc?.threat() ?? null);
+
+/** Keeps every stage the threat goes through, as the page draws. */
+async function recordStages(page: Page): Promise<() => Promise<string[]>> {
+  await page.evaluate(() => {
+    const seen: string[] = [];
+    (window as unknown as { stagesSeen: string[] }).stagesSeen = seen;
+    const look = () => {
+      const stage = window.__lvdc?.threat()?.stage;
+      if (stage && seen[seen.length - 1] !== stage) seen.push(stage);
+      requestAnimationFrame(look);
+    };
+    look();
+  });
+  return () => page.evaluate(() => (window as unknown as { stagesSeen: string[] }).stagesSeen);
+}
+
+test.describe('the hunting fish', () => {
+  test('with ?debug, F10 brings it; a shrimp dug in is not seen, and it passes on', async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    const errors = watchErrors(page);
+    await openLagoon(page, '&at=5200,2600&debug');
+    await page.keyboard.down('ShiftLeft');
+    await page.waitForFunction(() => window.__lvdc?.player()?.tucked === true);
+    const stages = await recordStages(page);
+    await page.keyboard.press('F10');
+    await page.waitForFunction(() => window.__lvdc?.threat()?.fish != null);
+    expect((await threat(page))?.kind).toBe('fish');
+    await page.waitForFunction(() => window.__lvdc?.threat()?.stage === 'idle', null, {
+      timeout: 60_000,
+    });
+    await page.keyboard.up('ShiftLeft');
+    expect(await stages()).toEqual(['idle', 'cue', 'presence', 'release', 'idle']);
+    expect((await threat(page))?.strikes).toBe(0);
+    expect(
+      await page.evaluate(() =>
+        window.__lvdc?.feelings()?.discovered.includes('creature.huntingFish'),
+      ),
+    ).toBe(true);
+    expect(errors).toEqual([]);
+  });
+
+  test('swimming near it brings the chase: it faces, holds still, and charges', async ({
+    page,
+  }) => {
+    test.setTimeout(150_000);
+    const errors = watchErrors(page);
+    await openLagoon(page, '&at=5200,2600&debug');
+    const stages = await recordStages(page);
+    await page.keyboard.press('F10');
+    // Swimming toward it is what it notices. A fish that leaves unnoticed is called again.
+    let held: string | null = null;
+    await expect
+      .poll(
+        async () => {
+          const now = await threat(page);
+          if (now?.stage === 'idle') await page.keyboard.press('F10');
+          const me = await player(page);
+          let key: string | null = null;
+          if (now?.stage === 'presence' && now.fish && me) {
+            const dx = now.fish.x - me.x;
+            const dy = now.fish.y - me.y;
+            key =
+              Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'KeyD' : 'KeyA') : dy > 0 ? 'KeyS' : 'KeyW';
+          }
+          if (key !== held) {
+            if (held) await page.keyboard.up(held);
+            if (key) await page.keyboard.down(key);
+            held = key;
+          }
+          return now?.stage;
+        },
+        { timeout: 60_000, intervals: [200] },
+      )
+      .toBe('chase');
+    if (held) await page.keyboard.up(held);
+    await page.waitForFunction(() => (window.__lvdc?.threat()?.fish?.charges ?? 0) >= 1, null, {
+      timeout: 20_000,
+    });
+    expect(await stages()).toContain('chase');
+    expect(errors).toEqual([]);
+  });
+});
+
+test.describe('the dawn fish', () => {
+  test('in the story, the first dawn brings the fish in from the pass', async ({ page }) => {
+    test.setTimeout(90_000);
+    const errors = watchErrors(page);
+    await page.goto('./?debug');
+    await waitForScene(page, 'Title');
+    await page.evaluate((save) => localStorage.setItem('lvdc.save.v1', JSON.stringify(save)), {
+      ...AT_THE_CREEK,
+      area: 'lagoon',
+      stage: 'subAdult',
+      at: { x: 7500, y: 2650 },
+      narrated: ['narr.c1.arrive', 'narr.c2.arrive'],
+      placesSeen: ['drift', 'mangrove', 'lagoon'],
+    });
+    await page.reload();
+    await waitForScene(page, 'Title');
+    await page.keyboard.press('Enter');
+    await page.waitForFunction(() => window.__lvdc?.player()?.area === 'lagoon');
+    await page.waitForFunction(() => window.__lvdc?.day() != null);
+    // Dusk, night, then dawn.
+    for (const phase of ['dusk', 'night', 'dawn']) {
+      await page.keyboard.press('F7');
+      await page.waitForFunction((want) => window.__lvdc?.day()?.phase === want, phase);
+    }
+    await page.waitForFunction(() => window.__lvdc?.threat()?.kind === 'fish', null, {
+      timeout: 10_000,
+    });
+    // It comes from the west, where the pass is.
+    const fish = (await threat(page))?.fish;
+    const me = await player(page);
+    expect(fish && me && fish.x < me.x).toBe(true);
+    expect(errors).toEqual([]);
+  });
+});

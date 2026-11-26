@@ -16,7 +16,7 @@ import type {
   WallDef,
 } from '../data/areas/types';
 import { CAMERA, COVER, WORLD } from '../data/tuning';
-import { LIVE_KINDS } from './Creatures';
+import { LIVE_KINDS, THREAT_KINDS } from './Creatures';
 
 /**
  * Builds a place from its data with Phaser objects: the bed, what lies on it,
@@ -248,7 +248,7 @@ export function loadArea(scene: Phaser.Scene, area: AreaDef): LoadedArea {
   // 6. Animals: on the bed, in mid-water, or over the cover with their shadows below.
   // Those that move are drawn by the creatures system instead.
   for (const creature of area.creatures ?? []) {
-    if (LIVE_KINDS.has(creature.kind)) continue;
+    if (LIVE_KINDS.has(creature.kind) || THREAT_KINDS.has(creature.kind)) continue;
     let body: Phaser.GameObjects.Image;
     if (OVER_COVER.has(creature.kind)) {
       addStill(scene, area, creature, bl, DEPTH.midWater, stills, 'shadow');

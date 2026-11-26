@@ -70,6 +70,8 @@ export class StoryTeller {
   private sinceMolt: number | null = null;
   /** Chapter 2: the shrimp has dug in at least once in this life. */
   private everBurrowed: boolean;
+  /** The shoal is smaller and has not yet been seen together since. */
+  private fewerDue = false;
 
   constructor(
     private readonly bus: EventBus<GameEvents>,
@@ -168,6 +170,21 @@ export class StoryTeller {
     this.narrator.say('narr.c2.glow');
   }
 
+  /** Chapter 2: at dawn the fish comes, until it has come and gone once (doc 12, `s2.fish`). */
+  get wantsDawnFish(): boolean {
+    return this.chapter === 2 && this.phase === 'dawn' && !this.story.has('s2.fish');
+  }
+
+  /** Someone of the shoal has gone missing, unseen (D42). */
+  lost(): void {
+    if (!this.life.narrated.has('narr.fewer')) this.fewerDue = true;
+  }
+
+  /** The fish turned to face the shrimp and held still: the warning. */
+  fishFaced(): void {
+    this.narrator.say('narr.c2.faces');
+  }
+
   /** Sense has been hinted and not yet used: its prompt shows. */
   get wantsSense(): boolean {
     return (
@@ -206,6 +223,10 @@ export class StoryTeller {
       }
     }
     this.shoalNear = frame.shoalNear ?? 0;
+    // The first time the shoal is together again after a loss, it is fewer.
+    if (this.fewerDue && this.shoalNear >= STORY.regrouped && this.narrator.say('narr.fewer')) {
+      this.fewerDue = false;
+    }
     if (this.sinceFish !== null) this.sinceFish += dt;
     if (this.sinceMolt !== null) {
       const before = this.sinceMolt;

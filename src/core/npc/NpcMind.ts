@@ -391,7 +391,8 @@ export class NpcMind {
       case 'groom':
         return { ...NOTHING, grooming: true };
       case 'rest':
-        return { ...NOTHING, look: this.social(world) };
+        // By day in the lagoon it digs into the sand, or tucks into cover close by.
+        return { ...NOTHING, hide: world.lagoonDay, look: this.social(world) };
       case 'wander': {
         if (!this.target) return NOTHING;
         const axis = this.walkTo(here, this.target, npc.walk.strength, true, world);

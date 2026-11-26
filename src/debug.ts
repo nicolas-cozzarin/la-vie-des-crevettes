@@ -153,6 +153,8 @@ export interface ThreatSnapshot {
   predator: { x: number; y: number } | null;
   /** The cornered sequence is running. */
   cornered: boolean;
+  /** The hunting fish, from its cue to the end of its release. */
+  fish: { x: number; y: number; heading: number; phase: string; charges: number } | null;
 }
 
 /** What the browser test can ask about the animals: where each is, and how strong the rim is. */

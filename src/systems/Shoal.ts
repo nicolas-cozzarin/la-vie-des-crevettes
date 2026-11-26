@@ -4,19 +4,20 @@ import type { ActivityName, OtherShrimp } from '../core/activity/Activity';
 import { Bonds, type BondChange } from '../core/bonds/Bonds';
 import type { EventBus } from '../core/events';
 import type { FoodPatch } from '../core/food/FoodPatch';
-import type { BondStage, StimulusKind, ThreatView } from '../core/feelings/types';
+import type { BondStage, DayPhase, StimulusKind, ThreatView } from '../core/feelings/types';
 import type { GameEvents } from '../core/gameEvents';
 import { moveCircle, type Bounds, type Obstacle, type Point } from '../core/movement/collision';
 import type { MotionMode } from '../core/movement/ShrimpMotion';
 import { AlarmNet, type Alarm } from '../core/npc/alarm';
 import { NpcMind, type SeenShrimp } from '../core/npc/NpcMind';
+import type { LossCandidate } from '../core/npc/losses';
 import type { ShoalMember } from '../core/npc/shoal';
 import { seededRandom, seedOf } from '../core/random';
 import type { ShrimpSource } from '../core/scent/ribbons';
 import type { LifeStage } from '../core/world/kinds';
 import type { AreaDef, ShrimpSpawnDef } from '../data/areas/types';
 import { COMPANIONS, UNNAMED, type ShrimpKind } from '../data/shrimp';
-import { ALARM, BOND, COMPANY, GREET, MOTION, NPC, SHOAL, STEER } from '../data/tuning';
+import { ALARM, BOND, COMPANY, GREET, LOSSES, MOTION, NPC, SHOAL, STEER } from '../data/tuning';
 import { NpcShrimp } from '../entities/NpcShrimp';
 import type { CoverHandle } from './AreaLoader';
 
@@ -57,6 +58,8 @@ export interface ShoalOptions {
   depth: number;
   /** From chapter 2 the shrimp keep together as a shoal. */
   together: boolean;
+  /** How many unnamed shrimp have gone missing here before (D42). They are not there. */
+  missing?: number;
 }
 
 /** What the browser test can ask about one other shrimp. */
@@ -115,6 +118,8 @@ export class Shoal {
   private forPlayer: Alarm[] = [];
   private time = 0;
   private threat: ShoalThreat | null = null;
+  /** The time of day, where the place has one. By day in the lagoon the shoal rests in the sand. */
+  dayPhase: DayPhase | null = null;
   /** The shrimp that took fright during the threat under way (doc 02, bonds). */
   private frightened = new Set<string>();
 
@@ -124,7 +129,15 @@ export class Shoal {
   ) {
     const { area, bodyLengthPx: bl } = options;
     this.alarm = new AlarmNet(ALARM, bl, seededRandom(seedOf(`${area.id}:alarm`)));
-    const defs = area.shrimp ?? [];
+    // Those gone missing before are the last unnamed ones, down to the floor.
+    const all = area.shrimp ?? [];
+    const unnamedIds = all.filter((def) => def.who === 'young').map((def) => def.id);
+    const gone = new Set(
+      unnamedIds.slice(
+        unnamedIds.length - Math.min(options.missing ?? 0, unnamedIds.length - LOSSES.floor),
+      ),
+    );
+    const defs = all.filter((def) => !gone.has(def.id));
     defs.forEach((def, index) => {
       const named = def.who !== 'young';
       const kind = def.who === 'young' ? unnamed(area.id, def) : COMPANIONS[def.who];
@@ -171,6 +184,7 @@ export class Shoal {
         look,
         hunger,
         options.depth,
+        area.sand ? area.ground : null,
       );
       this.members.push(npc);
       this.movers.set(npc, (x, y, dx, dy) =>
@@ -301,7 +315,7 @@ export class Shoal {
         called:
           time < this.calledUntil && this.options.bonds.value(npc.id) >= BOND.stages.companion,
         shoal: this.options.together ? this.shoalMembers() : null,
-        lagoonDay: false,
+        lagoonDay: this.dayPhase === 'day' && this.options.area.sand === true,
       },
       this.options.covers,
       this.options.foods,
@@ -457,6 +471,19 @@ export class Shoal {
     return this.members.filter((npc) => Math.hypot(npc.x - x, npc.y - y) <= reach).length;
   }
 
+  /** The middle of the other shrimp within `reach` px of a point, if two or more are there. */
+  middleNear(x: number, y: number, reach: number): { x: number; y: number } | null {
+    const close = this.members.filter((npc) => Math.hypot(npc.x - x, npc.y - y) <= reach);
+    if (close.length < 2) return null;
+    let sx = 0;
+    let sy = 0;
+    for (const npc of close) {
+      sx += npc.x;
+      sy += npc.y;
+    }
+    return { x: sx / close.length, y: sy / close.length };
+  }
+
   /** Another shrimp tucked under cover within `reach` px, for "Side by side". */
   hiddenNear(x: number, y: number, reach: number): boolean {
     return this.members.some(
@@ -514,6 +541,40 @@ export class Shoal {
       bond: this.options.bonds.value(npc.id),
       stage: this.stage(npc.id),
     }));
+  }
+
+  /** Every shrimp of the shoal, for choosing who goes missing (D42). */
+  lossCandidates(view: { contains(x: number, y: number): boolean }): LossCandidate[] {
+    return this.members.map((npc) => ({
+      id: npc.id,
+      named: npc.named,
+      x: npc.x,
+      y: npc.y,
+      // A little beyond the view's edge counts as in view: a body length might show.
+      inView:
+        view.contains(npc.x, npc.y) ||
+        view.contains(npc.x + npc.bodyLengthPx, npc.y) ||
+        view.contains(npc.x - npc.bodyLengthPx, npc.y) ||
+        view.contains(npc.x, npc.y + npc.bodyLengthPx) ||
+        view.contains(npc.x, npc.y - npc.bodyLengthPx),
+    }));
+  }
+
+  /** These shrimp are gone, out of view, with no trace. */
+  remove(ids: readonly string[]): void {
+    for (const id of ids) {
+      const index = this.members.findIndex((npc) => npc.id === id);
+      const npc = this.members[index];
+      if (!npc || npc.named) continue;
+      this.members.splice(index, 1);
+      this.movers.delete(npc);
+      npc.destroy();
+    }
+  }
+
+  /** How many of the shoal are here. */
+  get count(): number {
+    return this.members.length;
   }
 
   destroy(): void {

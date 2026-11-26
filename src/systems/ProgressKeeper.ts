@@ -79,8 +79,9 @@ export class ProgressKeeper {
     on('step:done', ({ id }) => hear({ kind: 'step', id }));
     on('threat:stage', ({ kind, stage }) => {
       hear({ kind: 'threat', threat: kind, stage, area });
-      // The shadow with legs is known once it has gone.
+      // The shadow with legs, and the long fish, are known once they have gone.
       if (kind === 'bird' && stage === 'release') options.find('creature.bird');
+      if (kind === 'fish' && stage === 'release') options.find('creature.huntingFish');
     });
     on('threat:escaped', ({ kind, clean, still }) => {
       hear({ kind: 'escaped', threat: kind, clean, still });

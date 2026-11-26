@@ -7,8 +7,9 @@ import type { FeelingsContext } from '../core/feelings/types';
 import { rotateToward } from '../core/movement/angles';
 import { ShrimpMotion, type Mover } from '../core/movement/ShrimpMotion';
 import { NpcMind, type NpcIntent, type NpcWorld } from '../core/npc/NpcMind';
-import { FEELINGS, GRAZE, GREET, HIDE, MOOD, MOTION } from '../data/tuning';
+import { BURROW, FEELINGS, GRAZE, GREET, HIDE, MOOD, MOTION } from '../data/tuning';
 import type { CoverHandle } from '../systems/AreaLoader';
+import { SandLid } from './SandLid';
 import { ShrimpRig } from './ShrimpRig';
 
 /** What happened to one other shrimp on one step, for the shoal to pass on. */
@@ -34,6 +35,8 @@ export class NpcShrimp {
   eating = false;
   /** Seconds owed to a shrimp far outside the view, stepped in one go. */
   owed = 0;
+  /** The sand over it when it digs in, where the bed is sand. */
+  private readonly lid: SandLid | null;
 
   constructor(
     scene: Phaser.Scene,
@@ -45,11 +48,14 @@ export class NpcShrimp {
     look: Partial<RigLook>,
     hunger: number,
     depth: number,
+    /** The ground's picture where the bed is sand, so it can dig in. Null elsewhere. */
+    private readonly sand: string | null = null,
   ) {
     this.motion = new ShrimpMotion({ ...MOTION, bodyLengthPx }, start);
     this.feelings = new FeelingsModel(FEELINGS, MOOD, { hunger });
-    this.activity = new Activity<CoverHandle, FoodPatch>(HIDE, bodyLengthPx, GRAZE, GREET);
+    this.activity = new Activity<CoverHandle, FoodPatch>(HIDE, bodyLengthPx, GRAZE, GREET, BURROW);
     this.rig = new ShrimpRig(scene, bodyLengthPx, depth, look);
+    this.lid = sand ? new SandLid(scene, sand, bodyLengthPx, depth + 1) : null;
     this.rig.update(0, this.motion);
   }
 
@@ -95,6 +101,7 @@ export class NpcShrimp {
         tasted: () => true,
         greet: intent.greet,
         others: intent.greetWith ? others.filter((one) => one.id === intent.greetWith) : [],
+        sand: this.sand !== null,
       },
       covers,
       foods,
@@ -124,7 +131,10 @@ export class NpcShrimp {
   /** Draws it, or hides it when it is out of sight. `lift` brightens it. */
   draw(dt: number, visible: boolean, lift: number, target: { x: number; y: number } | null): void {
     this.rig.setVisible(visible);
-    if (!visible) return;
+    if (!visible) {
+      this.lid?.update(this.motion.x, this.motion.y, this.motion.heading, 0);
+      return;
+    }
     const feelings = this.feelings;
     const has = feelings.has.bind(feelings);
     const greeting = this.activity.name === 'greeting';
@@ -138,9 +148,11 @@ export class NpcShrimp {
       grazing: this.eating,
       grooming: this.intent?.grooming === true,
     });
+    this.lid?.update(this.motion.x, this.motion.y, this.motion.heading, this.activity.burrowDepth);
   }
 
   destroy(): void {
     this.rig.destroy();
+    this.lid?.destroy();
   }
 }

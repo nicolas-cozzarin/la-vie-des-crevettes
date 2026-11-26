@@ -6,8 +6,9 @@ import { shelterFor, type Shelter } from '../core/threat/cornered';
 import { ThreatDirector, type ThreatEvent, type ThreatPlayer } from '../core/threat/ThreatDirector';
 import { ZoneTracker } from '../core/world/zones';
 import type { AreaDef } from '../data/areas/types';
-import { BIRD, CORNERED, HIDE, THREAT, WORLD } from '../data/tuning';
+import { BIRD, CORNERED, FISH, HIDE, THREAT, WORLD } from '../data/tuning';
 import { Bird } from '../entities/Bird';
+import { Hunter } from '../entities/Hunter';
 import type { CoverHandle, LoadedArea } from './AreaLoader';
 import { CorneredSequence } from './CorneredSequence';
 
@@ -34,7 +35,8 @@ export interface ThreatsOptions {
 export class Threats {
   readonly director: ThreatDirector;
   readonly cornered: CorneredSequence;
-  private readonly bird: Bird;
+  private readonly bird: Bird | null;
+  private readonly hunter: Hunter | null;
   private readonly triggers: ZoneTracker;
   private readonly fired = new Set<string>();
   private frameEvents: ThreatEvent[] = [];
@@ -55,8 +57,11 @@ export class Threats {
       },
       seededRandom(options.seed),
       { gentle: options.gentle, kinds: area.threats ?? [], ambient: options.ambient },
+      FISH,
     );
-    this.bird = new Bird(scene, bodyLengthPx);
+    const kinds = area.threats ?? [];
+    this.bird = kinds.includes('bird') ? new Bird(scene, bodyLengthPx) : null;
+    this.hunter = kinds.includes('fish') ? new Hunter(scene, bodyLengthPx) : null;
     this.cornered = new CorneredSequence(scene, options.camera, CORNERED, options.reducedMotion);
     this.triggers = new ZoneTracker(area.triggers ?? []);
   }
@@ -89,9 +94,15 @@ export class Threats {
     }
   }
 
-  /** The debug key: a bird now, whatever the gap. */
-  callBird(): void {
-    this.director.request('bird', false, null, true);
+  /** The debug key: this place's threat now, whatever the gap. */
+  callThreat(): void {
+    const kind = this.options.area.threats?.[0];
+    if (kind) this.director.request(kind, false, null, true);
+  }
+
+  /** The story's dawn fish, coming from the way given: it starts as soon as it may. */
+  dawnFish(from: number): void {
+    this.director.request('fish', false, from);
   }
 
   /** Where the danger is: the bird's feet, or its shadow. */
@@ -124,9 +135,10 @@ export class Threats {
     );
   }
 
-  /** Draws the bird from this frame's events. */
+  /** Draws the bird or the fish from this frame's events. */
   draw(dt: number): void {
-    this.bird.update(dt, this.director, this.frameEvents);
+    this.bird?.update(dt, this.director, this.director.fish ? [] : this.frameEvents);
+    this.hunter?.update(dt, this.director);
     this.frameEvents = [];
   }
 
@@ -135,7 +147,8 @@ export class Threats {
   }
 
   destroy(): void {
-    this.bird.destroy();
+    this.bird?.destroy();
+    this.hunter?.destroy();
     this.cornered.destroy();
   }
 }

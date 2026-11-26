@@ -530,6 +530,43 @@ export const BIRD = {
   firstFrom: -Math.PI / 4,
 };
 
+/** The hunting fish (doc 10, "The hunting fish"). Distances in BL, times in seconds. */
+export const FISH = {
+  length: 4.5,
+  patrol: { speed: 2, radius: 5 },
+  /** It comes in from the edge of the view, a little faster than it patrols. */
+  arrive: { from: 6, speed: 3 },
+  turn: 0.9,
+  room: 3,
+  face: 0.6,
+  pause: 0.5,
+  charge: { speed: 9, reach: 10 },
+  hit: 0.7,
+  recover: 1.6,
+  recoverSpeed: 2.5,
+  charges: 3,
+  giveUp: { hidden: 2, far: 8, seconds: 12 },
+  range: 7,
+  sight: 8,
+  shadowReach: 3,
+  missReach: 3,
+  sidestep: { near: 1.5, after: 0.6 },
+  leave: { speed: 4, bend: 0.35 },
+  /** Tail beats a second on patrol, and in the pause before a charge. */
+  tail: { slow: 1.1, fast: 4.5 },
+  /** Radians the tail swings either way at most (doc 14). */
+  swing: 0.18,
+};
+
+/** Who goes missing from the shoal when a threat leaves (doc 10, "Losses", D42). */
+export const LOSSES = {
+  chance: { bird: 1 / 3, fish: 1 / 2, net: 1 },
+  /** BL. */
+  away: 10,
+  floor: 2,
+  netTwoFrom: 4,
+};
+
 /** Being cornered (doc 10, "Cornered"). Seconds from the instant before contact. */
 export const CORNERED = {
   blurred: 0.25,
@@ -578,6 +615,8 @@ export const STORY = {
   leanAfterMolt: 10,
   /** Shoal members this close count as grazing with the shrimp. BL. */
   shoalNear: 4,
+  /** Shoal members within `shoalNear` BL for the shoal to count as together again. */
+  regrouped: 3,
   /** Seconds the view takes to fade out on the way to the next place. */
   leaveFade: 1.5,
 };

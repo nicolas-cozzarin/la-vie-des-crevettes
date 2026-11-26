@@ -73,6 +73,7 @@ export const lagoon: AreaDef = {
   light: { dapple: 'light.caustics', dappleStrength: 0.35, murk: 'lagoon.murk' },
   dayCycle: true,
   sand: true,
+  threats: ['fish'],
   music: 'music.lagoon',
   ambience: 'amb.lagoon',
 

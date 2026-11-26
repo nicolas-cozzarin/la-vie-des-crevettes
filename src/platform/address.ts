@@ -1,3 +1,5 @@
+import type { DayPhase } from '../core/feelings/types';
+
 /**
  * What the page's address asks for. Only this file reads it.
  *
@@ -22,4 +24,11 @@ export function exploreStart(): { x: number; y: number } | null {
 export function debugRequested(): boolean {
   if (typeof window === 'undefined') return false;
   return new URLSearchParams(window.location.search).has('debug');
+}
+
+/** `&time=dusk`: in explore mode, the time of day a place with a day cycle opens at. */
+export function exploreTime(): DayPhase | null {
+  if (typeof window === 'undefined') return null;
+  const time = new URLSearchParams(window.location.search).get('time');
+  return time === 'day' || time === 'dusk' || time === 'night' || time === 'dawn' ? time : null;
 }

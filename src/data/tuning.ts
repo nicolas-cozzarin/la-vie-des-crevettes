@@ -1,4 +1,5 @@
 import type { MotionTuning } from '../core/movement/ShrimpMotion';
+import type { DayTuning } from '../core/world/dayCycle';
 
 /**
  * Every number that shapes how the game feels. Starting points for playtests.
@@ -84,6 +85,25 @@ export const HIDE = {
   slowing: 0.35,
 };
 
+/** Burrowing into sand, from chapter 2 (doc 10, "Activities"). Seconds. */
+export const BURROW = {
+  dig: 1.2,
+  out: 0.5,
+  /** In the story, seconds into the lagoon before the sand line and the burrow prompt. */
+  hint: 8,
+};
+
+/** "Rest until dusk" (doc 02, "Hide and shelter"; doc 10, "Comfort"). */
+export const REST = {
+  /** Seconds tucked or dug in, calm, before it may be chosen. */
+  calm: 5,
+  /** Comfort above which it may be chosen, and the fear below which the shrimp counts as calm. */
+  comfort: 0.6,
+  fear: 0.2,
+  /** While resting, the day runs this many times faster, until dusk (T101). */
+  speed: 15,
+};
+
 export const COVER = {
   /** Opacity of a cover while the player is beneath it. */
   fadedAlpha: 0.4,
@@ -94,6 +114,66 @@ export const COVER = {
 export const WATER_LIGHT = {
   /** How fast the light patches slide, in design pixels per second. */
   dappleDrift: { x: 6, y: 3.5 },
+};
+
+/**
+ * Day and night, from chapter 2 (doc 02, "Day and night"). One cycle is
+ * 4 minutes. The strengths are doc 14's, "From data to picture" (T99).
+ */
+export const DAY: DayTuning & {
+  plankton: {
+    perBl2: number;
+    elsewhere: number;
+    alpha: number;
+    width: { min: number; max: number };
+    wake: number;
+    lit: number;
+    grow: number;
+    pool: number;
+  };
+  effects: {
+    dayOpenFall: number;
+    dayOpenComfort: number;
+    duskComfort: number;
+    nightThreats: number;
+    dawnThreats: number;
+    duskFilm: number;
+  };
+} = {
+  length: { day: 100, dusk: 40, night: 60, dawn: 40 },
+  ease: 8,
+  dusk: 0.55,
+  night: 0.86,
+  duskCaustics: 0.4,
+  plankton: {
+    /** Points for each square BL in the bright shallows; elsewhere this share of them. */
+    perBl2: 2,
+    elsewhere: 0.35,
+    /** How bright a point is when nothing has passed, 0 to 1. */
+    alpha: 0.22,
+    /** BL across. */
+    width: { min: 0.1, max: 0.22 },
+    /** BL from the wake within which a point lights up, and seconds it stays lit. */
+    wake: 1.5,
+    lit: 1.5,
+    /** How much wider a lit point grows. */
+    grow: 1.6,
+    /** The most points drawn at once. */
+    pool: 700,
+  },
+  /** What the time of day does to the feelings and the threats (doc 10, "Day and night"). */
+  effects: {
+    /** By day, in the open, fear falls at this share of its speed. */
+    dayOpenFall: 0.5,
+    /** Added to comfort's target by day in the open, and at dusk anywhere. */
+    dayOpenComfort: -0.1,
+    duskComfort: 0.05,
+    /** Ambient threats are this much as likely at night, and at dawn. */
+    nightThreats: 0.5,
+    dawnThreats: 2,
+    /** At dusk the golden film is worth this much more (T99). */
+    duskFilm: 1.5,
+  },
 };
 
 /** Hunger. See docs/10-feelings-and-states.md, "Hunger". */
@@ -210,6 +290,11 @@ export const FEELINGS = {
   curiosity: CURIOSITY,
   company: COMPANY,
   wary: WARY,
+  day: {
+    openFall: DAY.effects.dayOpenFall,
+    openComfort: DAY.effects.dayOpenComfort,
+    duskComfort: DAY.effects.duskComfort,
+  },
 };
 
 /** How the screen shows the player's mood. See doc 10, "Screen". */
@@ -487,6 +572,14 @@ export const STORY = {
   meet: 4,
   /** Into the wait for the molt, out in the open, the body asks for cover. */
   notHere: 20,
+  /** Chapter 2: after the dawn fish has gone, the molt signal (T100). */
+  moltAfterFish: 20,
+  /** Chapter 2: after the molt, the water leans toward the sea. */
+  leanAfterMolt: 10,
+  /** Shoal members this close count as grazing with the shrimp. BL. */
+  shoalNear: 4,
+  /** Seconds the view takes to fade out on the way to the next place. */
+  leaveFade: 1.5,
 };
 
 /** Saving at rest (doc 02, "Saving"). Seconds. */

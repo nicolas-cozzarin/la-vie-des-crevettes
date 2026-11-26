@@ -227,6 +227,11 @@ export class FeelingsModel {
         if (context.companionWithin2) fall = Math.max(fall, f.companion);
         if (context.restingAgainstClose) fall = Math.max(fall, f.restingClose);
         if (context.hidden) fall = Math.max(fall, present ? f.hiddenNearThreat : f.hidden);
+        // By day, out in the open, fear is slow to go (doc 10, "Day and night").
+        const day = this.tuning.day;
+        if (day && context.dayPhase === 'day' && !context.hidden && !context.nearCover) {
+          fall *= day.openFall;
+        }
         this.feelings.fear = clamp(this.feelings.fear - fall * dt);
       }
     }
@@ -253,12 +258,17 @@ export class FeelingsModel {
     const f = this.feelings;
     const sheltered = context.hidden || context.nearCover ? 1 : 0;
     const settled = context.activity === 'resting' ? 1 : 0;
+    const day = this.tuning.day;
+    let light = 0;
+    if (day && context.dayPhase === 'day' && !sheltered) light = day.openComfort;
+    if (day && context.dayPhase === 'dusk') light = day.duskComfort;
     const target = clamp(
       t.base +
         t.fed * (1 - f.hunger) +
         t.sheltered * sheltered +
         t.company * f.company +
-        t.settled * settled -
+        t.settled * settled +
+        light -
         t.fear * f.fear,
     );
     f.comfort = clamp(follow(f.comfort, target, dt, t.rise, t.fall));

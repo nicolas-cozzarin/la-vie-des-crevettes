@@ -3,6 +3,7 @@ import type { Lang } from './core/i18n';
 import type { SettingsV1 } from './core/save/settings';
 import type {
   CreaturesSnapshot,
+  DaySnapshot,
   DriftSnapshot,
   FeelingsSnapshot,
   JournalSnapshot,
@@ -42,6 +43,8 @@ export interface DebugHook {
   progress(): ProgressSnapshot | null;
   /** The sound: the mix's levels, the caption showing, the last sounds asked for. */
   audio(): AudioSnapshot | null;
+  /** The time of day, where the place has one. */
+  day(): DaySnapshot | null;
 }
 
 declare global {

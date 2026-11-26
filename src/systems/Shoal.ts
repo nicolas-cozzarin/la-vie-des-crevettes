@@ -452,6 +452,11 @@ export class Shoal {
     return this.members.some((npc) => this.options.bonds.value(npc.id) >= BOND.stages.companion);
   }
 
+  /** How many other shrimp are within `reach` px of a point. */
+  near(x: number, y: number, reach: number): number {
+    return this.members.filter((npc) => Math.hypot(npc.x - x, npc.y - y) <= reach).length;
+  }
+
   /** Another shrimp tucked under cover within `reach` px, for "Side by side". */
   hiddenNear(x: number, y: number, reach: number): boolean {
     return this.members.some(

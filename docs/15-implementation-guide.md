@@ -393,6 +393,14 @@ Documents: 03 (settings), 07 (About), 06 (counter).
 
 Release 0.2 onward reuses everything above. What each adds is in doc 08. The lagoon, channel, shadow and open sea are mapped in doc 11, and their threats are specified in doc 10.
 
+Release 0.2 is built in parts, each committed and pushed:
+
+1. The way into the lagoon, and day and night (T99, T100). `DayCycle` in `src/core/world/dayCycle.ts` knows only time: the phase, the light to draw, `skipTo` for "Rest until dusk". `DayNight` in `src/systems/` draws it: two veils with the multiply blend just over the murk, the caustics turned down through `WaterLight.setDappleLevel`, and a pool of plankton points sorted by cell, so only those in view are looked at. The feelings take `dayPhase` in their context and `FEELINGS.day`. `StoryTeller` tells chapter 2 as well as chapter 1: `chapter`, `arrive()`, `dayPhase()`, `glowed()`. `__lvdc.day()` gives the phase, the light, the veils and the plankton.
+2. Burrowing and "Rest until dusk" (T101). `Activity` takes `BURROW` and the input's `sand` and `wake`: `burrowing` goes in, down and out, `resting` keeps whichever tuck it came from, and `wake()` hands it back. When the rest is offered is the scene's `mayRest`, since it needs the day, the threats and the molt. `SandLid` in `src/entities/` is painted again from the bed's own picture each time a dig starts, lined up with the world, so there is no seam.
+3. The hunting fish and the sidestep. 4. The shoal, Brise and Écume, companion molts. 5. The turtle, the pistol shrimp and goby, and the other new things. 6. Chapter 2's challenges, achievements and cards.
+
+Pitfall: `scene.restart` runs the scene's shutdown before the next `init`, so whatever the shutdown writes into the life (the hunger) wins over what was set before the restart. `leavingTo` tells the shutdown the next place starts with its own.
+
 The lagoon's data file is written: `src/data/areas/lagoon.ts`, with nine views of it in the atelier at `?show=lagoonscenes`. Its new drawing rules are in doc 14, "From data to picture": seagrass fuzz, the turtle, the hunting fish, the pistol shrimp and goby, a burrowed shrimp, dusk, night and plankton. The turtle and the hunting fish are drawn at `DEPTH.overCover`, above the seagrass, and their shadows at `DEPTH.midWater` (T48). The channel, shadow and open sea data files are still to be written.
 
 ## When stuck

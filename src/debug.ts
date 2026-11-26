@@ -1,6 +1,7 @@
 import type { ActivityName } from './core/activity/Activity';
 import type { Mood } from './core/feelings/mood';
-import type { Condition, Feelings, ThreatStage } from './core/feelings/types';
+import type { Condition, DayPhase, Feelings, ThreatStage } from './core/feelings/types';
+import type { DayLight } from './core/world/dayCycle';
 import type { ThreatKind } from './core/gameEvents';
 import type { MotionMode } from './core/movement/ShrimpMotion';
 import type { AudioSnapshot } from './systems/AudioDirector';
@@ -30,6 +31,27 @@ export interface PlayerSnapshot {
   steps: string[];
   /** The line of narration on screen, by its key, or null. */
   narration: string | null;
+  /** The place the shrimp is on its way to, or null. */
+  leaving: string | null;
+  /** The activity's prompt on screen, by its key, or null. */
+  prompt: string | null;
+}
+
+/** What the browser test can ask about the time of day, where a place has one. */
+export interface DaySnapshot {
+  phase: DayPhase;
+  /** Seconds left in the phase. */
+  left: number;
+  light: DayLight;
+  /** How likely an ambient threat is, against the usual. */
+  ambient: number;
+  /** How strong the veils of dusk and night are on screen. */
+  dusk: number;
+  night: number;
+  /** Plankton points drawn, those lit, and whether any is lit near the player. */
+  plankton: number;
+  lit: number;
+  litNearPlayer: boolean;
 }
 
 /** What the browser test can ask about the player's feelings. */
@@ -58,6 +80,7 @@ export const debugState: {
   journal: (() => JournalSnapshot) | null;
   progress: (() => ProgressSnapshot) | null;
   audio: (() => AudioSnapshot) | null;
+  day: (() => DaySnapshot | null) | null;
 } = {
   player: null,
   feelings: null,
@@ -69,6 +92,7 @@ export const debugState: {
   journal: null,
   progress: null,
   audio: null,
+  day: null,
 };
 
 /** What the browser test can ask about the open journal. */

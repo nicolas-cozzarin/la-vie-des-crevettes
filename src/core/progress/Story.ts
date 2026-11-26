@@ -1,5 +1,5 @@
 import type { ThreatKind } from '../gameEvents';
-import type { ThreatStage } from '../feelings/types';
+import type { DayPhase, ThreatStage } from '../feelings/types';
 import type { AreaId, FoodKind } from '../world/kinds';
 
 /** What makes a story step done (doc 12, "Story steps"). */
@@ -10,7 +10,12 @@ export type StoryCondition =
   | { kind: 'sense'; seconds: number }
   | { kind: 'threat'; threat: ThreatKind; stage: ThreatStage; area: AreaId; count: number }
   | { kind: 'greeting' }
-  | { kind: 'molt'; area: AreaId };
+  | { kind: 'molt'; area: AreaId }
+  /** Hidden or burrowed when dusk begins, or "Rest until dusk" chosen. */
+  | { kind: 'duskHidden' }
+  /** A whole graze in this phase with this many of the shoal close. */
+  | { kind: 'shoalGraze'; phase: DayPhase; with: number }
+  | { kind: 'bond'; atLeast: number };
 
 export interface StoryStep {
   id: string;
@@ -20,13 +25,25 @@ export interface StoryStep {
 
 /** What the story hears from the game. */
 export type StoryEvent =
-  | { kind: 'eaten'; food: FoodKind }
+  | {
+      kind: 'eaten';
+      food: FoodKind;
+      /** The time of day, from chapter 2. */
+      phase?: DayPhase | null;
+      /** Eaten to the end: full, or the patch cleared. */
+      whole?: boolean;
+      /** Shoal members within 4 BL. */
+      shoal?: number;
+    }
   | { kind: 'zone'; area: AreaId; zone: string }
   | { kind: 'hunger'; value: number }
   | { kind: 'sense'; seconds: number }
   | { kind: 'threat'; threat: ThreatKind; stage: ThreatStage; area: AreaId }
   | { kind: 'greeting' }
-  | { kind: 'molt'; area: AreaId };
+  | { kind: 'molt'; area: AreaId }
+  | { kind: 'dusk'; hidden: boolean }
+  | { kind: 'rest' }
+  | { kind: 'bond'; value: number };
 
 /**
  * The steps of the story. A step is done the moment its condition is true,
@@ -92,6 +109,17 @@ export class Story {
         return event.kind === 'greeting';
       case 'molt':
         return event.kind === 'molt' && event.area === when.area;
+      case 'duskHidden':
+        return (event.kind === 'dusk' && event.hidden) || event.kind === 'rest';
+      case 'shoalGraze':
+        return (
+          event.kind === 'eaten' &&
+          event.phase === when.phase &&
+          event.whole === true &&
+          (event.shoal ?? 0) >= when.with
+        );
+      case 'bond':
+        return event.kind === 'bond' && event.value >= when.atLeast;
     }
   }
 }

@@ -72,6 +72,7 @@ export const lagoon: AreaDef = {
   spawn: { x: 7600, y: 2650, heading: Math.PI },
   light: { dapple: 'light.caustics', dappleStrength: 0.35, murk: 'lagoon.murk' },
   dayCycle: true,
+  sand: true,
   music: 'music.lagoon',
   ambience: 'amb.lagoon',
 

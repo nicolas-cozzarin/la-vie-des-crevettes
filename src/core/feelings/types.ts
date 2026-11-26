@@ -193,6 +193,16 @@ export interface WaryTuning {
   restEnds: number;
 }
 
+/** What the time of day does to the feelings, from chapter 2 (doc 10, "Day and night"). */
+export interface DayFeelingsTuning {
+  /** By day, in the open, fear falls at this share of its speed. */
+  openFall: number;
+  /** Added to comfort's target by day in the open. */
+  openComfort: number;
+  /** Added to comfort's target at dusk. */
+  duskComfort: number;
+}
+
 export interface FeelingsTuning {
   hunger: HungerTuning;
   fear: FearTuning;
@@ -200,4 +210,6 @@ export interface FeelingsTuning {
   curiosity: RiseFall & { fearBlocks: number };
   company: CompanyTuning;
   wary: WaryTuning;
+  /** Without it, the time of day changes nothing. */
+  day?: DayFeelingsTuning;
 }

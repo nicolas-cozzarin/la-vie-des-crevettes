@@ -143,6 +143,8 @@ export class ThreatDirector {
   private miss: { seq: number; x: number; y: number } | null = null;
   /** Gentle mode: hunters pass by and never chase. The settings can change it during play. */
   gentle: boolean;
+  /** How likely an ambient threat is, against the usual: less at night, more at dawn (doc 10, "Day and night"). */
+  ambientFactor = 1;
   private missSeen = new Map<string, number>();
 
   constructor(
@@ -286,7 +288,7 @@ export class ThreatDirector {
     ) {
       return;
     }
-    if (this.random() < this.tuning.roll / this.tuning.meanWait) {
+    if (this.random() < (this.tuning.roll / this.tuning.meanWait) * this.ambientFactor) {
       this.ambientLeft -= 1;
       this.begin({ kind, first: false, from: null, force: false }, player, events);
     }

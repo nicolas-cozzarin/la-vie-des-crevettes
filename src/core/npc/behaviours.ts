@@ -50,8 +50,8 @@ export interface NpcTuning {
     shoalSpan: number;
   };
   groom: { factor: number; min: number; max: number };
-  /** Rest: `factor * comfort * (1 - activity)`, plus `lagoonDay` by day in the lagoon. Seconds of rest: `min + span * (1 - activity)`. */
-  rest: { factor: number; lagoonDay: number; min: number; span: number };
+  /** Rest: `factor * comfort * (1 - activity)`, plus `lagoonDay` by day in the lagoon, plus `beside` to rest touching a still player at Close (T105). Seconds of rest: `min + span * (1 - activity)`. */
+  rest: { factor: number; lagoonDay: number; min: number; span: number; beside: number };
   /** Wander: `base + perActivity * activity`, to a point within `reach` BL, within `home` BL of where it lives. */
   wander: {
     base: number;
@@ -61,6 +61,8 @@ export interface NpcTuning {
     giveUp: number;
     waryCover: number;
   };
+  /** A molt is sheltered in cover within `cover` BL, or else where the shrimp stands. */
+  molt: { cover: number };
   /** A Stranger keeps `keep` BL from the player, and backs off to `backOff` BL when rushed within `rushed`. */
   stranger: { keep: number; backOff: number; rushed: number };
   /** A walk is a run of steps, then a pause that grows as activity falls. Seconds. */
@@ -93,6 +95,8 @@ export interface ChoiceView {
   shoalGap: number | null;
   /** By day in the lagoon (chapter 2). */
   lagoonDay: boolean;
+  /** At Close, with the player keeping still close by: it comes to rest touching (T105). */
+  restBeside?: boolean;
 }
 
 /** The fear at which a shrimp of this boldness flees: 0.38 for Nacre, 0.64 for Brise. */
@@ -122,7 +126,8 @@ export function scoreBehaviours(
     groom: view.calm && !view.wary ? t.groom.factor * comfort : 0,
     rest:
       t.rest.factor * comfort * (1 - temperament.activity) +
-      (view.lagoonDay ? t.rest.lagoonDay : 0),
+      (view.lagoonDay ? t.rest.lagoonDay : 0) +
+      (view.restBeside ? t.rest.beside : 0),
     wander: t.wander.base + t.wander.perActivity * temperament.activity,
   };
 }

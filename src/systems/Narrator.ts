@@ -13,17 +13,26 @@ import type { HudScene } from '../scenes/HudScene';
 export class Narrator {
   private readonly queue: NarrationQueue;
   private place: { text: string; age: number } | null = null;
+  /** What fills a line's gaps, such as a companion's name. */
+  private readonly params = new Map<string, Record<string, string>>();
 
   constructor(
     private readonly hud: () => HudScene | null,
     narrated: Set<string>,
     private readonly placesSeen: Set<AreaId>,
   ) {
-    this.queue = new NarrationQueue(NARRATION_LINES, NARRATION, (key) => t(key).length, narrated);
+    this.queue = new NarrationQueue(
+      NARRATION_LINES,
+      NARRATION,
+      (key) => this.text(key).length,
+      narrated,
+    );
   }
 
-  /** A line's moment has come. Returns whether it will show. */
-  say(key: string): boolean {
+  /** A line's moment has come. Returns whether it will show. `params` fill its gaps. */
+  say(key: string, params?: Record<string, string>): boolean {
+    // The line on screen keeps the words it began with.
+    if (params && this.showing !== key) this.params.set(key, params);
     return this.queue.say(key);
   }
 
@@ -62,7 +71,11 @@ export class Narrator {
     }
     this.queue.step(dt);
     const current = this.queue.current;
-    hud?.narrate(current ? t(current.key) : null, current?.alpha ?? 0);
+    hud?.narrate(current ? this.text(current.key) : null, current?.alpha ?? 0);
+  }
+
+  private text(key: string): string {
+    return t(key, this.params.get(key));
   }
 
   /** Nothing shows any more, as when the scene ends. */

@@ -397,7 +397,7 @@ export const NPC = {
   greet: { base: 3, perSociability: 5, every: 30, touch: 1.2, giveUp: 8 },
   follow: { called: 0.9, near: 1.5, far: 3, seconds: 20, shoalFactor: 0.5, shoalSpan: 6 },
   groom: { factor: 0.5, min: 3, max: 6 },
-  rest: { factor: 0.6, lagoonDay: 0.4, min: 3, span: 9 },
+  rest: { factor: 0.6, lagoonDay: 0.4, min: 3, span: 9, beside: 0.8 },
   wander: { base: 0.3, perActivity: 0.3, reach: 6, home: 8, giveUp: 10, waryCover: 3 },
   /** A Stranger keeps this far from the player, in BL, and backs off this far when rushed. */
   stranger: { keep: 1.2, backOff: 3.5, rushed: 2 },
@@ -417,6 +417,34 @@ export const NPC = {
   awake: 4,
   /** Seconds between steps for a shrimp far outside the view. */
   farStep: 0.25,
+  /**
+   * A companion's molt (T104): at night, this many seconds in, a named shrimp
+   * with this bond or more, within `near` BL of the player, begins to molt.
+   * She molts in cover within `cover` BL, or else where she is. Within `stay`
+   * BL of her the whole time, the player stays with her.
+   */
+  molt: { after: 10, near: 8, stay: 3, known: 0.25, cover: 8 },
+};
+
+/**
+ * What a companion does for the player once the bond is deep (T105). At
+ * Close she leads the player to her favourite food once a chapter, when
+ * both are hungry, and rests touching when the player keeps still. Any
+ * companion with the player sidesteps a fish's charge a beat early.
+ * BL, seconds and shares.
+ */
+export const CLOSE = {
+  lead: {
+    playerHunger: 0.45,
+    ownHunger: 0.3,
+    near: 6,
+    reach: 30,
+    amount: 0.5,
+    wait: 4,
+    giveUp: 60,
+  },
+  rest: { after: 3, near: 8, touch: 0.8 },
+  sidestep: { with: 3, ahead: 3.5, line: 1.5 },
 };
 
 /** How other shrimp find their way. */

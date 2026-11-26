@@ -278,3 +278,63 @@ test.describe('the dawn fish', () => {
     expect(errors).toEqual([]);
   });
 });
+
+test.describe("a companion's molt", () => {
+  test('with ?debug, Shift and F8: she finds cover and molts, and staying close counts', async ({
+    page,
+  }) => {
+    test.setTimeout(150_000);
+    const errors = watchErrors(page);
+    await page.goto('./?debug');
+    await waitForScene(page, 'Title');
+    await page.evaluate((save) => localStorage.setItem('lvdc.save.v1', JSON.stringify(save)), {
+      ...AT_THE_CREEK,
+      area: 'lagoon',
+      stage: 'subAdult',
+      // At the edge of the meadow, above the shoal's ground, where Brise rests.
+      at: { x: 4200, y: 1700 },
+      bonds: { brise: 0.3 },
+      narrated: ['narr.c1.arrive', 'narr.c2.arrive', 'narr.c2.sand', 'narr.c2.dusk'],
+      placesSeen: ['drift', 'mangrove', 'lagoon'],
+    });
+    await page.reload();
+    await waitForScene(page, 'Title');
+    await page.keyboard.press('Enter');
+    await page.waitForFunction(() => window.__lvdc?.player()?.area === 'lagoon');
+    await page.waitForFunction(() => window.__lvdc?.day() != null);
+    for (const phase of ['dusk', 'night']) {
+      await page.keyboard.press('F7');
+      await page.waitForFunction((want) => window.__lvdc?.day()?.phase === want, phase);
+    }
+    const brise = () =>
+      page.evaluate(() => window.__lvdc?.shrimp()?.find((one) => one.id === 'brise') ?? null);
+    await page.keyboard.press('Shift+F8');
+    await page.waitForFunction(() =>
+      window.__lvdc?.shrimp()?.some((one) => one.id === 'brise' && one.molt === 'signal'),
+    );
+    // She walks to the seagrass and tucks in, then molts.
+    await page.waitForFunction(
+      () => window.__lvdc?.shrimp()?.some((one) => one.id === 'brise' && one.molt === 'molt'),
+      null,
+      { timeout: 30_000 },
+    );
+    expect((await brise())?.activity).toBe('hiding');
+    await page.waitForFunction(
+      () => window.__lvdc?.player()?.narration === 'narr.c2.herMolt',
+      null,
+      {
+        timeout: 60_000,
+      },
+    );
+    await page.waitForFunction(
+      () => window.__lvdc?.shrimp()?.some((one) => one.id === 'brise' && one.molt === 'none'),
+      null,
+      { timeout: 60_000 },
+    );
+    const stats = await page.evaluate(() => window.__lvdc?.progress()?.stats ?? {});
+    expect(stats.stayedThroughMolt).toBe(1);
+    expect(stats['stayedWith.brise']).toBe(1);
+    expect((await brise())?.bond).toBeCloseTo(0.45);
+    expect(errors).toEqual([]);
+  });
+});

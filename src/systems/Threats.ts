@@ -11,6 +11,7 @@ import { Bird } from '../entities/Bird';
 import { Hunter } from '../entities/Hunter';
 import type { CoverHandle, LoadedArea } from './AreaLoader';
 import { CorneredSequence } from './CorneredSequence';
+import type { Charge } from '../core/npc/close';
 
 export interface ThreatsOptions {
   area: AreaDef;
@@ -113,6 +114,12 @@ export class Threats {
   /** A threat's cue is under way: other shrimp freeze. */
   get cue(): boolean {
     return this.director.stage === 'cue';
+  }
+
+  /** The fish charging now: where its head is and where it is going (T105). */
+  get charging(): Charge | null {
+    const fish = this.director.fish;
+    return fish?.phase === 'charge' ? { head: fish.head, heading: fish.heading } : null;
   }
 
   view(x: number, y: number, isPlayer: boolean): ThreatView | null {

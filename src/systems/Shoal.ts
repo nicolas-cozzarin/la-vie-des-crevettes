@@ -8,16 +8,30 @@ import type { BondStage, DayPhase, StimulusKind, ThreatView } from '../core/feel
 import type { GameEvents } from '../core/gameEvents';
 import { moveCircle, type Bounds, type Obstacle, type Point } from '../core/movement/collision';
 import type { MotionMode } from '../core/movement/ShrimpMotion';
+import type { MoltEvent } from '../core/molt/Molt';
 import { AlarmNet, type Alarm } from '../core/npc/alarm';
+import { leadTo, sidestepNow, type Charge } from '../core/npc/close';
+import { pickMolter, StayingClose } from '../core/npc/companionMolt';
 import { NpcMind, type SeenShrimp } from '../core/npc/NpcMind';
 import type { LossCandidate } from '../core/npc/losses';
 import type { ShoalMember } from '../core/npc/shoal';
 import { seededRandom, seedOf } from '../core/random';
 import type { ShrimpSource } from '../core/scent/ribbons';
-import type { LifeStage } from '../core/world/kinds';
+import type { FoodKind, LifeStage } from '../core/world/kinds';
 import type { AreaDef, ShrimpSpawnDef } from '../data/areas/types';
 import { COMPANIONS, UNNAMED, type ShrimpKind } from '../data/shrimp';
-import { ALARM, BOND, COMPANY, GREET, LOSSES, MOTION, NPC, SHOAL, STEER } from '../data/tuning';
+import {
+  ALARM,
+  BOND,
+  CLOSE,
+  COMPANY,
+  GREET,
+  LOSSES,
+  MOTION,
+  NPC,
+  SHOAL,
+  STEER,
+} from '../data/tuning';
 import { NpcShrimp } from '../entities/NpcShrimp';
 import type { CoverHandle } from './AreaLoader';
 
@@ -27,6 +41,8 @@ export interface ShoalThreat {
   readonly cue: boolean;
   /** Where the danger is, to flee from. */
   readonly danger: Point;
+  /** A fish charging now, for a companion to sidestep (T105). */
+  readonly charging?: Charge | null;
   view(x: number, y: number, isPlayer: boolean): ThreatView | null;
   felt(id: string, x: number, y: number): StimulusKind[];
 }
@@ -42,6 +58,8 @@ export interface PlayerView {
   under: CoverHandle | null;
   /** Grazing with the mouth on the food. */
   eating: boolean;
+  /** For a companion at Close to lead the player to food (T105). */
+  hunger?: number;
 }
 
 export interface ShoalOptions {
@@ -60,6 +78,8 @@ export interface ShoalOptions {
   together: boolean;
   /** How many unnamed shrimp have gone missing here before (D42). They are not there. */
   missing?: number;
+  /** The companions who have led the player to food here before: once a chapter (T105). */
+  led?: readonly string[];
 }
 
 /** What the browser test can ask about one other shrimp. */
@@ -71,8 +91,15 @@ export interface ShrimpSnapshot {
   activity: string;
   mood: string;
   fear: number;
+  hunger: number;
+  /** How it moves now: rest, walk, swim, dart or glide. */
+  mode: string;
   bond: number;
   stage: BondStage;
+  /** Where its molt is, or 'none'. */
+  molt: string;
+  /** Leading the player to its favourite food. */
+  leading: boolean;
 }
 
 const PLAYER = 'player';
@@ -122,12 +149,33 @@ export class Shoal {
   dayPhase: DayPhase | null = null;
   /** The shrimp that took fright during the threat under way (doc 02, bonds). */
   private frightened = new Set<string>();
+  /** The player's own molt is under way: those at Close come and stay (doc 10). */
+  playerMolting = false;
+  /** Seconds into the night, and whether a companion has begun to molt this night (T104). */
+  private nightFor = 0;
+  private moltedTonight = false;
+  /** The player near her through a companion's molt, and those the player stayed with. */
+  private staying: { id: string; watch: StayingClose } | null = null;
+  private stayedWith: string[] = [];
+  /** Each one's favourite food, and those seen eating it from close by (doc 12, `c2.favourites`). */
+  private readonly favourites = new Map<string, FoodKind>();
+  private seenFavourite = new Set<string>();
+  private favouriteNews: string[] = [];
+  /** A Close companion leading the player to food, those who have here, and the news (T105). */
+  private leading: { id: string; food: FoodPatch; since: number } | null = null;
+  private readonly led: Set<string>;
+  private ledNews: string[] = [];
+  /** Seconds the player has kept still, for a Close companion to rest touching. */
+  private stillFor = 0;
+  /** Those who sidestepped the charge under way. */
+  private readonly dodged = new Set<string>();
 
   constructor(
     scene: Phaser.Scene,
     private readonly options: ShoalOptions,
   ) {
     const { area, bodyLengthPx: bl } = options;
+    this.led = new Set(options.led ?? []);
     this.alarm = new AlarmNet(ALARM, bl, seededRandom(seedOf(`${area.id}:alarm`)));
     // Those gone missing before are the last unnamed ones, down to the floor.
     const all = area.shrimp ?? [];
@@ -142,6 +190,7 @@ export class Shoal {
       const named = def.who !== 'young';
       const kind = def.who === 'young' ? unnamed(area.id, def) : COMPANIONS[def.who];
       const size = bl * kind.size;
+      this.favourites.set(def.id, kind.favourite);
       const random = seededRandom(seedOf(`${area.id}:${def.id}:mind`));
       const antenna =
         def.who === 'young'
@@ -171,6 +220,7 @@ export class Shoal {
           shoal: SHOAL,
           greetReach: GREET.reach,
           dartEvery: MOTION.dartTime + MOTION.glideTime,
+          close: CLOSE,
         },
       );
       const hunger = NPC.hunger.min + (NPC.hunger.max - NPC.hunger.min) * random();
@@ -202,6 +252,7 @@ export class Shoal {
   step(dt: number, time: number, player: PlayerView): void {
     this.time = time;
     this.player = player;
+    this.watchClose(dt, player);
     for (const alarm of this.alarm.due(time)) this.deliver(alarm);
     const playerSeen = this.seenPlayer(player);
     for (const npc of this.members) {
@@ -219,6 +270,221 @@ export class Shoal {
     }
     this.keepApart(player);
     this.gainBonds(dt, time, player);
+    this.watchMolts(dt, player);
+    this.watchFavourites(player);
+  }
+
+  /** Before each step: what the companions at Close and those with the player do for it (T105). */
+  private watchClose(dt: number, player: PlayerView): void {
+    const bl = this.options.bodyLengthPx;
+    this.stillFor = player.mode === 'rest' ? this.stillFor + dt : 0;
+    // A lead under way ends at the food, when given up, or at a threat.
+    const leading = this.leading;
+    if (leading) {
+      leading.since += dt;
+      const npc = this.members.find((one) => one.id === leading.id);
+      if (!npc || npc.mind.ledThere || leading.since > CLOSE.lead.giveUp || this.threat?.cue) {
+        this.leading = null;
+      }
+    } else if ((player.hunger ?? 0) >= CLOSE.lead.playerHunger && !this.threat?.cue) {
+      for (const npc of this.members) {
+        if (!npc.named || this.led.has(npc.id) || npc.moltStage !== 'none') continue;
+        if (this.options.bonds.value(npc.id) < BOND.stages.close) continue;
+        if (npc.feelings.values.hunger < CLOSE.lead.ownHunger || npc.feelings.mood === 'afraid') {
+          continue;
+        }
+        if (Math.hypot(npc.x - player.x, npc.y - player.y) > CLOSE.lead.near * bl) continue;
+        const favourite = this.favourites.get(npc.id);
+        const spot = favourite ? leadTo(npc, favourite, this.options.foods, bl, CLOSE.lead) : null;
+        const food = this.options.foods.find((patch) => patch === spot);
+        // Not when the player is there already.
+        if (!food || Math.hypot(food.x - player.x, food.y - player.y) <= CLOSE.lead.wait * bl) {
+          continue;
+        }
+        this.leading = { id: npc.id, food, since: 0 };
+        this.led.add(npc.id);
+        this.ledNews.push(npc.id);
+        break;
+      }
+    }
+    // A companion with the player darts aside a beat before the charge passes.
+    const charge = this.threat?.charging ?? null;
+    if (!charge) {
+      this.dodged.clear();
+      return;
+    }
+    for (const npc of this.members) {
+      if (this.dodged.has(npc.id) || npc.moltStage !== 'none') continue;
+      if (this.options.bonds.value(npc.id) < BOND.stages.companion) continue;
+      if (Math.hypot(npc.x - player.x, npc.y - player.y) > CLOSE.sidestep.with * bl) continue;
+      const axis = sidestepNow(charge, npc, bl, CLOSE.sidestep);
+      if (!axis) continue;
+      npc.mind.sidestep(axis);
+      this.dodged.add(npc.id);
+    }
+  }
+
+  /** Where a Close companion rests touching the player now, or null (T105). */
+  private restBesideFor(npc: NpcShrimp, player: PlayerView): { x: number; y: number } | null {
+    if (this.stillFor < CLOSE.rest.after || !npc.named) return null;
+    if (this.options.bonds.value(npc.id) < BOND.stages.close) return null;
+    const near = CLOSE.rest.near * this.options.bodyLengthPx;
+    if (Math.hypot(npc.x - player.x, npc.y - player.y) > near) return null;
+    return { x: player.x, y: player.y };
+  }
+
+  /** The player keeps still touching a Close companion who rests too (doc 10, "Fear"). */
+  restingAgainstClose(x: number, y: number): boolean {
+    if (this.stillFor < CLOSE.rest.after) return false;
+    const reach = CLOSE.rest.touch * 1.5 * this.options.bodyLengthPx;
+    return this.members.some(
+      (npc) =>
+        this.options.bonds.value(npc.id) >= BOND.stages.close &&
+        npc.motion.mode === 'rest' &&
+        Math.hypot(npc.x - x, npc.y - y) <= reach,
+    );
+  }
+
+  /** A companion seen eating her favourite from within 4 BL: the player learns it (doc 12). */
+  private watchFavourites(player: PlayerView): void {
+    const reach = COMPANY.radius * this.options.bodyLengthPx;
+    for (const npc of this.members) {
+      if (!npc.named || !npc.eating || this.seenFavourite.has(npc.id)) continue;
+      if (npc.activity.food?.kind !== this.favourites.get(npc.id)) continue;
+      if (Math.hypot(npc.x - player.x, npc.y - player.y) > reach) continue;
+      this.seenFavourite.add(npc.id);
+      this.favouriteNews.push(npc.id);
+    }
+  }
+
+  /** Companions seen eating their favourite since the last call. */
+  takeFavourites(): string[] {
+    const news = this.favouriteNews;
+    this.favouriteNews = [];
+    return news;
+  }
+
+  /** Companions who began to lead the player to food since the last call. */
+  takeLed(): string[] {
+    const news = this.ledNews;
+    this.ledNews = [];
+    return news;
+  }
+
+  /**
+   * A companion's molt (T104): at night, a while in, one named shrimp the
+   * player knows, close by, begins to molt. One a night, and never while
+   * the player molts.
+   */
+  private watchMolts(dt: number, player: PlayerView): void {
+    if (this.dayPhase !== 'night' || !this.options.together) {
+      this.nightFor = 0;
+      this.moltedTonight = false;
+    } else {
+      this.nightFor += dt;
+      if (!this.moltedTonight && this.nightFor >= NPC.molt.after && !this.playerMolting) {
+        const id = pickMolter(
+          this.members.map((npc) => ({
+            id: npc.id,
+            named: npc.named,
+            bond: this.options.bonds.value(npc.id),
+            x: npc.x,
+            y: npc.y,
+            molts: npc.molts,
+          })),
+          player,
+          this.options.bodyLengthPx,
+          NPC.molt,
+        );
+        if (id) this.beginMolt(id);
+      }
+    }
+    const staying = this.staying;
+    if (!staying) return;
+    const npc = this.members.find((one) => one.id === staying.id);
+    if (!npc) {
+      this.staying = null;
+      return;
+    }
+    staying.watch.step(Math.hypot(npc.x - player.x, npc.y - player.y));
+  }
+
+  /** `id` begins to molt now. Returns whether it did. */
+  beginMolt(id: string): boolean {
+    const npc = this.members.find((one) => one.id === id);
+    if (!npc || this.members.some((one) => one.moltStage !== 'none')) return false;
+    this.moltedTonight = true;
+    const seed = seedOf(`${this.options.area.id}:${id}:molt:${npc.molts}`);
+    this.moltPhases(npc, npc.beginMolt(seed));
+    return true;
+  }
+
+  /** With `?debug`: the named shrimp nearest the player begins to molt, whatever the bond. */
+  moltNearest(): boolean {
+    const player = this.player;
+    if (!player) return false;
+    let best: NpcShrimp | null = null;
+    let bestDistance = Infinity;
+    for (const npc of this.members) {
+      if (!npc.named) continue;
+      const distance = Math.hypot(npc.x - player.x, npc.y - player.y);
+      if (distance < bestDistance) {
+        best = npc;
+        bestDistance = distance;
+      }
+    }
+    return best ? this.beginMolt(best.id) : false;
+  }
+
+  /** A shrimp is sheltering to molt, molting or soft: no threat may start (doc 10, "Molting"). */
+  get moltGuarded(): boolean {
+    return this.members.some((npc) => ['shelter', 'molt', 'soft'].includes(npc.moltStage));
+  }
+
+  /** The companions whose whole molt the player stayed through, since the last call (doc 12, `c2.molt`). */
+  takeStayed(): string[] {
+    const stayed = this.stayedWith;
+    this.stayedWith = [];
+    return stayed;
+  }
+
+  /** The companion who is soft now, with the player near her since her molt began, or null. */
+  get softStaying(): string | null {
+    const staying = this.staying;
+    if (!staying?.watch.staying) return null;
+    const npc = this.members.find((one) => one.id === staying.id);
+    return npc?.moltStage === 'soft' ? npc.id : null;
+  }
+
+  /**
+   * The phases of a companion's molt as they begin: told to the rest of the
+   * game, and watched for the player staying near (doc 12, `c2.molt`).
+   */
+  private moltPhases(npc: NpcShrimp, events: readonly MoltEvent[]): void {
+    const player = this.player;
+    const reach = NPC.molt.stay * this.options.bodyLengthPx;
+    for (const event of events) {
+      if (event.type === 'done') {
+        this.options.bus.emit('molt:done', { who: npc.id, molts: npc.molts });
+        continue;
+      }
+      const phase = event.phase;
+      if (phase !== 'none' && phase !== 'hardened') {
+        this.options.bus.emit('molt:phase', { who: npc.id, phase });
+      }
+      if (phase === 'molt') {
+        const near = player !== null && Math.hypot(npc.x - player.x, npc.y - player.y) <= reach;
+        this.staying = { id: npc.id, watch: new StayingClose(reach, near) };
+      }
+      const staying = this.staying?.id === npc.id ? this.staying : null;
+      if (!staying || phase !== 'hardened') continue;
+      // Her shell is hard: the player who stayed the whole time has stayed with her.
+      if (staying.watch.staying) {
+        this.report(this.options.bonds.add(npc.id, BOND.molt));
+        this.stayedWith.push(npc.id);
+      }
+      this.staying = null;
+    }
   }
 
   /**
@@ -295,6 +561,7 @@ export class Shoal {
       });
     }
     const values = npc.feelings.values;
+    const restBeside = this.restBesideFor(npc, player);
     const result = npc.step(
       dt,
       {
@@ -312,10 +579,15 @@ export class Shoal {
         foods: this.options.foods,
         others,
         cue: this.threat?.cue ?? false,
+        // Called, or, at Close, through the player's molt (doc 10, "Toward the player").
         called:
-          time < this.calledUntil && this.options.bonds.value(npc.id) >= BOND.stages.companion,
+          (time < this.calledUntil && this.options.bonds.value(npc.id) >= BOND.stages.companion) ||
+          (this.playerMolting && this.options.bonds.value(npc.id) >= BOND.stages.close),
         shoal: this.options.together ? this.shoalMembers() : null,
         lagoonDay: this.dayPhase === 'day' && this.options.area.sand === true,
+        molting: npc.moltStage,
+        leading: this.leading?.id === npc.id ? this.leading.food : null,
+        restBeside,
       },
       this.options.covers,
       this.options.foods,
@@ -326,7 +598,10 @@ export class Shoal {
         companionWithin2:
           this.options.bonds.value(npc.id) >= BOND.stages.companion &&
           Math.hypot(player.x - npc.x, player.y - npc.y) <= 2 * npc.bodyLengthPx,
-        restingAgainstClose: false,
+        restingAgainstClose:
+          restBeside !== null &&
+          Math.hypot(player.x - npc.x, player.y - npc.y) <=
+            CLOSE.rest.touch * 1.5 * npc.bodyLengthPx,
         curiosityPull: 0,
         threat: this.threat?.view(npc.x, npc.y, false) ?? null,
         inCurrent: false,
@@ -338,6 +613,7 @@ export class Shoal {
       this.alarm.raise(npc.id, npc.x, npc.y, time, this.everyone());
     }
     if (result.greeted) this.greetingDone(npc, result.greeted, time);
+    if (result.molt) this.moltPhases(npc, result.molt);
   }
 
   /** The threats of the place, for the other shrimp to feel. */
@@ -451,9 +727,9 @@ export class Shoal {
       .map((npc) => this.stage(npc.id));
   }
 
-  /** A shrimp with a bond of Companion or more within 2 BL. */
-  companionNear(x: number, y: number): boolean {
-    const reach = 2 * this.options.bodyLengthPx;
+  /** A shrimp with a bond of Companion or more within `bls` BL. */
+  companionNear(x: number, y: number, bls = 2): boolean {
+    const reach = bls * this.options.bodyLengthPx;
     return this.members.some(
       (npc) =>
         this.options.bonds.value(npc.id) >= BOND.stages.companion &&
@@ -538,8 +814,12 @@ export class Shoal {
       activity: npc.activity.name,
       mood: npc.feelings.mood,
       fear: npc.feelings.values.fear,
+      hunger: npc.feelings.values.hunger,
+      mode: npc.motion.mode,
       bond: this.options.bonds.value(npc.id),
       stage: this.stage(npc.id),
+      molt: npc.moltStage,
+      leading: this.leading?.id === npc.id,
     }));
   }
 

@@ -11,7 +11,7 @@ import { shoalPull } from '../../src/core/npc/shoal';
 import { steer } from '../../src/core/npc/steer';
 import { seededRandom } from '../../src/core/random';
 import { COMPANIONS } from '../../src/data/shrimp';
-import { ALARM, GREET, MOTION, NPC, SHOAL, STEER } from '../../src/data/tuning';
+import { ALARM, CLOSE, GREET, MOTION, NPC, SHOAL, STEER } from '../../src/data/tuning';
 
 const BL = 100;
 
@@ -235,6 +235,7 @@ describe('the mind of another shrimp', () => {
         shoal: SHOAL,
         greetReach: GREET.reach,
         dartEvery: MOTION.dartTime + MOTION.glideTime,
+        close: CLOSE,
       },
     );
   }
@@ -280,6 +281,93 @@ describe('the mind of another shrimp', () => {
     expect(nacre.behaviour).toBe('greet');
     expect(intent.greet).toBe(true);
     expect(intent.greetWith).toBe('player');
+  });
+
+  it('waiting to molt, walks to cover within reach and tucks in, then keeps still', () => {
+    const nacre = mind();
+    const cover = { x: 1500, y: 0, r: 150 };
+    const afraid = { ...world().feelings, fear: 0.9 };
+    const walk = (time: number) =>
+      nacre.step(1 / 30, world({ time, covers: [cover], molting: 'signal', feelings: afraid }));
+    let moved = false;
+    for (let time = 0; time < 2; time += 1 / 30) if (walk(time).axis.x > 0.5) moved = true;
+    expect(moved).toBe(true);
+    expect(nacre.moltInOpen).toBe(false);
+    const near = nacre.step(
+      1 / 30,
+      world({ x: 1400, covers: [cover], molting: 'signal', feelings: afraid }),
+    );
+    expect(near.hide).toBe(true);
+    expect(near.dart).toBe(false);
+    const tucked = nacre.step(
+      1 / 30,
+      world({ x: 1400, covers: [cover], molting: 'soft', activity: 'hiding', tucked: true }),
+    );
+    expect(tucked).toMatchObject({ hide: true, dart: false, axis: { x: 0, y: 0 } });
+  });
+
+  it('with no cover within reach, molts where it stands', () => {
+    const nacre = mind();
+    const far = { x: 1000 + 12 * BL, y: 0, r: 150 };
+    const intent = nacre.step(1 / 30, world({ covers: [far], molting: 'signal' }));
+    expect(nacre.moltInOpen).toBe(true);
+    expect(intent).toMatchObject({ hide: false, axis: { x: 0, y: 0 } });
+  });
+
+  it('at Close, leads to its favourite, waits when the player falls behind, and grazes there', () => {
+    const nacre = mind();
+    const fuzz = { id: 'fuzz', kind: 'seagrassFuzz' as const, x: 2000, y: 0, r: 100, amount: 1 };
+    const close = { ...player, x: 900, stage: 'close' as const };
+    let walked = false;
+    for (let time = 0; time < 2; time += 1 / 30) {
+      const intent = nacre.step(1 / 30, world({ time, leading: fuzz, others: [close] }));
+      if (intent.axis.x > 0.5) walked = true;
+    }
+    expect(walked).toBe(true);
+    const waits = nacre.step(1 / 30, world({ time: 2, x: 1500, leading: fuzz, others: [close] }));
+    expect(waits.axis).toEqual({ x: 0, y: 0 });
+    expect(waits.look).toMatchObject({ x: 900 });
+    const there = nacre.step(
+      1 / 30,
+      world({ time: 3, x: 1850, leading: fuzz, others: [{ ...close, x: 1700 }] }),
+    );
+    expect(nacre.ledThere).toBe(true);
+    expect(nacre.behaviour).toBe('graze');
+    expect(there.interact).toBe(true);
+    // Far from the shoal, it still eats its fill where it led the player.
+    const far = [{ id: 'young.1', x: -3000, y: 0, heading: 0 }];
+    const hungry = { ...world().feelings, hunger: 0.5 };
+    for (let time = 3.5; time < 6; time += 0.5) {
+      nacre.step(1 / 30, world({ time, x: 1850, feelings: hungry, shoal: far, foods: [fuzz] }));
+    }
+    expect(nacre.behaviour).toBe('graze');
+  });
+
+  it('at Close, comes to rest touching a player who keeps still', () => {
+    const nacre = mind();
+    const beside = { x: 1500, y: 0 };
+    const calm = { ...world().feelings, comfort: 0.6 };
+    let walked = false;
+    for (let time = 0; time < 2; time += 1 / 30) {
+      const intent = nacre.step(1 / 30, world({ time, restBeside: beside, feelings: calm }));
+      if (nacre.behaviour === 'rest' && intent.axis.x > 0.3) walked = true;
+    }
+    expect(nacre.behaviour).toBe('rest');
+    expect(walked).toBe(true);
+    const touching = nacre.step(
+      1 / 30,
+      world({ time: 2.1, x: 1420, restBeside: beside, feelings: calm }),
+    );
+    expect(touching.axis).toEqual({ x: 0, y: 0 });
+  });
+
+  it('sidesteps when asked, with a tail flip the way it is told', () => {
+    const nacre = mind();
+    nacre.step(1 / 30, world());
+    nacre.sidestep({ x: 0, y: 1 });
+    const intent = nacre.step(1 / 30, world({ time: 0.1 }));
+    expect(intent).toMatchObject({ dart: true, axis: { x: 0, y: 1 } });
+    expect(nacre.step(1 / 30, world({ time: 0.2 })).dart).toBe(false);
   });
 
   it('comes when called, and stops within 3 BL', () => {

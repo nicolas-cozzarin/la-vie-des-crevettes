@@ -55,6 +55,7 @@ import {
   MOLT,
   MOOD_SCREEN,
   MOTION,
+  NPC,
   REST,
   SAVE,
   SENSE,
@@ -352,6 +353,9 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
       depth: DEPTH.bedAnimals,
       together: stage === 'subAdult' || stage === 'adult',
       missing: this.life.stats[`missing.${area.id}`] ?? 0,
+      led: Object.keys(this.life.stats)
+        .filter((key) => key.startsWith(`led.${area.id}.`))
+        .map((key) => key.slice(`led.${area.id}.`.length)),
     });
     this.lossRandom = seededRandom(seedOf(`${area.id}:losses`));
     this.lift = 0;
@@ -494,12 +498,14 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
     });
 
     // `?debug`: F9 cycles the forced mood, to look at each one. F10 calls
-    // the bird at once. F8 brings the molt signal.
+    // the bird at once. F8 brings the molt signal, and Shift and F8 a
+    // companion's, the nearest.
     const stopDebug = debugRequested()
       ? app.keyboard.onDebugKey((key) => {
           if (key === 'mood') this.cycleMood();
           else if (key === 'threat') this.threats.callThreat();
           else if (key === 'time') this.nextTime();
+          else if (key === 'herMolt') this.shoal.moltNearest();
           else this.answerMolt(this.molting.signal());
         })
       : null;
@@ -613,6 +619,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
         this.alarmedBy(alarm.from);
       }
       this.stepFeelings(dt, axis.x !== 0 || axis.y !== 0 || dart);
+      this.shoal.playerMolting = this.molting.molt.guarded;
       this.shoal.step(dt, this.clock, {
         x: this.motion.x,
         y: this.motion.y,
@@ -621,7 +628,16 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
         activity: this.activity.name,
         under: this.activity.tucked ? this.activity.cover : null,
         eating,
+        hunger: this.feelings.values.hunger,
       });
+      // A Close companion began to lead the player to food: once a chapter. A favourite seen eaten.
+      for (const id of this.shoal.takeLed()) this.keeper.count(`led.${this.areaId}.${id}`);
+      for (const id of this.shoal.takeFavourites()) this.keeper.count(`favourites.${id}`);
+      // Stayed with a companion through her whole molt: the journal remembers it (doc 12, `c2.molt`).
+      for (const id of this.shoal.takeStayed()) {
+        this.keeper.count('stayedThroughMolt');
+        this.keeper.count(`stayedWith.${id}`);
+      }
       const moved = this.motion.step(dt, { x: axis.x, y: axis.y, dart }, this.mover);
       this.stepMolt(dt);
       if (moved.darted) {
@@ -882,6 +898,9 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
         premolt: this.molting.molt.premolt,
         shoalNear: this.shoal.near(x, y, STORY.shoalNear * this.bodyLengthPx),
         burrowed: this.activity.name === 'burrowing' && this.activity.tucked,
+        softNotAlone:
+          this.molting.molt.stage === 'soft' && this.shoal.companionNear(x, y, NPC.molt.stay),
+        herSoft: this.shoal.softStaying ? t(`companion.${this.shoal.softStaying}.name`) : null,
       });
       if (teller.takeMoltDue()) this.answerMolt(this.molting.signal());
     }
@@ -964,7 +983,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
       // Threats, currents and the day come in later steps.
       neighbours: this.shoal.neighbours(x, y),
       companionWithin2: this.shoal.companionNear(x, y),
-      restingAgainstClose: false,
+      restingAgainstClose: this.shoal.restingAgainstClose(x, y),
       curiosityPull: this.pull.value,
       threat: this.threats.view(x, y, true),
       inCurrent: false,
@@ -1045,8 +1064,8 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
       hidden: this.activity.tucked,
       underCover,
       darted,
-      // No threat may start from the shelter of a molt until the shell is hard.
-      soft: this.feelings.has('soft') || this.molting.molt.guarded,
+      // No threat may start from the shelter of a molt until the shell is hard, a companion's too.
+      soft: this.feelings.has('soft') || this.molting.molt.guarded || this.shoal.moltGuarded,
       // On sand, shelter is everywhere: the shrimp can dig in where it is.
       coverGap: this.area.sand ? 0 : coverGap / this.bodyLengthPx,
       shoal: this.shoal.middleNear(x, y, FISH.sight * this.bodyLengthPx),
@@ -1071,6 +1090,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
           if (this.shoal.cueNoticed(this.clock, this.motion.x, this.motion.y)) {
             this.feelings.stimulus('alarm');
             this.alarmedBy('nacre');
+            this.teller?.nacreAlarm();
           }
         }
       } else if (event.type === 'strike') {

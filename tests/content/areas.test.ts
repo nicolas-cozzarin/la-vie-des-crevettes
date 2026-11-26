@@ -359,6 +359,7 @@ describe('the lagoon', () => {
       huntingFish: 'G',
       brise: 'E',
       ecume: 'E',
+      nacre: 'A',
       seaStar: 'H',
       'burrow.pistol': 'D',
     };

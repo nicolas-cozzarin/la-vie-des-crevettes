@@ -252,7 +252,7 @@ The player comes in from the mangrove on the right and leaves for the channel on
 
 | Zone | Rectangle (x, y, w, h) | What is there | What happens |
 |------|------------------------|---------------|--------------|
-| A. Creek apron | 6900, 1800, 1100, 1700 | Muddy sand, a few mangrove leaves washed out | Arrival, in full daylight. "Too bright." |
+| A. Creek apron | 6900, 1800, 1100, 1700 | Muddy sand, a few mangrove leaves washed out. Nacre, who came on the same tide (T104) | Arrival, in full daylight. "Too bright." |
 | B. The flat | 4700, 1800, 2200, 1900 | Bare rippled sand. Golden film in patches. Small sand mounds | Learn to burrow. Story step: burrow through a day |
 | C. Seagrass meadow | 2500, 200, 4000, 1500 | Clumps of seagrass, close together. Fuzz on the older blades. Small fish | The turtle grazes on a slow loop. Cover from the fish |
 | D. Rock garden | 2700, 3900, 2300, 1000 | Rounded rocks with algae film. One overhang. The burrow of the pistol shrimp and goby at its sandy edge | Challenge: find them |

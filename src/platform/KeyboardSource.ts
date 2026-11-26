@@ -14,10 +14,10 @@ const DEBUG_KEYS = { F7: 'time', F8: 'molt', F9: 'mood', F10: 'threat' } as cons
 
 /**
  * What a debug key does: F7 moves the day on to its next phase (release
- * 0.2), F8 brings the molt signal (step 8), F9 cycles the mood, F10 calls a
- * threat now (step 7).
+ * 0.2), F8 brings the molt signal (step 8), and Shift and F8 a companion's
+ * (T104), F9 cycles the mood, F10 calls a threat now (step 7).
  */
-export type DebugKey = (typeof DEBUG_KEYS)[keyof typeof DEBUG_KEYS];
+export type DebugKey = (typeof DEBUG_KEYS)[keyof typeof DEBUG_KEYS] | 'herMolt';
 
 export interface KeyboardSourceOptions {
   /** The bindings in use right now. */
@@ -109,7 +109,8 @@ export class KeyboardSource {
       return;
     }
 
-    const debug = (DEBUG_KEYS as Record<string, DebugKey>)[code];
+    const debug =
+      code === 'F8' && event.shiftKey ? 'herMolt' : (DEBUG_KEYS as Record<string, DebugKey>)[code];
     if (debug && this.debugHandlers.size > 0) {
       event.preventDefault();
       if (!event.repeat) for (const handler of [...this.debugHandlers]) handler(debug);

@@ -32,6 +32,10 @@ export interface StoryFrame {
   shoalNear?: number;
   /** Dug into the sand. */
   burrowed?: boolean;
+  /** Soft after the molt, with a companion within 3 BL. */
+  softNotAlone?: boolean;
+  /** The name of a companion soft now, the player near her since her molt began. */
+  herSoft?: string | null;
 }
 
 const PLAYER = 'player';
@@ -222,6 +226,9 @@ export class StoryTeller {
         this.narrator.say('narr.c2.burrowed');
       }
     }
+    // Soft, with a companion close; or close to a companion who is soft (T104).
+    if (this.chapter >= 2 && frame.softNotAlone) this.narrator.say('narr.c2.notAlone');
+    if (frame.herSoft) this.narrator.say('narr.c2.herMolt', { name: frame.herSoft });
     this.shoalNear = frame.shoalNear ?? 0;
     // The first time the shoal is together again after a loss, it is fewer.
     if (this.fewerDue && this.shoalNear >= STORY.regrouped && this.narrator.say('narr.fewer')) {
@@ -281,6 +288,11 @@ export class StoryTeller {
   /** The shrimp woke in cover after being cornered. */
   woke(): void {
     this.wokeNow = true;
+  }
+
+  /** Nacre noticed a threat first, and the player felt her alarm (doc 13, `narr.c2.alarm`). */
+  nacreAlarm(): void {
+    if (this.chapter === 2) this.narrator.say('narr.c2.alarm');
   }
 
   /** The player's tail flip startled a shrimp that does not know it yet. */

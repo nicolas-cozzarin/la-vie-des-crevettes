@@ -1,4 +1,5 @@
 import type { MotionTuning } from '../core/movement/ShrimpMotion';
+import type { DayTuning } from '../core/world/dayCycle';
 
 /**
  * Every number that shapes how the game feels. Starting points for playtests.
@@ -84,6 +85,25 @@ export const HIDE = {
   slowing: 0.35,
 };
 
+/** Burrowing into sand, from chapter 2 (doc 10, "Activities"). Seconds. */
+export const BURROW = {
+  dig: 1.2,
+  out: 0.5,
+  /** In the story, seconds into the lagoon before the sand line and the burrow prompt. */
+  hint: 8,
+};
+
+/** "Rest until dusk" (doc 02, "Hide and shelter"; doc 10, "Comfort"). */
+export const REST = {
+  /** Seconds tucked or dug in, calm, before it may be chosen. */
+  calm: 5,
+  /** Comfort above which it may be chosen, and the fear below which the shrimp counts as calm. */
+  comfort: 0.6,
+  fear: 0.2,
+  /** While resting, the day runs this many times faster, until dusk (T101). */
+  speed: 15,
+};
+
 export const COVER = {
   /** Opacity of a cover while the player is beneath it. */
   fadedAlpha: 0.4,
@@ -94,6 +114,66 @@ export const COVER = {
 export const WATER_LIGHT = {
   /** How fast the light patches slide, in design pixels per second. */
   dappleDrift: { x: 6, y: 3.5 },
+};
+
+/**
+ * Day and night, from chapter 2 (doc 02, "Day and night"). One cycle is
+ * 4 minutes. The strengths are doc 14's, "From data to picture" (T99).
+ */
+export const DAY: DayTuning & {
+  plankton: {
+    perBl2: number;
+    elsewhere: number;
+    alpha: number;
+    width: { min: number; max: number };
+    wake: number;
+    lit: number;
+    grow: number;
+    pool: number;
+  };
+  effects: {
+    dayOpenFall: number;
+    dayOpenComfort: number;
+    duskComfort: number;
+    nightThreats: number;
+    dawnThreats: number;
+    duskFilm: number;
+  };
+} = {
+  length: { day: 100, dusk: 40, night: 60, dawn: 40 },
+  ease: 8,
+  dusk: 0.55,
+  night: 0.86,
+  duskCaustics: 0.4,
+  plankton: {
+    /** Points for each square BL in the bright shallows; elsewhere this share of them. */
+    perBl2: 2,
+    elsewhere: 0.35,
+    /** How bright a point is when nothing has passed, 0 to 1. */
+    alpha: 0.22,
+    /** BL across. */
+    width: { min: 0.1, max: 0.22 },
+    /** BL from the wake within which a point lights up, and seconds it stays lit. */
+    wake: 1.5,
+    lit: 1.5,
+    /** How much wider a lit point grows. */
+    grow: 1.6,
+    /** The most points drawn at once. */
+    pool: 700,
+  },
+  /** What the time of day does to the feelings and the threats (doc 10, "Day and night"). */
+  effects: {
+    /** By day, in the open, fear falls at this share of its speed. */
+    dayOpenFall: 0.5,
+    /** Added to comfort's target by day in the open, and at dusk anywhere. */
+    dayOpenComfort: -0.1,
+    duskComfort: 0.05,
+    /** Ambient threats are this much as likely at night, and at dawn. */
+    nightThreats: 0.5,
+    dawnThreats: 2,
+    /** At dusk the golden film is worth this much more (T99). */
+    duskFilm: 1.5,
+  },
 };
 
 /** Hunger. See docs/10-feelings-and-states.md, "Hunger". */
@@ -210,6 +290,11 @@ export const FEELINGS = {
   curiosity: CURIOSITY,
   company: COMPANY,
   wary: WARY,
+  day: {
+    openFall: DAY.effects.dayOpenFall,
+    openComfort: DAY.effects.dayOpenComfort,
+    duskComfort: DAY.effects.duskComfort,
+  },
 };
 
 /** How the screen shows the player's mood. See doc 10, "Screen". */
@@ -312,7 +397,7 @@ export const NPC = {
   greet: { base: 3, perSociability: 5, every: 30, touch: 1.2, giveUp: 8 },
   follow: { called: 0.9, near: 1.5, far: 3, seconds: 20, shoalFactor: 0.5, shoalSpan: 6 },
   groom: { factor: 0.5, min: 3, max: 6 },
-  rest: { factor: 0.6, lagoonDay: 0.4, min: 3, span: 9 },
+  rest: { factor: 0.6, lagoonDay: 0.4, min: 3, span: 9, beside: 0.8 },
   wander: { base: 0.3, perActivity: 0.3, reach: 6, home: 8, giveUp: 10, waryCover: 3 },
   /** A Stranger keeps this far from the player, in BL, and backs off this far when rushed. */
   stranger: { keep: 1.2, backOff: 3.5, rushed: 2 },
@@ -332,6 +417,34 @@ export const NPC = {
   awake: 4,
   /** Seconds between steps for a shrimp far outside the view. */
   farStep: 0.25,
+  /**
+   * A companion's molt (T104): at night, this many seconds in, a named shrimp
+   * with this bond or more, within `near` BL of the player, begins to molt.
+   * She molts in cover within `cover` BL, or else where she is. Within `stay`
+   * BL of her the whole time, the player stays with her.
+   */
+  molt: { after: 10, near: 8, stay: 3, known: 0.25, cover: 8 },
+};
+
+/**
+ * What a companion does for the player once the bond is deep (T105). At
+ * Close she leads the player to her favourite food once a chapter, when
+ * both are hungry, and rests touching when the player keeps still. Any
+ * companion with the player sidesteps a fish's charge a beat early.
+ * BL, seconds and shares.
+ */
+export const CLOSE = {
+  lead: {
+    playerHunger: 0.45,
+    ownHunger: 0.3,
+    near: 6,
+    reach: 30,
+    amount: 0.5,
+    wait: 4,
+    giveUp: 60,
+  },
+  rest: { after: 3, near: 8, touch: 0.8 },
+  sidestep: { with: 3, ahead: 3.5, line: 1.5 },
 };
 
 /** How other shrimp find their way. */
@@ -445,6 +558,43 @@ export const BIRD = {
   firstFrom: -Math.PI / 4,
 };
 
+/** The hunting fish (doc 10, "The hunting fish"). Distances in BL, times in seconds. */
+export const FISH = {
+  length: 4.5,
+  patrol: { speed: 2, radius: 5 },
+  /** It comes in from the edge of the view, a little faster than it patrols. */
+  arrive: { from: 6, speed: 3 },
+  turn: 0.9,
+  room: 3,
+  face: 0.6,
+  pause: 0.5,
+  charge: { speed: 9, reach: 10 },
+  hit: 0.7,
+  recover: 1.6,
+  recoverSpeed: 2.5,
+  charges: 3,
+  giveUp: { hidden: 2, far: 8, seconds: 12 },
+  range: 7,
+  sight: 8,
+  shadowReach: 3,
+  missReach: 3,
+  sidestep: { near: 1.5, after: 0.6 },
+  leave: { speed: 4, bend: 0.35 },
+  /** Tail beats a second on patrol, and in the pause before a charge. */
+  tail: { slow: 1.1, fast: 4.5 },
+  /** Radians the tail swings either way at most (doc 14). */
+  swing: 0.18,
+};
+
+/** Who goes missing from the shoal when a threat leaves (doc 10, "Losses", D42). */
+export const LOSSES = {
+  chance: { bird: 1 / 3, fish: 1 / 2, net: 1 },
+  /** BL. */
+  away: 10,
+  floor: 2,
+  netTwoFrom: 4,
+};
+
 /** Being cornered (doc 10, "Cornered"). Seconds from the instant before contact. */
 export const CORNERED = {
   blurred: 0.25,
@@ -487,6 +637,16 @@ export const STORY = {
   meet: 4,
   /** Into the wait for the molt, out in the open, the body asks for cover. */
   notHere: 20,
+  /** Chapter 2: after the dawn fish has gone, the molt signal (T100). */
+  moltAfterFish: 20,
+  /** Chapter 2: after the molt, the water leans toward the sea. */
+  leanAfterMolt: 10,
+  /** Shoal members this close count as grazing with the shrimp. BL. */
+  shoalNear: 4,
+  /** Shoal members within `shoalNear` BL for the shoal to count as together again. */
+  regrouped: 3,
+  /** Seconds the view takes to fade out on the way to the next place. */
+  leaveFade: 1.5,
 };
 
 /** Saving at rest (doc 02, "Saving"). Seconds. */

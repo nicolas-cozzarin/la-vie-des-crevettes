@@ -17,8 +17,10 @@ export class WaterLight {
   private readonly dapple: Phaser.GameObjects.TileSprite | null;
   private readonly murk: Phaser.GameObjects.Image | null;
   private slide = { x: 0, y: 0 };
+  private readonly strength: number;
 
   constructor(scene: Phaser.Scene, light: LightDef | undefined) {
+    this.strength = light?.dappleStrength ?? 1;
     this.dapple = light?.dapple
       ? scene.add
           .tileSprite(0, 0, VIEW_W + 4, VIEW_H + 4, ensureTexture(scene, light.dapple))
@@ -34,6 +36,12 @@ export class WaterLight {
           .setDisplaySize(VIEW_W * 2, VIEW_H * 2)
           .setDepth(DEPTH.mood)
       : null;
+  }
+
+  /** How much of the dapple shows, against its usual strength: less at dusk, none at night. */
+  setDappleLevel(level: number): void {
+    if (!this.dapple) return;
+    this.dapple.setAlpha(this.strength * level).setVisible(level > 0.005);
   }
 
   /** Lay the dapple over the view and centre the murk on the shrimp. */

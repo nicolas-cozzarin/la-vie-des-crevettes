@@ -20,6 +20,9 @@ export const LIVE_KINDS: ReadonlySet<CreatureDef['kind']> = new Set([
   'smallFish',
 ]);
 
+/** The kinds the threats draw when they come. The area's entry is only where they come from. */
+export const THREAT_KINDS: ReadonlySet<CreatureDef['kind']> = new Set(['huntingFish']);
+
 /** A hermit crab's whole length, shell and legs, in BL (doc 11). */
 const HERMIT_LENGTH = 0.9;
 

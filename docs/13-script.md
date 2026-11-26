@@ -496,7 +496,7 @@ Keys that exist already (`title.*`, `pause.*`, `controls.*`, `action.*`, `key.*`
 | `notice.saved` | Kept. | Gardé. |
 | `end.continued` | The rest of the life is being made. Stay here as long as you like. | La suite de la vie est en préparation. Reste ici autant que tu veux. |
 
-`end.continued` is for release 0.1 only, at the lagoon's edge. It is removed when the lagoon exists.
+`end.continued` stands at the last way out that leads nowhere yet: the creek mouth in release 0.1, the lagoon's pass from release 0.2 until the channel exists (T100).
 
 ## Counts
 

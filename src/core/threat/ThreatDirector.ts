@@ -2,7 +2,7 @@
  * The one system that starts and runs every frightening event (doc 10,
  * "Threats"). It is told where the player is and what the player does on
  * each step, and it says what the scene should show. It never touches a
- * picture. For now the only threat is the wading bird.
+ * picture. The threats so far: the wading bird and the hunting fish.
  * Nothing here knows about the engine.
  */
 
@@ -20,6 +20,7 @@ import {
   type BirdWorld,
   type LegEvent,
 } from './bird';
+import { HuntingFish, type FishTuning } from './fish';
 
 export type DirectorStage = 'idle' | 'cue' | 'presence' | 'chase' | 'cornered' | 'release';
 
@@ -72,6 +73,10 @@ export interface ThreatPlayer {
   soft: boolean;
   /** BL from the nearest cover's edge. */
   coverGap: number;
+  /** The middle of the shoal close by, which the fish circles. Without one, it circles the player. */
+  shoal?: Point | null;
+  /** Seconds since the last tail flip began. */
+  sinceFlip?: number;
 }
 
 export interface ThreatOptions {
@@ -87,7 +92,10 @@ export type ThreatEvent =
   | LegEvent
   | { type: 'ring'; x: number; y: number; warn: number }
   | { type: 'strike'; x: number; y: number; hit: boolean }
-  | { type: 'escaped'; kind: ThreatKind; clean: boolean; still: boolean };
+  | { type: 'escaped'; kind: ThreatKind; clean: boolean; still: boolean }
+  | { type: 'faced'; x: number; y: number }
+  | { type: 'charge'; x: number; y: number; heading: number }
+  | { type: 'sidestep' };
 
 export interface Ring {
   x: number;
@@ -119,6 +127,8 @@ export class ThreatDirector {
   headAim = 0;
   legs: Legs | null = null;
   ring: Ring | null = null;
+  /** The hunting fish, from its cue to the end of its release. */
+  fish: HuntingFish | null = null;
   strikes = 0;
 
   private time = 0;
@@ -143,7 +153,11 @@ export class ThreatDirector {
   private miss: { seq: number; x: number; y: number } | null = null;
   /** Gentle mode: hunters pass by and never chase. The settings can change it during play. */
   gentle: boolean;
+  /** How likely an ambient threat is, against the usual: less at night, more at dawn (doc 10, "Day and night"). */
+  ambientFactor = 1;
   private missSeen = new Map<string, number>();
+  /** Where the player was on the last step, for the fish to leave away from. */
+  private lastPlayer: Point = { x: 0, y: 0 };
 
   constructor(
     private readonly tuning: ThreatTuning,
@@ -151,6 +165,7 @@ export class ThreatDirector {
     private readonly world: BirdWorld,
     private readonly random: () => number,
     private readonly options: ThreatOptions,
+    private readonly fishTuning?: FishTuning,
   ) {
     this.nextRoll = tuning.gap;
     this.ambientLeft = options.ambient ?? Infinity;
@@ -159,6 +174,7 @@ export class ThreatDirector {
 
   /** Where the predator is: its feet once it stands, else its shadow. */
   get predator(): Point {
+    if (this.fish) return { x: this.fish.x, y: this.fish.y };
     return this.legs?.anyDown ? this.legs.middle : { x: this.shadow.x, y: this.shadow.y };
   }
 
@@ -174,19 +190,21 @@ export class ThreatDirector {
    */
   request(kind: ThreatKind, first = false, from: number | null = null, force = false): void {
     if (force ? this.stage !== 'idle' : !this.options.kinds.includes(kind)) return;
+    if (kind === 'fish' && !this.fishTuning) return;
     this.queued = { kind, first, from, force };
   }
 
   step(dt: number, player: ThreatPlayer): ThreatEvent[] {
     this.time += dt;
     this.stageTime += dt;
+    this.lastPlayer = { x: player.x, y: player.y };
     const events: ThreatEvent[] = [];
     switch (this.stage) {
       case 'idle':
         this.idle(player, events);
         break;
       case 'cue':
-        this.cue(player, events);
+        this.cue(dt, player, events);
         break;
       case 'presence':
         this.presence(dt, player, events);
@@ -195,6 +213,7 @@ export class ThreatDirector {
         this.chase(dt, player, events);
         break;
       case 'cornered':
+        this.fish?.leave(dt);
         if (this.stageTime >= this.stageLength) this.release(events);
         break;
       case 'release':
@@ -209,10 +228,11 @@ export class ThreatDirector {
     if (this.stage === 'idle') return null;
     const present =
       this.stage === 'presence' || this.stage === 'chase' || this.stage === 'cornered';
-    const legsDown = this.legs?.anyDown === true;
     const middle = this.predator;
     const distance = Math.hypot(x - middle.x, y - middle.y);
-    const near = present && legsDown && distance <= this.bird.sight * this.world.bl;
+    const near = this.fish
+      ? present && distance <= (this.fishTuning?.sight ?? 0) * this.world.bl
+      : present && this.legs?.anyDown === true && distance <= this.bird.sight * this.world.bl;
     return {
       stage: this.stage,
       inSight: near,
@@ -229,25 +249,32 @@ export class ThreatDirector {
   felt(id: string, x: number, y: number): StimulusKind[] {
     const out: StimulusKind[] = [];
     const bl = this.world.bl;
+    const fish = this.fish ? this.fishTuning : undefined;
+    const reach = {
+      shadow: fish?.shadowReach ?? this.bird.shadowReach,
+      sight: fish?.sight ?? this.bird.sight,
+      miss: fish?.missReach ?? this.bird.missReach,
+    };
     if (
       this.stage === 'cue' &&
       !this.shadowFelt.has(id) &&
-      Math.hypot(x - this.shadow.x, y - this.shadow.y) <= this.bird.shadowReach * bl
+      Math.hypot(x - this.shadow.x, y - this.shadow.y) <= reach.shadow * bl
     ) {
       this.shadowFelt.add(id);
       out.push('shadow');
     }
     const searching = this.stage === 'presence' || this.stage === 'chase';
-    if (searching && this.legs?.anyDown && !this.seen.has(id)) {
-      const middle = this.legs.middle;
-      if (Math.hypot(x - middle.x, y - middle.y) <= this.bird.sight * bl) {
+    const there = this.fish !== null || this.legs?.anyDown === true;
+    if (searching && there && !this.seen.has(id)) {
+      const middle = this.predator;
+      if (Math.hypot(x - middle.x, y - middle.y) <= reach.sight * bl) {
         this.seen.add(id);
         out.push('predatorSeen');
       }
     }
     if (this.miss && this.missSeen.get(id) !== this.miss.seq) {
       this.missSeen.set(id, this.miss.seq);
-      if (Math.hypot(x - this.miss.x, y - this.miss.y) <= this.bird.missReach * bl) {
+      if (Math.hypot(x - this.miss.x, y - this.miss.y) <= reach.miss * bl) {
         out.push('missNearby');
       }
     }
@@ -263,6 +290,15 @@ export class ThreatDirector {
       strikes: this.strikes,
       ring: this.ring ? { x: this.ring.x, y: this.ring.y } : null,
       predator: this.stage === 'idle' ? null : this.predator,
+      fish: this.fish
+        ? {
+            x: this.fish.x,
+            y: this.fish.y,
+            heading: this.fish.heading,
+            phase: this.fish.phase,
+            charges: this.fish.charges,
+          }
+        : null,
     };
   }
 
@@ -286,7 +322,7 @@ export class ThreatDirector {
     ) {
       return;
     }
-    if (this.random() < this.tuning.roll / this.tuning.meanWait) {
+    if (this.random() < (this.tuning.roll / this.tuning.meanWait) * this.ambientFactor) {
       this.ambientLeft -= 1;
       this.begin({ kind, first: false, from: null, force: false }, player, events);
     }
@@ -307,8 +343,17 @@ export class ThreatDirector {
     this.seen.clear();
     this.miss = null;
     this.missSeen.clear();
-    // The shadow comes from one side, slides over the player, and goes on.
+    this.fish = null;
     const from = request.from ?? this.random() * Math.PI * 2;
+    if (request.kind === 'fish' && this.fishTuning) {
+      // The fish comes in from the edge of the view toward the shoal it will circle.
+      const way = this.random() < 0.5 ? 1 : -1;
+      this.fish = new HuntingFish(this.fishTuning, this.world.bl, centreOf(player), from, way);
+      this.enter('cue', this.between(this.tuning.cue), events);
+      this.followFish();
+      return;
+    }
+    // The shadow comes from one side, slides over the player, and goes on.
     const way = from + Math.PI;
     const offset = (this.random() * 2 - 1) * this.bird.pass * this.world.bl;
     this.path = { x: player.x, y: player.y, way, offset };
@@ -327,7 +372,15 @@ export class ThreatDirector {
     this.shadow.y = y + Math.cos(way) * offset + Math.sin(way) * along;
   }
 
-  private cue(player: ThreatPlayer, events: ThreatEvent[]): void {
+  private cue(dt: number, player: ThreatPlayer, events: ThreatEvent[]): void {
+    if (this.fish) {
+      this.fish.arrive(dt, centreOf(player));
+      this.followFish();
+      if (this.stageTime >= this.stageLength) {
+        this.enter('presence', this.between(this.tuning.presence), events);
+      }
+      return;
+    }
     if (this.stageTime < this.stageLength) {
       this.placeShadow();
       this.headAim = this.shadow.heading;
@@ -344,6 +397,22 @@ export class ThreatDirector {
   }
 
   private presence(dt: number, player: ThreatPlayer, events: ThreatEvent[]): void {
+    if (this.fish && this.fishTuning) {
+      // It circles. Shrimp that are burrowed, hidden or still are not seen.
+      this.fish.circle(dt, centreOf(player));
+      this.followFish();
+      if (player.mode !== 'rest' || player.darted) this.moved = true;
+      const distance = Math.hypot(player.x - this.fish.x, player.y - this.fish.y);
+      const change = this.noticeChange(dt, player, distance, this.fishTuning.range);
+      this.notice = Math.max(0, Math.min(1, this.notice + change));
+      if (this.notice >= 1 && !this.gentle) {
+        this.fish.hunt();
+        this.enter('chase', this.tuning.chase, events);
+      } else if (this.stageTime >= this.stageLength) {
+        this.release(events);
+      }
+      return;
+    }
     const legs = this.legs;
     if (!legs) return;
     events.push(...legs.step(dt));
@@ -359,7 +428,8 @@ export class ThreatDirector {
         ? Math.atan2(player.y - middle.y, player.x - middle.x)
         : legs.heading + 0.6 * Math.sin(this.time * 0.5);
     this.headAim = rotateToward(this.headAim, aim, this.bird.headTurn * dt);
-    this.notice = Math.max(0, Math.min(1, this.notice + this.noticeChange(dt, player, distance)));
+    const change = this.noticeChange(dt, player, distance, this.bird.range);
+    this.notice = Math.max(0, Math.min(1, this.notice + change));
     if (this.notice >= 1 && !this.gentle) {
       this.enter('chase', this.tuning.chase, events);
     } else if (this.stageTime >= this.stageLength) {
@@ -368,10 +438,15 @@ export class ThreatDirector {
   }
 
   /** How much notice changes on this step (doc 10, "Being noticed"). */
-  private noticeChange(dt: number, player: ThreatPlayer, distance: number): number {
+  private noticeChange(
+    dt: number,
+    player: ThreatPlayer,
+    distance: number,
+    rangeBl: number,
+  ): number {
     const n = this.tuning.notice;
     if (player.hidden) return n.hidden * dt;
-    const range = this.bird.range * this.world.bl;
+    const range = rangeBl * this.world.bl;
     if (distance > range) return 0;
     let gain = 0;
     if (player.mode === 'walk') gain = n.walk * dt;
@@ -386,6 +461,10 @@ export class ThreatDirector {
   }
 
   private chase(dt: number, player: ThreatPlayer, events: ThreatEvent[]): void {
+    if (this.fish) {
+      this.chaseFish(dt, this.fish, player, events);
+      return;
+    }
     const legs = this.legs;
     if (!legs) return;
     const bl = this.world.bl;
@@ -446,6 +525,75 @@ export class ThreatDirector {
     }
   }
 
+  /**
+   * Face, pause, charge, recover, and again (doc 10, "The hunting fish").
+   * It gives up, between charges, once the player has hidden for 2 s or
+   * after 12 s, and after a recovery with the player 8 BL away or the third
+   * charge made.
+   */
+  private chaseFish(
+    dt: number,
+    fish: HuntingFish,
+    player: ThreatPlayer,
+    events: ThreatEvent[],
+  ): void {
+    const t = this.fishTuning;
+    if (!t) return;
+    const bl = this.world.bl;
+    if (player.mode !== 'rest' || player.darted) this.moved = true;
+    this.hiddenFor = player.hidden ? this.hiddenFor + dt : 0;
+    if (
+      fish.phase !== 'charge' &&
+      (this.hiddenFor >= t.giveUp.hidden ||
+        this.stageTime >= Math.min(this.stageLength, t.giveUp.seconds))
+    ) {
+      this.release(events);
+      return;
+    }
+    const prey = {
+      x: player.x,
+      y: player.y,
+      safe: player.hidden || player.underCover,
+      sinceFlip: player.sinceFlip ?? Infinity,
+    };
+    for (const event of fish.chase(dt, prey, this.world.covers, this.world.bounds)) {
+      if (event.type === 'faced' || event.type === 'charge') {
+        events.push(event);
+      } else if (event.type === 'passed') {
+        this.strikes = fish.charges;
+        this.lastStrike = this.time;
+        events.push({ type: 'strike', x: event.x, y: event.y, hit: event.hit });
+        if (event.sidestep) events.push({ type: 'sidestep' });
+        if (event.hit) {
+          this.cornered = true;
+          fish.goAway(player);
+          this.followFish();
+          this.enter('cornered', this.tuning.cornered, events);
+          return;
+        }
+        this.miss = { seq: (this.miss?.seq ?? 0) + 1, x: event.x, y: event.y };
+      } else {
+        const far = Math.hypot(player.x - fish.x, player.y - fish.y) > t.giveUp.far * bl;
+        if (fish.charges >= t.charges || far) {
+          this.followFish();
+          this.release(events);
+          return;
+        }
+      }
+    }
+    this.followFish();
+  }
+
+  /** The shadow and the head's aim, for whatever draws the threat, follow the fish. */
+  private followFish(): void {
+    const fish = this.fish;
+    if (!fish) return;
+    this.shadow.x = fish.x;
+    this.shadow.y = fish.y;
+    this.shadow.heading = fish.heading;
+    this.headAim = fish.heading;
+  }
+
   /** The shadow keeps over the feet, a little behind them, turning as they turn. */
   private follow(dt: number): void {
     const legs = this.legs;
@@ -475,19 +623,24 @@ export class ThreatDirector {
     }
     this.ring = null;
     this.enter('release', this.between(this.tuning.release), events);
+    if (this.fish && this.fish.phase !== 'leave') this.fish.goAway(this.lastPlayer);
     const legs = this.legs;
     if (legs) events.push(...legs.lift());
     this.leaving = this.shadow.heading;
   }
 
   private leave(dt: number, events: ThreatEvent[]): void {
+    if (this.fish) {
+      this.fish.leave(dt);
+      this.followFish();
+    }
     const legs = this.legs;
     if (legs) {
       events.push(...legs.step(dt));
       if (this.stageTime >= this.bird.liftGap && legs.anyDown) events.push(...legs.lift());
     }
     // Once both feet are up, the shadow slides away the way it faces.
-    if (!legs?.anyDown) {
+    if (!this.fish && !legs?.anyDown) {
       const speed = this.bird.shadowSpeed * this.world.bl * dt;
       this.shadow.x += Math.cos(this.leaving) * speed;
       this.shadow.y += Math.sin(this.leaving) * speed;
@@ -498,6 +651,7 @@ export class ThreatDirector {
     this.stage = 'idle';
     this.stageTime = 0;
     this.legs = null;
+    this.fish = null;
     this.lastRelease = this.time;
     this.nextRoll = Math.max(this.nextRoll, this.time + this.tuning.gap);
     this.kind = null;
@@ -514,4 +668,9 @@ export class ThreatDirector {
   private between(span: Span): number {
     return span.min + this.random() * (span.max - span.min);
   }
+}
+
+/** What the fish circles: the shoal close by, or the player. */
+function centreOf(player: ThreatPlayer): Point {
+  return player.shoal ?? { x: player.x, y: player.y };
 }

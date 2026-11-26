@@ -1,6 +1,8 @@
 import type { ActivityName } from '../activity/Activity';
 import type { FoodSpot } from '../food/FoodPatch';
+import type { CloseTuning } from './close';
 import type { Mood } from '../feelings/mood';
+import type { MoltStage } from '../molt/Molt';
 import type { BondStage, Feelings } from '../feelings/types';
 import type { Bounds, Obstacle } from '../movement/collision';
 import type { MotionMode } from '../movement/ShrimpMotion';
@@ -61,6 +63,12 @@ export interface NpcWorld {
   /** From chapter 2, the shoal. Null in the mangrove. */
   shoal: readonly ShoalMember[] | null;
   lagoonDay: boolean;
+  /** Where its own molt is (T104). Through it, the mind follows the molt's script. */
+  molting?: MoltStage;
+  /** At Close: the patch of its favourite it is leading the player to (T105). */
+  leading?: FoodSpot | null;
+  /** At Close: where the player keeps still, to rest touching (T105). */
+  restBeside?: { x: number; y: number } | null;
 }
 
 /** What the shrimp presses on this step, as a player would. */
@@ -98,6 +106,8 @@ export interface MindTuning {
   greetReach: number;
   /** Seconds a dart lasts with its glide, so the next is not asked too soon. */
   dartEvery: number;
+  /** What it does at Close (T105). */
+  close: CloseTuning;
 }
 
 const NOTHING: NpcIntent = {
@@ -142,6 +152,16 @@ export class NpcMind {
   private waiting = 0;
   /** The length of the step under way. */
   private dt = 0;
+  /** Its molt was under way on the last step. */
+  private wasMolting = false;
+  /** No cover close enough: it molts where it stands (T104). */
+  moltInOpen = false;
+  /** Leading the player, it has reached the food (T105). */
+  ledThere = false;
+  /** Grazing where it led the player: it stays until it has eaten its fill. */
+  private heldGraze = false;
+  /** A sidestep asked for, to dart on the next step. */
+  private dodge: Axis | null = null;
 
   constructor(
     private readonly setup: NpcSetup,
@@ -192,6 +212,11 @@ export class NpcMind {
     this.avoid = null;
   }
 
+  /** A fish's charge is coming at it: it darts aside on the next step (T105). */
+  sidestep(axis: Axis): void {
+    this.dodge = axis;
+  }
+
   /** The player called. It starts to come at its next choice. */
   hearCall(time: number): void {
     this.nextChoice = Math.min(this.nextChoice, time);
@@ -204,6 +229,31 @@ export class NpcMind {
 
   step(dt: number, world: NpcWorld): NpcIntent {
     const npc = this.tuning.npc;
+    // Through a molt it does nothing else (doc 10, "Molt: scripted").
+    if (world.molting && world.molting !== 'none') {
+      this.dt = dt;
+      this.pulse += dt;
+      this.wasMolting = true;
+      this.avoid = null;
+      return this.molt(world);
+    }
+    if (this.wasMolting) {
+      this.wasMolting = false;
+      this.ended = true;
+    }
+    if (this.dodge) {
+      const axis = this.dodge;
+      this.dodge = null;
+      this.lastDart = world.time;
+      return { ...NOTHING, axis, dart: true };
+    }
+    // Leading the player to its favourite, unless something frightens it.
+    if (world.leading && !this.ledThere && world.feelings.fear < npc.hide.fear) {
+      this.dt = dt;
+      this.pulse += dt;
+      return this.lead(world, world.leading);
+    }
+    if (!world.leading) this.ledThere = false;
     // Fear past its level makes it choose at once, whatever the clock says.
     const fleeing = this.behaviour === 'flee' || this.behaviour === 'hide';
     if (world.feelings.fear >= this.fleeLevel && !fleeing) this.nextChoice = world.time;
@@ -236,6 +286,7 @@ export class NpcMind {
         called: world.called,
         shoalGap: middle ? Math.hypot(middle.x - world.x, middle.y - world.y) / bl : null,
         lagoonDay: world.lagoonDay,
+        restBeside: world.restBeside != null,
       },
       this.setup.temperament,
       npc,
@@ -244,8 +295,9 @@ export class NpcMind {
     let current: Behaviour | null = null;
     if (!this.ended && !this.hasEnded(world)) {
       current = this.behaviour;
-      const hold = this.behaviour === 'flee' || this.behaviour === 'hide' ? 1 : this.startScore;
-      if (!['graze', 'freeze'].includes(this.behaviour)) {
+      const held = this.behaviour === 'flee' || this.behaviour === 'hide' || this.heldGraze;
+      const hold = held ? 1 : this.startScore;
+      if (!['graze', 'freeze'].includes(this.behaviour) || this.heldGraze) {
         scores[this.behaviour] = Math.max(scores[this.behaviour], hold);
       }
     } else {
@@ -261,6 +313,7 @@ export class NpcMind {
     const random = this.setup.random;
     this.behaviour = behaviour;
     this.startScore = score;
+    this.heldGraze = false;
     this.started = time;
     this.ended = false;
     this.target = null;
@@ -390,8 +443,26 @@ export class NpcMind {
       }
       case 'groom':
         return { ...NOTHING, grooming: true };
-      case 'rest':
-        return { ...NOTHING, look: this.social(world) };
+      case 'rest': {
+        // At Close, beside a player keeping still: it comes to touch, then rests there.
+        const beside = world.restBeside;
+        if (beside) {
+          const touch = this.tuning.close.rest.touch * bl;
+          const gap = Math.hypot(beside.x - world.x, beside.y - world.y);
+          if (gap <= touch * 1.2) return { ...NOTHING, look: beside };
+          const spot = {
+            x: beside.x + ((world.x - beside.x) / gap) * touch,
+            y: beside.y + ((world.y - beside.y) / gap) * touch,
+          };
+          return {
+            ...NOTHING,
+            axis: this.walkTo(here, spot, npc.walk.strength, true),
+            look: beside,
+          };
+        }
+        // By day in the lagoon it digs into the sand, or tucks into cover close by.
+        return { ...NOTHING, hide: world.lagoonDay, look: this.social(world) };
+      }
       case 'wander': {
         if (!this.target) return NOTHING;
         const axis = this.walkTo(here, this.target, npc.walk.strength, true, world);
@@ -399,6 +470,49 @@ export class NpcMind {
         return { ...NOTHING, axis, look: this.social(world) };
       }
     }
+  }
+
+  /**
+   * Leading the player to a patch of its favourite: it walks there, and
+   * waits, turned toward the player, whenever the player falls behind. At
+   * the patch it grazes, and the lead is done.
+   */
+  private lead(world: NpcWorld, food: FoodSpot): NpcIntent {
+    const npc = this.tuning.npc;
+    const bl = this.setup.bodyLengthPx;
+    const here = { x: world.x, y: world.y };
+    const gap = Math.hypot(food.x - world.x, food.y - world.y) - food.r;
+    if (gap <= 0.85 * bl) {
+      this.ledThere = true;
+      this.begin('graze', world.time, 1);
+      this.food = food;
+      this.heldGraze = true;
+      return { ...NOTHING, interact: true, look: food };
+    }
+    const player = world.others.find((one) => one.player);
+    if (player) {
+      const behind = Math.hypot(player.x - world.x, player.y - world.y);
+      if (behind > this.tuning.close.lead.wait * bl) return { ...NOTHING, look: player };
+    }
+    return { ...NOTHING, axis: this.walkTo(here, food, npc.walk.strength, true), look: food };
+  }
+
+  /**
+   * The molt's script: waiting, it walks to the nearest cover within reach
+   * and tucks in, or stays where it is if there is none. From then on it
+   * keeps still, tucked if it is, until the shell is hard.
+   */
+  private molt(world: NpcWorld): NpcIntent {
+    const npc = this.tuning.npc;
+    const bl = this.setup.bodyLengthPx;
+    if (world.activity === 'hiding') return { ...NOTHING, hide: true };
+    if (world.molting !== 'signal') return NOTHING;
+    const cover = this.nearestCover(world);
+    this.moltInOpen = !cover || cover.gap > npc.molt.cover * bl;
+    if (!cover || this.moltInOpen) return NOTHING;
+    if (cover.gap <= npc.hide.reach * bl * 0.9) return { ...NOTHING, hide: true };
+    const here = { x: world.x, y: world.y };
+    return { ...NOTHING, axis: this.walkTo(here, cover.cover, npc.walk.strength, true, world) };
   }
 
   /** Tail flips toward cover and away from the fright, up to three, then a swim. */

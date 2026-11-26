@@ -72,6 +72,8 @@ export const lagoon: AreaDef = {
   spawn: { x: 7600, y: 2650, heading: Math.PI },
   light: { dapple: 'light.caustics', dappleStrength: 0.35, murk: 'lagoon.murk' },
   dayCycle: true,
+  sand: true,
+  threats: ['fish'],
   music: 'music.lagoon',
   ambience: 'amb.lagoon',
 
@@ -245,6 +247,8 @@ export const lagoon: AreaDef = {
   ],
 
   shrimp: [
+    // Zone A: Nacre came down the creek on the same tide, just behind the player (T104).
+    { id: 'nacre', who: 'nacre', x: 7790, y: 2470, heading: Math.PI },
     // Zone E: the shoal rests here by day. Brise and Écume are met here.
     { id: 'brise', who: 'brise', x: 3700, y: 2450, heading: 0.4 },
     { id: 'ecume', who: 'ecume', x: 4150, y: 3050, heading: -2.2 },

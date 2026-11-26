@@ -6,7 +6,8 @@ import type { FoodKind } from '../world/kinds';
  * What the body is busy with, on top of how it moves. One at a time. Every
  * name of doc 10's table is listed so that the feelings can read it, but the
  * state machine below runs only `free`, `hiding`, `grazing`, `sensing`,
- * `greeting` and `calling` so far; the rest join in later steps. See docs/10-feelings-and-states.md, "Activities".
+ * `greeting`, `calling`, `burrowing` and `resting` so far; the rest join in
+ * later steps. See docs/10-feelings-and-states.md, "Activities".
  */
 export type ActivityName =
   | 'free'
@@ -57,6 +58,14 @@ export interface GreetTuning {
   callHold: number;
 }
 
+/** Burrowing into sand, from chapter 2. Seconds. */
+export interface BurrowTuning {
+  /** To dig in, until only the eyes and antennae are out. */
+  dig: number;
+  /** To come out again once Hide is let go. */
+  out: number;
+}
+
 /** Another shrimp, as the greeting needs it. */
 export interface OtherShrimp {
   id: string;
@@ -88,6 +97,10 @@ export interface ActivityInput {
   greet?: boolean;
   /** The other shrimp that could be greeted. */
   others?: readonly OtherShrimp[];
+  /** The ground here is sand the shrimp can dig into (chapter 2 on). */
+  sand?: boolean;
+  /** A key was pressed on this step: it wakes a resting shrimp. */
+  wake?: boolean;
 }
 
 export interface ActivityResult {
@@ -139,13 +152,66 @@ export class Activity<T extends CoverSpot = CoverSpot, F extends FoodSpot = Food
   /** Seconds without getting closer: something solid is in the way. */
   private stalled = 0;
   private lastDistance = Infinity;
+  /** Burrowing: digging in, dug in, or coming out, and for how long. */
+  private burrowPhase: 'in' | 'down' | 'out' = 'in';
+  private burrowTime = 0;
+  /** What the shrimp was doing when it lay down to rest: it goes back to it on waking. */
+  private restFrom: 'hiding' | 'burrowing' | null = null;
 
   constructor(
     private readonly tuning: HideTuning,
     private readonly bodyLengthPx: number,
     private readonly graze: GrazeTuning,
     private readonly greeting: GreetTuning,
+    private readonly burrow: BurrowTuning = { dig: 1.2, out: 0.5 },
   ) {}
+
+  /** How deep in the sand the body is, from 0 (out) to 1 (only the eyes and antennae out). */
+  get burrowDepth(): number {
+    const burrowing = this.name === 'burrowing' || this.restFrom === 'burrowing';
+    if (!burrowing) return 0;
+    if (this.name === 'resting' || this.burrowPhase === 'down') return 1;
+    if (this.burrowPhase === 'in') return Math.min(1, this.burrowTime / this.burrow.dig);
+    return Math.max(0, 1 - this.burrowTime / this.burrow.out);
+  }
+
+  /** Whether Hide would dig in here: sand, and no cover within reach. */
+  canBurrow(x: number, y: number, covers: readonly T[], sand: boolean): boolean {
+    return sand && !this.canHide(x, y, covers);
+  }
+
+  /** Tucked in or dug in: "Rest until dusk" may begin. */
+  get canRest(): boolean {
+    return this.tucked && (this.name === 'hiding' || this.name === 'burrowing');
+  }
+
+  /**
+   * "Rest until dusk" (doc 02): the shrimp lies still where it is tucked or
+   * dug in, Hide or not, until dusk or a key wakes it. Returns whether it began.
+   */
+  rest(): boolean {
+    if (!this.canRest) return false;
+    this.restFrom = this.name === 'burrowing' ? 'burrowing' : 'hiding';
+    this.name = 'resting';
+    return true;
+  }
+
+  /** Dusk has come, or a key: the resting shrimp wakes. Dug in, it comes out of the sand. */
+  wake(): void {
+    if (this.name !== 'resting') return;
+    const from = this.restFrom;
+    this.restFrom = null;
+    if (from === 'burrowing') {
+      // Still dug in: it comes out at once unless Hide is held.
+      this.name = 'burrowing';
+      this.burrowPhase = 'down';
+      this.burrowTime = 0;
+    } else {
+      // Tucked under cover it stays there, as if put there, until it moves.
+      this.name = 'hiding';
+      this.placed = true;
+    }
+  }
 
   /** Wakes the shrimp tucked in under a cover, as after being cornered (doc 10). */
   tuckInto(cover: T, at: { x: number; y: number }): void {
@@ -245,6 +311,11 @@ export class Activity<T extends CoverSpot = CoverSpot, F extends FoodSpot = Food
       }
     }
     if (this.name === 'calling' && (input.tailFlip || !input.greet || scared)) this.stop();
+    if (this.name === 'resting') {
+      if (input.tailFlip) this.stop();
+      else if (input.wake) this.wake();
+    }
+    if (this.name === 'burrowing') this.stepBurrow(input);
 
     if (this.name === 'free' && !input.tailFlip) {
       const cover = input.hide
@@ -255,7 +326,13 @@ export class Activity<T extends CoverSpot = CoverSpot, F extends FoodSpot = Food
       const wantsGreet = input.greet === true && !this.greetSpent && !scared;
       const other = wantsGreet ? this.greetable(input.x, input.y, input.others ?? []) : null;
       if (wantsGreet && !other) this.greetHeld += input.dt;
-      if (cover) {
+      const dig = input.hide && !cover && input.sand === true;
+      if (dig) {
+        this.name = 'burrowing';
+        this.burrowPhase = 'in';
+        this.burrowTime = 0;
+        this.tucked = false;
+      } else if (cover) {
         this.name = 'hiding';
         this.cover = cover;
         this.target = tuckPoint(input.x, input.y, cover, this.tuning.tuck);
@@ -286,6 +363,10 @@ export class Activity<T extends CoverSpot = CoverSpot, F extends FoodSpot = Food
       return { axis: { x: 0, y: 0 }, eating: false, face };
     }
     if (this.name === 'calling') return { axis: { x: 0, y: 0 }, eating: false };
+    // Digging in, dug in, coming out or resting, the body stays where it is.
+    if (this.name === 'burrowing' || this.name === 'resting') {
+      return { axis: { x: 0, y: 0 }, eating: false };
+    }
 
     if (this.name === 'sensing') return { axis: { x: 0, y: 0 }, eating: false };
     if (this.name === 'grazing' && this.food) return this.stepGraze(input, this.food);
@@ -323,6 +404,31 @@ export class Activity<T extends CoverSpot = CoverSpot, F extends FoodSpot = Food
     return { axis: { x: dx / distance, y: dy / distance }, eating: false };
   }
 
+  /** Digs in over `dig` seconds; let go, it comes out over `out`. A tail flip ends it at once. */
+  private stepBurrow(input: ActivityInput): void {
+    if (input.tailFlip) {
+      this.stop();
+      return;
+    }
+    this.burrowTime += input.dt;
+    if (this.burrowPhase === 'in') {
+      if (!input.hide) {
+        // Let go while still digging: out from as deep as it got.
+        const depth = Math.min(1, this.burrowTime / this.burrow.dig);
+        this.burrowPhase = 'out';
+        this.burrowTime = (1 - depth) * this.burrow.out;
+      } else if (this.burrowTime >= this.burrow.dig) {
+        this.burrowPhase = 'down';
+        this.tucked = true;
+      }
+    } else if (this.burrowPhase === 'down' && !input.hide) {
+      this.burrowPhase = 'out';
+      this.burrowTime = 0;
+      this.tucked = false;
+    }
+    if (this.burrowPhase === 'out' && this.burrowTime >= this.burrow.out) this.stop();
+  }
+
   private mouth(input: ActivityInput): { x: number; y: number } {
     const heading = input.heading ?? 0;
     const ahead = this.graze.head * this.bodyLengthPx;
@@ -331,6 +437,9 @@ export class Activity<T extends CoverSpot = CoverSpot, F extends FoodSpot = Food
 
   private stop(): void {
     this.name = 'free';
+    this.restFrom = null;
+    this.burrowPhase = 'in';
+    this.burrowTime = 0;
     this.placed = false;
     this.cover = null;
     this.food = null;

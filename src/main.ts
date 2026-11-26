@@ -62,4 +62,5 @@ window.__lvdc = {
   journal: () => debugState.journal?.() ?? null,
   progress: () => debugState.progress?.() ?? null,
   audio: () => debugState.audio?.() ?? null,
+  day: () => debugState.day?.() ?? null,
 };

@@ -143,7 +143,9 @@ describe('story', () => {
   it('molts in the mangrove, and the zone must be in the right place', () => {
     const story = new Story(STORY_STEPS);
     expect(story.hear({ kind: 'zone', area: 'mangrove', zone: 'D' })).toEqual([]);
-    expect(story.hear({ kind: 'molt', area: 'lagoon' })).toEqual([]);
+    // A molt in the lagoon is chapter 2's, and never the mangrove's.
+    expect(story.hear({ kind: 'molt', area: 'lagoon' })).toEqual(['s2.molt']);
+    expect(story.has('s1.molt')).toBe(false);
     expect(story.hear({ kind: 'molt', area: 'mangrove' })).toEqual(['s1.molt']);
     expect(story.has('s1.molt')).toBe(true);
     expect(story.current(1)).toBe('s1.fill');

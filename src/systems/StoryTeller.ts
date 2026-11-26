@@ -1,11 +1,12 @@
 import type { EventBus } from '../core/events';
 import type { Mood } from '../core/feelings/mood';
+import type { DayPhase } from '../core/feelings/types';
 import type { GameEvents } from '../core/gameEvents';
 import { Story, type StoryEvent } from '../core/progress/Story';
 import type { Life } from '../core/progress/life';
 import type { AreaId, FoodKind } from '../core/world/kinds';
 import { STORY_STEPS } from '../data/story';
-import { STORY } from '../data/tuning';
+import { BURROW, STORY } from '../data/tuning';
 import type { Narrator } from './Narrator';
 
 /** What the play scene tells the story on each frame. */
@@ -27,14 +28,27 @@ export interface StoryFrame {
   atWayOut: boolean;
   /** Waiting to molt. */
   premolt: boolean;
+  /** Shoal members within 4 BL, from chapter 2. */
+  shoalNear?: number;
+  /** Dug into the sand. */
+  burrowed?: boolean;
+  /** Soft after the molt, with a companion within 3 BL. */
+  softNotAlone?: boolean;
+  /** The name of a companion soft now, the player near her since her molt began. */
+  herSoft?: string | null;
 }
 
 const PLAYER = 'player';
 
+/** The chapter each place tells. */
+const CHAPTER_OF: Partial<Record<AreaId, number>> = { mangrove: 1, lagoon: 2 };
+
 /**
  * The story of a place and its narration (doc 12, "Story steps"; doc 13,
  * "Narration"): it hears the game, marks the steps done, and says each line
- * when its moment comes. Built for the mangrove, chapter 1, in step 8.
+ * when its moment comes. Built for the mangrove, chapter 1, in step 8, and
+ * the lagoon, chapter 2, in release 0.2. The lines of any chapter are said
+ * in both.
  */
 export class StoryTeller {
   readonly story: Story;
@@ -51,6 +65,17 @@ export class StoryTeller {
   private premoltFor = 0;
   private moltSignalled = false;
   private wokeNow = false;
+  readonly chapter: number;
+  /** The time of day, from chapter 2. */
+  private phase: DayPhase | null = null;
+  private shoalNear = 0;
+  /** Chapter 2: seconds since the dawn fish went, and since the molt, or null before. */
+  private sinceFish: number | null = null;
+  private sinceMolt: number | null = null;
+  /** Chapter 2: the shrimp has dug in at least once in this life. */
+  private everBurrowed: boolean;
+  /** The shoal is smaller and has not yet been seen together since. */
+  private fewerDue = false;
 
   constructor(
     private readonly bus: EventBus<GameEvents>,
@@ -59,10 +84,18 @@ export class StoryTeller {
     private readonly area: AreaId,
     private readonly favourite: FoodKind,
   ) {
+    this.chapter = CHAPTER_OF[area] ?? 1;
     this.story = new Story(STORY_STEPS, life.stepsDone);
+    this.everBurrowed = life.narrated.has('narr.c2.burrowed') || this.story.has('s2.burrow');
     // Coming back from the save, the clocks between steps start again where they matter.
-    if (this.story.has('s1.fill') && !this.story.has('s1.sense')) this.sinceFull = STORY.senseHint;
-    if (this.story.has('s1.greet') && !this.story.has('s1.molt')) this.sinceGreet = 0;
+    if (this.chapter === 1) {
+      if (this.story.has('s1.fill') && !this.story.has('s1.sense')) {
+        this.sinceFull = STORY.senseHint;
+      }
+      if (this.story.has('s1.greet') && !this.story.has('s1.molt')) this.sinceGreet = 0;
+    } else {
+      if (this.story.has('s2.fish') && !this.story.has('s2.molt')) this.sinceFish = 0;
+    }
     const on = <K extends keyof GameEvents>(type: K, handler: (event: GameEvents[K]) => void) =>
       this.stops.push(bus.on(type, handler));
 
@@ -71,17 +104,28 @@ export class StoryTeller {
       if (to === 'content' && !life.narrated.has('narr.c0.taste')) return;
       if (to !== 'calm') this.narrator.say(`narr.mood.${to}`);
     });
-    on('food:eaten', ({ who, kind, first }) => {
+    on('food:eaten', ({ who, kind, first, full, cleared }) => {
       if (who !== PLAYER) return;
-      this.hear({ kind: 'eaten', food: kind });
+      this.hear({
+        kind: 'eaten',
+        food: kind,
+        phase: this.phase,
+        whole: full || cleared === true,
+        shoal: this.shoalNear,
+      });
       if (first && kind === this.favourite) this.narrator.say('narr.favourite');
     });
     on('greeting', ({ a, b }) => {
       if (a !== PLAYER && b !== PLAYER) return;
       this.hear({ kind: 'greeting' });
     });
-    on('bond:changed', ({ with: id, stage }) => {
+    on('bond:changed', ({ with: id, stage, value }) => {
       if (id === 'nacre' && stage === 'familiar') this.narrator.say('narr.c1.nacre');
+      if (this.chapter === 2 && stage === 'familiar') {
+        if (id === 'brise') this.narrator.say('narr.c2.brise');
+        if (id === 'ecume') this.narrator.say('narr.c2.ecume');
+      }
+      this.hear({ kind: 'bond', value });
     });
     on('threat:stage', ({ kind, stage }) => {
       this.hear({ kind: 'threat', threat: kind, stage, area: this.area });
@@ -94,7 +138,55 @@ export class StoryTeller {
 
   /** The first step of the chapter not done, for the narration to prompt. */
   get current(): string | null {
-    return this.story.current(1);
+    return this.story.current(this.chapter);
+  }
+
+  /** Arriving in the place: its first line. */
+  arrive(): void {
+    this.narrator.say(this.chapter === 2 ? 'narr.c2.arrive' : 'narr.c1.arrive');
+    // A bond already made in the place before counts toward this chapter's.
+    if (this.chapter === 2) {
+      for (const value of Object.values(this.life.bonds)) this.hear({ kind: 'bond', value });
+    }
+  }
+
+  /** A phase of the day began. At dusk, the shrimp is hidden or burrowed, or not. */
+  dayPhase(phase: DayPhase, hidden: boolean): void {
+    this.phase = phase;
+    if (phase === 'dusk') {
+      this.hear({ kind: 'dusk', hidden });
+      this.narrator.say('narr.c2.dusk');
+    }
+  }
+
+  /** Chapter 2: the sand has been hinted and never yet dug into. Its prompt shows. */
+  get wantsBurrow(): boolean {
+    return this.chapter === 2 && this.time >= BURROW.hint && !this.everBurrowed;
+  }
+
+  /** "Rest until dusk" was chosen. It counts as burrowing through a day. */
+  rested(): void {
+    this.hear({ kind: 'rest' });
+  }
+
+  /** The plankton lit up in the shrimp's own wake. */
+  glowed(): void {
+    this.narrator.say('narr.c2.glow');
+  }
+
+  /** Chapter 2: at dawn the fish comes, until it has come and gone once (doc 12, `s2.fish`). */
+  get wantsDawnFish(): boolean {
+    return this.chapter === 2 && this.phase === 'dawn' && !this.story.has('s2.fish');
+  }
+
+  /** Someone of the shoal has gone missing, unseen (D42). */
+  lost(): void {
+    if (!this.life.narrated.has('narr.fewer')) this.fewerDue = true;
+  }
+
+  /** The fish turned to face the shrimp and held still: the warning. */
+  fishFaced(): void {
+    this.narrator.say('narr.c2.faces');
   }
 
   /** Sense has been hinted and not yet used: its prompt shows. */
@@ -109,15 +201,47 @@ export class StoryTeller {
    * gone. True once, on the frame it comes due.
    */
   takeMoltDue(): boolean {
-    if (this.moltSignalled || this.story.has('s1.molt')) return false;
-    if (this.sinceGreet === null || this.sinceGreet < STORY.moltAfterGreet) return false;
+    if (this.moltSignalled) return false;
+    if (this.chapter === 2) {
+      if (this.story.has('s2.molt')) return false;
+      if (this.sinceFish === null || this.sinceFish < STORY.moltAfterFish) return false;
+    } else {
+      if (this.story.has('s1.molt')) return false;
+      if (this.sinceGreet === null || this.sinceGreet < STORY.moltAfterGreet) return false;
+    }
     this.moltSignalled = true;
     return true;
   }
 
   update(frame: StoryFrame): void {
     const { dt } = frame;
+    const before = this.time;
     this.time += dt;
+    if (this.chapter === 2) {
+      if (before < BURROW.hint && this.time >= BURROW.hint && !this.everBurrowed) {
+        this.narrator.say('narr.c2.sand');
+      }
+      if (frame.burrowed && !this.everBurrowed) {
+        this.everBurrowed = true;
+        this.narrator.say('narr.c2.burrowed');
+      }
+    }
+    // Soft, with a companion close; or close to a companion who is soft (T104).
+    if (this.chapter >= 2 && frame.softNotAlone) this.narrator.say('narr.c2.notAlone');
+    if (frame.herSoft) this.narrator.say('narr.c2.herMolt', { name: frame.herSoft });
+    this.shoalNear = frame.shoalNear ?? 0;
+    // The first time the shoal is together again after a loss, it is fewer.
+    if (this.fewerDue && this.shoalNear >= STORY.regrouped && this.narrator.say('narr.fewer')) {
+      this.fewerDue = false;
+    }
+    if (this.sinceFish !== null) this.sinceFish += dt;
+    if (this.sinceMolt !== null) {
+      const before = this.sinceMolt;
+      this.sinceMolt += dt;
+      if (before < STORY.leanAfterMolt && this.sinceMolt >= STORY.leanAfterMolt) {
+        this.narrator.say('narr.c2.lean');
+      }
+    }
     this.hear({ kind: 'hunger', value: frame.hunger });
     this.senseFor = frame.sensing ? this.senseFor + dt : 0;
     if (frame.sensing) this.hear({ kind: 'sense', seconds: this.senseFor });
@@ -150,8 +274,10 @@ export class StoryTeller {
     // Waiting to molt out in the open, the body asks for cover.
     this.premoltFor = frame.premolt ? this.premoltFor + dt : 0;
     if (this.premoltFor >= STORY.notHere && !frame.tucked) this.narrator.say('narr.c1.notHere');
+    // At a way out that is still closed. Beyond the lagoon, the life is still being made.
     if (frame.atWayOut) {
-      this.narrator.say(this.story.has('s1.molt') ? 'end.continued' : 'narr.c1.closed');
+      const open = this.story.has(this.chapter === 2 ? 's2.molt' : 's1.molt');
+      this.narrator.say(open ? 'end.continued' : 'narr.c1.closed');
     }
     if (this.wokeNow) {
       this.narrator.say('narr.cornered');
@@ -162,6 +288,11 @@ export class StoryTeller {
   /** The shrimp woke in cover after being cornered. */
   woke(): void {
     this.wokeNow = true;
+  }
+
+  /** Nacre noticed a threat first, and the player felt her alarm (doc 13, `narr.c2.alarm`). */
+  nacreAlarm(): void {
+    if (this.chapter === 2) this.narrator.say('narr.c2.alarm');
   }
 
   /** The player's tail flip startled a shrimp that does not know it yet. */
@@ -204,6 +335,15 @@ export class StoryTeller {
     } else if (id === 's1.greet') {
       this.narrator.say('narr.c1.greet');
       this.sinceGreet = 0;
+    } else if (id === 's2.dusk') {
+      this.narrator.say('narr.c2.graze');
+    } else if (id === 's2.bond') {
+      this.narrator.say('narr.c2.call');
+    } else if (id === 's2.fish') {
+      this.narrator.say('narr.c2.fishGone');
+      this.sinceFish = 0;
+    } else if (id === 's2.molt') {
+      this.sinceMolt = 0;
     }
   }
 }

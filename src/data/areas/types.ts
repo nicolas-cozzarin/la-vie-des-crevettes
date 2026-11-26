@@ -195,7 +195,10 @@ export interface AreaDef {
   threats?: ThreatKind[];
   exits?: ExitDef[];
   light?: LightDef;
+  /** Day, dusk, night and dawn turn here (doc 02, from chapter 2). */
   dayCycle?: boolean;
+  /** The bed is sand the shrimp can dig into, anywhere away from cover (doc 02, from chapter 2). */
+  sand?: boolean;
   music?: string;
   ambience?: string;
 }

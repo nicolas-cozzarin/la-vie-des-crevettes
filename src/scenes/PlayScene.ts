@@ -9,15 +9,18 @@ import { FoodPatch } from '../core/food/FoodPatch';
 import { FeelingsModel, type FeelingsChange } from '../core/feelings/FeelingsModel';
 import { MOODS, type Mood } from '../core/feelings/mood';
 import type { FeelingsContext } from '../core/feelings/types';
-import type { GameEvents } from '../core/gameEvents';
+import type { GameEvents, ThreatKind } from '../core/gameEvents';
 import type { MoltEvent } from '../core/molt/Molt';
 import { approach, rotateToward } from '../core/movement/angles';
 import { moveCircle, type Bounds } from '../core/movement/collision';
-import { seededRandom } from '../core/random';
+import { pickMissing } from '../core/npc/losses';
+import { seededRandom, seedOf } from '../core/random';
 import { RibbonMemory, ribbons, type Ribbon } from '../core/scent/ribbons';
 import { ShrimpMotion, type Mover } from '../core/movement/ShrimpMotion';
 import type { ThreatEvent } from '../core/threat/ThreatDirector';
 import { distanceToCover, isUnder } from '../core/world/cover';
+import { DayCycle, next as nextPhase } from '../core/world/dayCycle';
+import type { DayPhase } from '../core/feelings/types';
 import { DiscoveryTracker, type Discoverable, type Pull } from '../core/world/discovery';
 import { CHALLENGE_TARGETS } from '../data/challenges';
 import { FOOD_KINDS, type FoodKind } from '../core/world/kinds';
@@ -36,28 +39,37 @@ import type { AreaDef } from '../data/areas/types';
 import { FOODS } from '../data/foods';
 import {
   BOND,
+  BURROW,
   CAMERA,
   CURIOSITY,
+  DAY,
   FEELINGS,
+  FISH,
   FRAME,
   GRAZE,
   GREET,
   HIDE,
   HUNGER,
+  LOSSES,
   MOOD,
   MOLT,
   MOOD_SCREEN,
   MOTION,
+  NPC,
+  REST,
   SAVE,
   SENSE,
+  STORY,
 } from '../data/tuning';
 import { debugState } from '../debug';
+import { SandLid } from '../entities/SandLid';
 import { ShrimpRig } from '../entities/ShrimpRig';
 import { i18n, t } from '../i18n';
-import { debugRequested } from '../platform/address';
+import { debugRequested, exploreTime } from '../platform/address';
 import { loadArea, type CoverHandle, type LoadedArea } from '../systems/AreaLoader';
-import { Creatures, LIVE_KINDS } from '../systems/Creatures';
+import { Creatures, LIVE_KINDS, THREAT_KINDS } from '../systems/Creatures';
 import { AudioDirector } from '../systems/AudioDirector';
+import { DayNight } from '../systems/DayNight';
 import { MoodPresenter } from '../systems/MoodPresenter';
 import { Rim } from '../systems/Rim';
 import { keepLife } from '../systems/keep';
@@ -82,6 +94,8 @@ export interface PlayData {
   life?: Life;
   /** Coming back to this place from the save, rather than arriving in it. */
   resume?: boolean;
+  /** Arriving from the place before: the view fades in. */
+  arriving?: boolean;
 }
 
 /** The player's shrimp on the event bus. */
@@ -95,6 +109,8 @@ const PLAYER = 'player';
 function discoverables(area: AreaDef): Discoverable[] {
   const things: Discoverable[] = [];
   for (const creature of area.creatures ?? []) {
+    // A hunter is known once it has come and gone, not by going to where it starts.
+    if (THREAT_KINDS.has(creature.kind)) continue;
     things.push({
       id: `creature.${creature.kind}`,
       kind: 'creature',
@@ -129,6 +145,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
   private areaId: PlayableArea = FIRST_AREA;
   private explore = false;
   private resume = false;
+  private arriving = false;
   private start: { x: number; y: number } | null = null;
   private area!: AreaDef;
   private loaded!: LoadedArea;
@@ -187,6 +204,26 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
 
   private hud: HudScene | null = null;
 
+  /** Day and night, where the place has them (chapter 2 on), and how they are drawn. */
+  private day: DayCycle | null = null;
+  private dayNight: DayNight | null = null;
+  /** Leaving for the next place: the view fades and the keys do nothing. */
+  private leaving = false;
+  /** The place to go to next, so the next place starts with its own hunger. */
+  private leavingTo: PlayableArea | null = null;
+  /** The sand over the shrimp when it digs in, where the bed is sand. */
+  private lid: SandLid | null = null;
+  /** Seconds tucked or dug in, calm: "Rest until dusk" may be chosen after a few. */
+  private calmTucked = 0;
+  /** Resting until dusk: the day runs faster until it comes. */
+  private restingToDusk = false;
+  /** "Rest until dusk" was chosen on this frame: the key that chose it does not wake it. */
+  private restBegunNow = false;
+  /** The draws for who goes missing (D42), seeded so a run replays. */
+  private lossRandom: () => number = Math.random;
+  /** When the last tail flip began, by the scene's clock, for a sidestep. */
+  private lastFlip = -Infinity;
+
   /** The life this place is part of. In explore mode, a life of its own. */
   private life: Life = newLife();
   /** The story and its narration. None in explore mode. */
@@ -204,6 +241,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
     this.start =
       (this.explore || this.resume) && data.at ? pointFor(this.areaId, data.at.x, data.at.y) : null;
     this.life = data.life ?? newLife();
+    this.arriving = data.arriving === true;
   }
 
   create(): void {
@@ -224,9 +262,32 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
     const stage = STAGE_IN[this.areaId];
     this.rig = new ShrimpRig(this, this.bodyLengthPx, DEPTH.bedAnimals, STAGE_LOOKS[stage]);
     this.rig.update(0, this.motion);
-    this.activity = new Activity<CoverHandle, FoodPatch>(HIDE, this.bodyLengthPx, GRAZE, GREET);
+    this.activity = new Activity<CoverHandle, FoodPatch>(
+      HIDE,
+      this.bodyLengthPx,
+      GRAZE,
+      GREET,
+      BURROW,
+    );
+    this.lid = area.sand
+      ? new SandLid(this, area.ground, this.bodyLengthPx, DEPTH.bedAnimals + 1)
+      : null;
+    this.calmTucked = 0;
+    this.lastFlip = -Infinity;
+    this.restingToDusk = false;
+    this.restBegunNow = false;
     this.zones = new ZoneTracker(this.loaded.zones);
     this.light = new WaterLight(this, area.light);
+    // A place with a day cycle opens by day; explore mode may ask for another time.
+    this.day = null;
+    this.dayNight = null;
+    if (area.dayCycle) {
+      const phase: DayPhase = (this.explore ? exploreTime() : null) ?? 'day';
+      this.day = new DayCycle(DAY, { phase, into: 0 });
+      this.dayNight = new DayNight(this, area, this.loaded.bodyLengthPx, this.light);
+    }
+    this.leaving = false;
+    this.leavingTo = null;
 
     // Feelings. What is found lives only as long as the scene until saving
     // comes in step 9.
@@ -291,7 +352,12 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
       bus: this.bus,
       depth: DEPTH.bedAnimals,
       together: stage === 'subAdult' || stage === 'adult',
+      missing: this.life.stats[`missing.${area.id}`] ?? 0,
+      led: Object.keys(this.life.stats)
+        .filter((key) => key.startsWith(`led.${area.id}.`))
+        .map((key) => key.slice(`led.${area.id}.`.length)),
     });
+    this.lossRandom = seededRandom(seedOf(`${area.id}:losses`));
     this.lift = 0;
 
     const camera = this.cameras.main;
@@ -312,7 +378,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
             id !== 'bird.first' ||
             (life.stepsDone.has('s1.sense') && !life.stepsDone.has('s1.bird'))
         : undefined,
-      ambient: story ? (life.stepsDone.has('s1.bird') ? 1 : 0) : undefined,
+      ambient: story ? ambientInStory(area.id, life.stepsDone) : undefined,
     });
     this.shoal.watch(this.threats);
     this.molting = new Molting(
@@ -334,6 +400,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
     this.view = { x: spawn.x, y: spawn.y };
     this.lead = { x: 0, y: 0 };
     this.aim();
+    if (this.arriving) camera.fadeIn(STORY.leaveFade * 1000, 0, 0, 0);
 
     this.scene.launch('Hud', { larva: false });
     this.hud = this.scene.get('Hud') as HudScene;
@@ -378,10 +445,14 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
       this.teller = new StoryTeller(this.bus, narrator, life, this.areaId, this.favourite);
       this.bus.on('step:done', ({ id }) => {
         if (id === 's1.bird') this.threats.director.ambientLeft = 1;
+        // After the dawn fish, the lagoon's fish may come at any time.
+        if (id === 's2.fish') this.threats.director.ambientLeft = Infinity;
       });
       narrator.enter(this.areaId);
-      narrator.say('narr.c1.arrive');
+      this.teller.arrive();
+      if (this.day) this.teller.dayPhase(this.day.phase, false);
     }
+    this.answerDay([]);
 
     debugState.player = () => ({
       x: this.motion.x,
@@ -398,7 +469,19 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
       molts: this.life.molts,
       steps: [...this.life.stepsDone],
       narration: this.narrator?.showing ?? null,
+      leaving: this.leavingTo,
+      prompt: this.promptNow,
     });
+    debugState.day = () =>
+      this.day && this.dayNight
+        ? {
+            phase: this.day.phase,
+            left: this.day.left,
+            light: { ...this.day.light },
+            ambient: this.threats.director.ambientFactor,
+            ...this.dayNight.snapshot,
+          }
+        : null;
     debugState.scent = () => this.scent.snapshot;
     debugState.shrimp = () => this.shoal.snapshot;
     debugState.creatures = () => ({ animals: this.creatures.snapshot, rim: this.rim.snapshot });
@@ -415,11 +498,14 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
     });
 
     // `?debug`: F9 cycles the forced mood, to look at each one. F10 calls
-    // the bird at once. F8 brings the molt signal.
+    // the bird at once. F8 brings the molt signal, and Shift and F8 a
+    // companion's, the nearest.
     const stopDebug = debugRequested()
       ? app.keyboard.onDebugKey((key) => {
           if (key === 'mood') this.cycleMood();
-          else if (key === 'threat') this.threats.callBird();
+          else if (key === 'threat') this.threats.callThreat();
+          else if (key === 'time') this.nextTime();
+          else if (key === 'herMolt') this.shoal.moltNearest();
           else this.answerMolt(this.molting.signal());
         })
       : null;
@@ -437,8 +523,12 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
       debugState.creatures = null;
       debugState.threat = null;
       debugState.audio = null;
+      debugState.day = null;
       this.audio.destroy();
-      this.life.hunger = this.feelings.values.hunger;
+      this.dayNight?.destroy();
+      this.lid?.destroy();
+      // The next place starts with its own hunger (doc 10, "Hunger").
+      this.life.hunger = this.leavingTo ? null : this.feelings.values.hunger;
       this.teller?.destroy();
       this.keeper.destroy();
       this.narrator?.clear();
@@ -470,7 +560,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
     // Gentle mode can be changed from the pause menu's settings.
     this.threats.director.gentle = app.settings.gentleMode;
     // Cornered, and in the molt itself, the keys do nothing.
-    const locked = this.threats.cornered.running || this.molting.molt.locked;
+    const locked = this.threats.cornered.running || this.molting.molt.locked || this.leaving;
     const sequence = this.threats.cornered.update(frame);
     // Soft after a molt, the shrimp moves at half speed.
     const slow = this.molting.molt.speed;
@@ -486,6 +576,13 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
     if (sequence.done) {
       this.feelings.stimulus('cornered');
       this.bus.emit('cornered', { kind: this.threats.director.kind ?? 'bird' });
+    }
+    this.restBegunNow = false;
+    if (!locked && actions.justPressed('interact') && this.mayRest()) {
+      this.activity.rest();
+      this.restingToDusk = true;
+      this.restBegunNow = true;
+      this.teller?.rested();
     }
     let darted = false;
     let remaining = frame;
@@ -522,6 +619,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
         this.alarmedBy(alarm.from);
       }
       this.stepFeelings(dt, axis.x !== 0 || axis.y !== 0 || dart);
+      this.shoal.playerMolting = this.molting.molt.guarded;
       this.shoal.step(dt, this.clock, {
         x: this.motion.x,
         y: this.motion.y,
@@ -530,10 +628,20 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
         activity: this.activity.name,
         under: this.activity.tucked ? this.activity.cover : null,
         eating,
+        hunger: this.feelings.values.hunger,
       });
+      // A Close companion began to lead the player to food: once a chapter. A favourite seen eaten.
+      for (const id of this.shoal.takeLed()) this.keeper.count(`led.${this.areaId}.${id}`);
+      for (const id of this.shoal.takeFavourites()) this.keeper.count(`favourites.${id}`);
+      // Stayed with a companion through her whole molt: the journal remembers it (doc 12, `c2.molt`).
+      for (const id of this.shoal.takeStayed()) {
+        this.keeper.count('stayedThroughMolt');
+        this.keeper.count(`stayedWith.${id}`);
+      }
       const moved = this.motion.step(dt, { x: axis.x, y: axis.y, dart }, this.mover);
       this.stepMolt(dt);
       if (moved.darted) {
+        this.lastFlip = this.clock;
         this.feelings.stimulus('tailFlip');
         this.bus.emit('tailflip', { who: PLAYER });
         if (this.shoal.playerFlipped(this.clock, this.motion.x, this.motion.y)) {
@@ -551,6 +659,8 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
     }
 
     this.enterZones();
+    this.leaveBy();
+    this.stepDay(frame);
     this.threats.enter(this.motion.x, this.motion.y);
     this.threats.draw(frame);
     this.loaded.update(frame, this.motion.x, this.motion.y);
@@ -564,6 +674,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
     this.rig.setGrowth(this.molting.growth);
     this.rig.setAlpha(this.feelings.has('soft') ? MOLT.softAlpha : 1);
     this.rig.update(frame, this.motion, this.feel(eating));
+    this.lid?.update(this.motion.x, this.motion.y, this.motion.heading, this.activity.burrowDepth);
     const lift = this.feelings.mood === 'social' ? MOOD_SCREEN.socialLift : 0;
     this.lift += (lift - this.lift) * approach(frame, MOOD.screen);
     this.shoal.draw(frame, this.cameras.main.worldView, this.lift);
@@ -658,7 +769,35 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
       tasted: (kind: FoodKind) => this.discovery.known.has(`food.${kind}`),
       greet: held('greet'),
       others: this.shoal.greetable,
+      sand: this.area.sand === true,
+      // Any key wakes a resting shrimp, except the one that just chose to rest.
+      wake:
+        !locked &&
+        (own.x !== 0 ||
+          own.y !== 0 ||
+          actions.justPressed('tailFlip') ||
+          actions.justPressed('hide') ||
+          actions.justPressed('sense') ||
+          actions.justPressed('greet') ||
+          (actions.justPressed('interact') && !this.restBegunNow)),
     };
+  }
+
+  /**
+   * "Rest until dusk" may be chosen: a place with a day, by day or at dawn,
+   * tucked or dug in, calm for a few seconds and comfortable enough (doc 10,
+   * "Comfort"), with no threat and no molt under way.
+   */
+  private mayRest(): boolean {
+    const phase = this.day?.phase;
+    return (
+      (phase === 'day' || phase === 'dawn') &&
+      this.activity.canRest &&
+      this.calmTucked >= REST.calm &&
+      this.feelings.values.comfort >= REST.comfort &&
+      this.threats.director.stage === 'idle' &&
+      this.molting.molt.stage === 'none'
+    );
   }
 
   /**
@@ -678,7 +817,9 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
         }
         this.meal = { food, first };
       }
-      this.feelings.eat(food.graze(dt));
+      // At dusk the golden film is worth more (doc 10, "Day and night").
+      const dusk = this.day?.phase === 'dusk' && food.kind === 'sandFilm';
+      this.feelings.eat(food.graze(dt) * (dusk ? DAY.effects.duskFilm : 1));
     }
     if (before === 'grazing' && this.activity.name !== 'grazing' && this.meal) {
       this.bus.emit('food:eaten', {
@@ -687,6 +828,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
         first: this.meal.first,
         full: this.feelings.values.hunger < GRAZE.full,
         patchId: this.meal.food.id,
+        cleared: this.meal.food.amount <= 0,
       });
       this.meal = null;
     }
@@ -752,8 +894,13 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
         veryHungry: has('veryHungry'),
         visit: this.threats.director.stage !== 'idle',
         nearestShrimp: nearest,
-        atWayOut: (this.area.exits ?? []).some((exit) => inRect(x, y, exit.zone)),
+        atWayOut: !this.leaving && (this.area.exits ?? []).some((exit) => inRect(x, y, exit.zone)),
         premolt: this.molting.molt.premolt,
+        shoalNear: this.shoal.near(x, y, STORY.shoalNear * this.bodyLengthPx),
+        burrowed: this.activity.name === 'burrowing' && this.activity.tucked,
+        softNotAlone:
+          this.molting.molt.stage === 'soft' && this.shoal.companionNear(x, y, NPC.molt.stay),
+        herSoft: this.shoal.softStaying ? t(`companion.${this.shoal.softStaying}.name`) : null,
       });
       if (teller.takeMoltDue()) this.answerMolt(this.molting.signal());
     }
@@ -767,9 +914,22 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
    */
   private showPrompt(own: { x: number; y: number }, locked: boolean): void {
     let key: string | null = null;
-    let action: 'interact' | 'greet' | 'sense' = 'interact';
-    // The story's Sense hint brings its prompt, until Sense is used.
-    if (!locked && this.activity.name === 'free' && this.teller?.wantsSense) {
+    let action: 'interact' | 'greet' | 'sense' | 'hide' = 'interact';
+    const { x, y } = this.motion;
+    // Tucked or dug in by day, calm: the rest can be chosen.
+    if (!locked && this.mayRest()) {
+      key = 'prompt.rest';
+    } else if (
+      !locked &&
+      this.activity.name === 'free' &&
+      this.teller?.wantsBurrow &&
+      this.activity.canBurrow(x, y, this.loaded.covers, this.area.sand === true)
+    ) {
+      // The story's sand line brings its prompt, until the shrimp first digs in.
+      key = 'prompt.burrow';
+      action = 'hide';
+    } else if (!locked && this.activity.name === 'free' && this.teller?.wantsSense) {
+      // The story's Sense hint brings its prompt, until Sense is used.
       key = 'prompt.sense';
       action = 'sense';
     } else if (!locked && this.activity.name === 'free' && own.x === 0 && own.y === 0) {
@@ -823,11 +983,11 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
       // Threats, currents and the day come in later steps.
       neighbours: this.shoal.neighbours(x, y),
       companionWithin2: this.shoal.companionNear(x, y),
-      restingAgainstClose: false,
+      restingAgainstClose: this.shoal.restingAgainstClose(x, y),
       curiosityPull: this.pull.value,
       threat: this.threats.view(x, y, true),
       inCurrent: false,
-      dayPhase: null,
+      dayPhase: this.day?.phase ?? null,
     };
     this.report(this.feelings.step(dt, context));
   }
@@ -904,9 +1064,12 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
       hidden: this.activity.tucked,
       underCover,
       darted,
-      // No threat may start from the shelter of a molt until the shell is hard.
-      soft: this.feelings.has('soft') || this.molting.molt.guarded,
-      coverGap: coverGap / this.bodyLengthPx,
+      // No threat may start from the shelter of a molt until the shell is hard, a companion's too.
+      soft: this.feelings.has('soft') || this.molting.molt.guarded || this.shoal.moltGuarded,
+      // On sand, shelter is everywhere: the shrimp can dig in where it is.
+      coverGap: this.area.sand ? 0 : coverGap / this.bodyLengthPx,
+      shoal: this.shoal.middleNear(x, y, FISH.sight * this.bodyLengthPx),
+      sinceFlip: this.clock - this.lastFlip,
     };
   }
 
@@ -915,13 +1078,19 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
     for (const event of events) {
       if (event.type === 'stage') {
         this.bus.emit('threat:stage', { kind: event.kind, stage: event.stage });
+        if (event.stage === 'release') this.loseFromShoal(event.kind);
         // At the cue, the crabs go down and the schools burst; Nacre notices first.
         if (event.stage === 'cue') {
-          const shadow = this.threats.director.shadow;
+          // The bird's shadow passes over the player; the fish is felt before it is seen.
+          const shadow =
+            event.kind === 'fish'
+              ? { x: this.motion.x, y: this.motion.y }
+              : this.threats.director.shadow;
           this.creatures.cue(shadow.x, shadow.y);
           if (this.shoal.cueNoticed(this.clock, this.motion.x, this.motion.y)) {
             this.feelings.stimulus('alarm');
             this.alarmedBy('nacre');
+            this.teller?.nacreAlarm();
           }
         }
       } else if (event.type === 'strike') {
@@ -930,6 +1099,8 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
           hit: event.hit,
         });
         if (event.hit) this.threats.cornered.start();
+      } else if (event.type === 'faced') {
+        this.teller?.fishFaced();
       } else if (event.type === 'escaped') {
         this.bus.emit('threat:escaped', {
           kind: event.kind,
@@ -941,6 +1112,114 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
         }
       }
     }
+  }
+
+  /**
+   * The day moves on, and is drawn: the veils of dusk and night, the
+   * caustics, the plankton lit in the wake of whatever moves.
+   */
+  private stepDay(frame: number): void {
+    const day = this.day;
+    const drawn = this.dayNight;
+    if (!day || !drawn) return;
+    this.shoal.dayPhase = day.phase;
+    // Calm, tucked or dug in, for "Rest until dusk".
+    const calm = this.activity.tucked && this.feelings.values.fear < REST.fear;
+    this.calmTucked = calm ? this.calmTucked + frame : 0;
+    const resting = this.activity.name === 'resting';
+    if (!resting) this.restingToDusk = false;
+    this.answerDay(day.step(frame * (this.restingToDusk ? REST.speed : 1)));
+    const movers = [{ id: 'player', x: this.motion.x, y: this.motion.y }, ...this.shoal.greetable];
+    drawn.update(frame, day.light, this.cameras.main.worldView, movers);
+    // The first time the water lights up in the shrimp's own wake.
+    if (drawn.glowingByPlayer && this.discovery.add('thing.glowingPlankton')) {
+      this.found('thing.glowingPlankton');
+      this.teller?.glowed();
+    }
+  }
+
+  /**
+   * As a threat leaves, an unnamed shrimp out of view may be gone (doc 10,
+   * "Losses", D42). Nothing is shown. The count is kept, so it stays gone.
+   */
+  private loseFromShoal(kind: ThreatKind): void {
+    const ids = pickMissing(
+      kind,
+      this.shoal.lossCandidates(this.cameras.main.worldView),
+      { x: this.motion.x, y: this.motion.y },
+      this.bodyLengthPx,
+      this.lossRandom,
+      LOSSES,
+    );
+    if (ids.length === 0) return;
+    this.shoal.remove(ids);
+    for (let index = 0; index < ids.length; index++) {
+      this.keeper.count('missing');
+      this.keeper.count(`missing.${this.areaId}`);
+    }
+    this.teller?.lost();
+  }
+
+  /** The fish of the story's dawn, from where the area says it comes. */
+  private callDawnFish(): void {
+    const origin = (this.area.creatures ?? []).find((one) => one.kind === 'huntingFish');
+    const { x, y } = this.motion;
+    const from = origin ? Math.atan2(origin.y - y, origin.x - x) : Math.PI;
+    this.threats.dawnFish(from);
+  }
+
+  /** What a new phase of the day changes: the odds of a threat, the story, the journal. */
+  private answerDay(begun: readonly DayPhase[]): void {
+    const day = this.day;
+    if (!day) return;
+    const effects = DAY.effects;
+    const phase = day.phase;
+    this.threats.director.ambientFactor =
+      phase === 'night' ? effects.nightThreats : phase === 'dawn' ? effects.dawnThreats : 1;
+    for (const one of begun) {
+      this.bus.emit('day:phase', { phase: one });
+      this.teller?.dayPhase(one, this.activity.tucked);
+      // At dawn in the story, the fish comes in from the pass.
+      if (one === 'dawn' && this.teller?.wantsDawnFish) this.callDawnFish();
+      // Dusk wakes a shrimp resting until it.
+      if (one === 'dusk' && this.activity.name === 'resting') {
+        this.activity.wake();
+        this.restingToDusk = false;
+      }
+    }
+  }
+
+  /** The debug key: the next phase of the day at once. */
+  private nextTime(): void {
+    const day = this.day;
+    if (!day) return;
+    const phase = day.skipTo(nextPhase(day.phase));
+    if (phase) this.answerDay([phase]);
+  }
+
+  /**
+   * In the story, a way out that is open leads on to the next place, when
+   * that place exists: the view fades and the life goes on there.
+   */
+  private leaveBy(): void {
+    if (this.explore || this.leaving) return;
+    const { x, y } = this.motion;
+    const exit = (this.area.exits ?? []).find(
+      (one) =>
+        inRect(x, y, one.zone) &&
+        isPlayableArea(one.to) &&
+        (one.needsStep === undefined || this.life.stepsDone.has(one.needsStep)),
+    );
+    if (!exit || !isPlayableArea(exit.to)) return;
+    const to = exit.to;
+    this.leaving = true;
+    this.leavingTo = to;
+    const camera = this.cameras.main;
+    camera.fadeOut(STORY.leaveFade * 1000, 0, 0, 0);
+    camera.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+      const data: PlayData = { area: to, life: this.life, arriving: true };
+      this.scene.restart(data);
+    });
   }
 
   /** Cornered: the body flips away from the bird. A tail flip goes backward, so it faces the bird first. */
@@ -1151,4 +1430,15 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
     this.loaded.placeGround(left, top);
     this.light.update(this.game.loop.delta / 1000, left, top, this.motion.x, this.motion.y);
   }
+}
+
+/**
+ * How many ambient threats may come in the story (doc 10, "When a threat
+ * starts"). The mangrove has none before the first bird and one after it.
+ * The lagoon has none before the dawn fish, then any.
+ */
+function ambientInStory(area: string, done: ReadonlySet<string>): number | undefined {
+  if (area === 'mangrove') return done.has('s1.bird') ? 1 : 0;
+  if (area === 'lagoon') return done.has('s2.fish') ? undefined : 0;
+  return undefined;
 }

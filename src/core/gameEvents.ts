@@ -18,7 +18,15 @@ export type GameEvents = {
   'mood:changed': { who: ShrimpId; from: Mood; to: Mood };
   'condition:changed': { who: ShrimpId; condition: Condition; on: boolean };
   stimulus: { who: ShrimpId; kind: StimulusKind };
-  'food:eaten': { who: ShrimpId; kind: FoodKind; first: boolean; full: boolean; patchId: string };
+  'food:eaten': {
+    who: ShrimpId;
+    kind: FoodKind;
+    first: boolean;
+    full: boolean;
+    patchId: string;
+    /** The patch was eaten to nothing. */
+    cleared?: boolean;
+  };
   'sense:used': { seconds: number };
   'ribbon:followed': { kind: FoodKind; patchId: string };
   tailflip: { who: ShrimpId };

@@ -361,12 +361,13 @@ Worn, faded and silted, never shiny. No print, word or mark. Each has a soft con
 
 | Name | Size | Status |
 |------|------|--------|
-| `channel.bed` | 1024, tile | To paint |
-| `channel.wall` | 1024 by 420, repeats sideways | To paint |
-| `channel.boulder.a`, `.b` | 640 | To paint |
-| `channel.crevice` | 340 by 150 | To paint |
+| `channel.bed` | 1024, tile | Built. Grey-blue sand and gravel; ripple crests run up and down the picture, across the tide, with gravel in the troughs |
+| `channel.wall` | 1024 by 420, repeats sideways | Built. Rock in five ledges stepping down to the water, each lip moonlit; weed combed to the left and fallen stones at the foot. Solid to 0.7 of its height |
+| `channel.boulder.a`, `.b` | 640 | Built. Slate, layered, moonlit on the upper left, turf low on the far side. `b` is flatter |
+| `channel.crevice` | 340 by 150 | Built. A dark slot between two long slabs. Drawn as cover, over the shrimp |
 | `food.seaweed` | 320 | To paint |
-| `light.moon` | 1024, tile | To paint |
+| `light.moon` | 1024, tile | Built. A few long soft bands of `#C9D6E8`, very faint, clear between |
+| `channel.murk` | 512 by 288 | Built. Added. Blue-black water at night, the eye reaching a little way |
 | `shadow.hull` | 1024 by 280, shown four times larger | To paint |
 | `shadow.grid` | 512, tile | To paint |
 | `fx.silt` | 256 | To paint |

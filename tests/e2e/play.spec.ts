@@ -195,6 +195,33 @@ test.describe('explore', () => {
     await page.keyboard.up('ShiftLeft');
     await page.waitForFunction(() => window.__lvdc?.player()?.activity === 'free');
   });
+
+  test('in the gutter the water carries a resting shrimp toward the creek (T110)', async ({
+    page,
+  }) => {
+    // The gutter runs left and a little up, at 18 pixels a second.
+    await explore(page, 'mangrove&at=1000,3150');
+    await page.waitForFunction(
+      () => window.__lvdc?.feelings()?.conditions.includes('inCurrent') ?? false,
+    );
+    await page.waitForFunction(() => (window.__lvdc?.player()?.x ?? 1000) < 990);
+    const end = await player(page);
+    expect(end.y).toBeLessThan(3150);
+  });
+
+  test('in the channel the tide carries a resting shrimp toward the sea (T110)', async ({
+    page,
+  }) => {
+    // The narrows run left at 2 BL a second; on the bed a quarter of that carries.
+    const errors = watchErrors(page);
+    await explore(page, 'channel&at=7400,1300');
+    await page.waitForFunction(
+      () => window.__lvdc?.feelings()?.conditions.includes('inCurrent') ?? false,
+    );
+    expect((await player(page)).zones).toContain('C');
+    await page.waitForFunction(() => (window.__lvdc?.player()?.x ?? 7400) < 7260);
+    expect(errors).toEqual([]);
+  });
 });
 
 test.describe('controls', () => {
@@ -240,11 +267,26 @@ test.describe('controls', () => {
     await openMangrove(page);
     const start = await player(page);
 
-    // Space no longer does anything.
+    // Space no longer does anything. The creek mouth carries a resting shrimp a
+    // little (T110), so the test watches every frame for a tail flip's dart and
+    // glide, not for stillness.
+    const watching = page.evaluate(
+      () =>
+        new Promise<string[]>((resolve) => {
+          const seen = new Set<string>();
+          const end = performance.now() + 400;
+          const look = (): void => {
+            const now = window.__lvdc?.player();
+            if (now) seen.add(now.mode);
+            if (performance.now() < end) requestAnimationFrame(look);
+            else resolve([...seen]);
+          };
+          look();
+        }),
+    );
     await page.keyboard.press('Space');
-    await page.waitForTimeout(400);
-    expect((await player(page)).x).toBe(start.x);
-    expect((await player(page)).y).toBe(start.y);
+    expect(await watching).toEqual(['rest']);
+    expect(await page.evaluate(thrownBack, start)).toBe(false);
 
     await page.keyboard.press('KeyG');
     await page.waitForFunction(thrownBack, start);

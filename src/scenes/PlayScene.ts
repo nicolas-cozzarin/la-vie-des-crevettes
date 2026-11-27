@@ -13,6 +13,7 @@ import type { GameEvents, ThreatKind } from '../core/gameEvents';
 import type { MoltEvent } from '../core/molt/Molt';
 import { approach, rotateToward } from '../core/movement/angles';
 import { moveCircle, type Bounds } from '../core/movement/collision';
+import { carried, currentAt, inCurrent } from '../core/movement/currents';
 import { pickMissing } from '../core/npc/losses';
 import { seededRandom, seedOf } from '../core/random';
 import { RibbonMemory, ribbons, type Ribbon } from '../core/scent/ribbons';
@@ -33,6 +34,7 @@ import {
   isPlayableArea,
   pointFor,
   STAGE_IN,
+  STORY_AREAS,
   type PlayableArea,
 } from '../data/areas';
 import type { AreaDef } from '../data/areas/types';
@@ -61,6 +63,7 @@ import {
   SAVE,
   SENSE,
   STORY,
+  CURRENT,
 } from '../data/tuning';
 import { debugState } from '../debug';
 import { SandLid } from '../entities/SandLid';
@@ -657,6 +660,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
         this.keeper.count(`stayedWith.${id}`);
       }
       const moved = this.motion.step(dt, { x: axis.x, y: axis.y, dart }, this.mover);
+      this.drift(dt);
       this.stepMolt(dt);
       if (moved.darted) {
         this.lastFlip = this.clock;
@@ -1011,13 +1015,12 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
       nearCover: this.activity.canHide(x, y, this.loaded.covers),
       moving,
       tired: this.motion.tired,
-      // Threats, currents and the day come in later steps.
       neighbours: this.shoal.neighbours(x, y),
       companionWithin2: this.shoal.companionNear(x, y),
       restingAgainstClose: this.shoal.restingAgainstClose(x, y),
       curiosityPull: this.pull.value,
       threat: this.threats.view(x, y, true),
-      inCurrent: false,
+      inCurrent: inCurrent(this.area.currents ?? [], x, y),
       dayPhase: this.day?.phase ?? null,
     };
     this.report(this.feelings.step(dt, context));
@@ -1251,7 +1254,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
 
   /**
    * In the story, a way out that is open leads on to the next place, when
-   * that place exists: the view fades and the life goes on there.
+   * the story goes there yet: the view fades and the life goes on there.
    */
   private leaveBy(): void {
     if (this.explore || this.leaving) return;
@@ -1260,6 +1263,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
       (one) =>
         inRect(x, y, one.zone) &&
         isPlayableArea(one.to) &&
+        STORY_AREAS.has(one.to) &&
         (one.needsStep === undefined || this.life.stepsDone.has(one.needsStep)),
     );
     if (!exit || !isPlayableArea(exit.to)) return;
@@ -1321,6 +1325,22 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
     if (id === 'thing.crackle') this.audio.crackle();
   }
 
+  /** The water carries the shrimp where a current runs, unless it holds on under cover (T110). */
+  private drift(dt: number): void {
+    const water = currentAt(this.area.currents ?? [], this.motion.x, this.motion.y);
+    if (water.vx === 0 && water.vy === 0) return;
+    const { dx, dy } = carried(
+      water,
+      { mode: this.motion.mode, tucked: this.activity.tucked },
+      dt,
+      CURRENT,
+    );
+    if (dx === 0 && dy === 0) return;
+    const after = this.mover(this.motion.x, this.motion.y, dx, dy);
+    this.motion.x = after.x;
+    this.motion.y = after.y;
+  }
+
   /**
    * Zones entered on this frame, and the places found by entering them, or
    * by staying a while, as the crackle of the rock garden is (T108).
@@ -1357,7 +1377,14 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
       wiggle: this.wiggleLeft > 0 ? 1 - this.wiggleLeft / GRAZE.wiggle : null,
       arch: this.molting.molt.arch,
       scratch: this.molting.molt.scratching,
+      downstream: has('inCurrent') ? this.downstream() : null,
     };
+  }
+
+  /** The way the water runs where the shrimp is, or null where it is still. */
+  private downstream(): number | null {
+    const water = currentAt(this.area.currents ?? [], this.motion.x, this.motion.y);
+    return water.vx === 0 && water.vy === 0 ? null : Math.atan2(water.vy, water.vx);
   }
 
   /** The pictures of what the shrimp is curious about, while it is curious (doc 10, "Screen"). */

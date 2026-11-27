@@ -404,7 +404,12 @@ Release 0.2 is built in parts, each committed and pushed:
 
 Pitfall: `scene.restart` runs the scene's shutdown before the next `init`, so whatever the shutdown writes into the life (the hunger) wins over what was set before the restart. `leavingTo` tells the shutdown the next place starts with its own.
 
-The lagoon's data file is written: `src/data/areas/lagoon.ts`, with nine views of it in the atelier at `?show=lagoonscenes`. Its new drawing rules are in doc 14, "From data to picture": seagrass fuzz, the turtle, the hunting fish, the pistol shrimp and goby, a burrowed shrimp, dusk, night and plankton. The turtle and the hunting fish are drawn at `DEPTH.overCover`, above the seagrass, and their shadows at `DEPTH.midWater` (T48). The channel, shadow and open sea data files are still to be written.
+The lagoon's data file is written: `src/data/areas/lagoon.ts`, with nine views of it in the atelier at `?show=lagoonscenes`. Its new drawing rules are in doc 14, "From data to picture": seagrass fuzz, the turtle, the hunting fish, the pistol shrimp and goby, a burrowed shrimp, dusk, night and plankton. The turtle and the hunting fish are drawn at `DEPTH.overCover`, above the seagrass, and their shadows at `DEPTH.midWater` (T48). The channel's data file is written too (below). The shadow and open sea data files are still to be written.
+
+Release 0.3 is built in parts, each committed and pushed:
+
+1. Currents and the channel (T110, T111). `currentAt` and `carried` in `src/core/movement/currents.ts` know only water and a body; `drift` in `PlayScene` moves the shrimp by them after each step of its own motion, and `ShrimpRig` leans the antennae and tail fan downstream (`STREAM_LEAN`). The channel's data file is `src/data/areas/channel.ts`, its pictures `src/art/painters/channel.ts`. It opens with `?explore=channel`. The story goes there only once `channel` joins `STORY_AREAS` in `src/data/areas/index.ts`, when chapter 3's story is built. Pitfall: in a painter, never call `random()` inside the callback given to `wrapped()`, since each copy across the tile's edge would get different numbers and the seam would show.
+2. Still to build: the seaweed riding the current, the travellers, the streaks, the shoal going with the tide, the fish that follows, chapter 3's story steps and lines. Then the pond in zone D (D39), the shadow and the open sea.
 
 ## When stuck
 

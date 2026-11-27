@@ -35,6 +35,12 @@ export const MOTION: MotionTuning = {
   liftTime: 0.22,
 };
 
+/** Water that runs (doc 02, "Current"; T110). Each area's currents are in its data file, in pixels per second. */
+export const CURRENT = {
+  /** Share of the current that carries a shrimp walking or resting on the bed: its legs hold on. */
+  onBed: 0.25,
+};
+
 export const FRAME = {
   /** The longest frame the game will play in full, in seconds. Anything longer is cut short. */
   longest: 0.25,

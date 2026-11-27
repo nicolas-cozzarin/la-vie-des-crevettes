@@ -1,12 +1,13 @@
 import type { LifeStage } from '../../core/world/kinds';
 import { WORLD } from '../tuning';
+import { channel } from './channel';
 import { lagoon } from './lagoon';
 import { mangrove } from './mangrove';
 import { mirrorArea } from './mirror';
 import type { AreaDef } from './types';
 
 /** Every area that can be played. More join as their data is written (doc 11). */
-export const AREAS = { mangrove, lagoon } as const;
+export const AREAS = { mangrove, lagoon, channel } as const;
 
 export type PlayableArea = keyof typeof AREAS;
 
@@ -14,7 +15,14 @@ export type PlayableArea = keyof typeof AREAS;
 export const STAGE_IN: Record<PlayableArea, LifeStage> = {
   mangrove: 'juvenile',
   lagoon: 'subAdult',
+  channel: 'subAdult',
 };
+
+/**
+ * The areas the story leads into. An area joins when its chapter's story is
+ * built; until then it opens in explore mode only (T111).
+ */
+export const STORY_AREAS: ReadonlySet<PlayableArea> = new Set<PlayableArea>(['mangrove', 'lagoon']);
 
 /** The area the story starts in, until the Drift is built (step 8). */
 export const FIRST_AREA: PlayableArea = 'mangrove';

@@ -530,6 +530,16 @@ export const CREATURES = {
     /** The fear the first time its shadow crosses the shrimp (doc 10, "Startles with no danger"). */
     startle: 0.25,
   },
+  /** Doc 11, "Pistol shrimp and goby" (T107). BL and seconds. */
+  burrowPair: {
+    alarm: 4,
+    near: 1.2,
+    calm: 6,
+    goIn: 0.15,
+    comeOut: 1.5,
+    round: { dig: { min: 3, max: 6 }, push: 1.6, dump: 0.7, back: 1.2 },
+    pile: 14,
+  },
   /** How bright the pale rim on a curiosity target is, and its width in pixels (doc 11, `fx.rim`). */
   rim: { color: 0xf4f1e4, strength: 0.35, width: 6 },
 };

@@ -311,6 +311,64 @@ test.describe('the turtle', () => {
   });
 });
 
+test.describe('the pistol shrimp and the goby', () => {
+  test('let a still shrimp find them; a tail flip sends them in, and they come back', async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+    const errors = watchErrors(page);
+    await page.goto('./');
+    await waitForScene(page, 'Title');
+    await page.evaluate((save) => localStorage.setItem('lvdc.save.v1', JSON.stringify(save)), {
+      ...AT_THE_CREEK,
+      area: 'lagoon',
+      stage: 'subAdult',
+      // A little over 2 BL from the burrow's mouth, in the rock garden.
+      at: { x: 3520, y: 4270 },
+      narrated: ['narr.c1.arrive', 'narr.c2.arrive', 'narr.c2.sand', 'narr.c2.dusk'],
+      placesSeen: ['drift', 'mangrove', 'lagoon'],
+    });
+    await page.reload();
+    await waitForScene(page, 'Title');
+    await page.keyboard.press('Enter');
+    await page.waitForFunction(() => window.__lvdc?.player()?.area === 'lagoon');
+    const pair = () =>
+      page.evaluate(
+        () =>
+          window.__lvdc?.creatures()?.animals.find((one) => one.id === 'pistolAndGoby')?.state ??
+          null,
+      );
+    // Watching them, the line comes after the curious mood's own and the quiet between lines.
+    await page.waitForFunction(() => window.__lvdc?.player()?.narration === 'narr.c2.door', null, {
+      timeout: 50_000,
+    });
+    expect(
+      await page.evaluate(() =>
+        window.__lvdc?.feelings()?.discovered.includes('creature.pistolAndGoby'),
+      ),
+    ).toBe(true);
+    expect(await pair()).not.toBe('in');
+    // A tail flip close by: the goby flicks its tail and both are gone.
+    await page.keyboard.down('KeyD');
+    await page.keyboard.press('Space');
+    await page.keyboard.up('KeyD');
+    await page.waitForFunction(
+      () =>
+        window.__lvdc?.creatures()?.animals.find((one) => one.id === 'pistolAndGoby')?.state ===
+        'in',
+    );
+    // After 6 s of calm they are back.
+    await page.waitForFunction(
+      () =>
+        window.__lvdc?.creatures()?.animals.find((one) => one.id === 'pistolAndGoby')?.state !==
+        'in',
+      null,
+      { timeout: 20_000 },
+    );
+    expect(errors).toEqual([]);
+  });
+});
+
 test.describe('the dawn fish', () => {
   test('in the story, the first dawn brings the fish in from the pass', async ({ page }) => {
     test.setTimeout(90_000);

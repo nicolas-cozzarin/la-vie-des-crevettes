@@ -50,6 +50,20 @@ describe('the discovery tracker', () => {
     expect(tracker.known.has(crab.id)).toBe(false);
   });
 
+  it('cannot find an animal while it is out of sight, and starts again when it is back', () => {
+    const tracker = new DiscoveryTracker(TUNING, BL);
+    const goby: Discoverable = { id: 'creature.pistolAndGoby', kind: 'creature', x: 0, y: 0 };
+    for (let index = 0; index < 50; index++) tracker.step(1 / 30, 200, 0, [goby]);
+    goby.away = true;
+    for (let index = 0; index < 90; index++) tracker.step(1 / 30, 200, 0, [goby]);
+    expect(tracker.known.has(goby.id)).toBe(false);
+    goby.away = false;
+    for (let index = 0; index < 50; index++) tracker.step(1 / 30, 200, 0, [goby]);
+    expect(tracker.known.has(goby.id)).toBe(false);
+    for (let index = 0; index < 10; index++) tracker.step(1 / 30, 200, 0, [goby]);
+    expect(tracker.known.has(goby.id)).toBe(true);
+  });
+
   it('finds a thing after 1 s within 1.5 BL', () => {
     const tracker = new DiscoveryTracker(TUNING, BL);
     for (let index = 0; index < 29; index++) tracker.step(1 / 30, 1100, 0, [pod]);

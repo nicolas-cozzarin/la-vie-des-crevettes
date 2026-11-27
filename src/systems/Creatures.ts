@@ -3,6 +3,7 @@ import { imageFit } from '../art/fit';
 import { CRAB_CLAW_JOINT, HERMIT_LEGS_JOINT, HERMIT_SHELL_MOUTH } from '../art/painters/creatures';
 import { ensureTexture } from '../art/TextureFactory';
 import { DEPTH } from '../config';
+import { BurrowPair } from '../core/creatures/burrowPair';
 import { Crab } from '../core/creatures/crab';
 import { Hermit } from '../core/creatures/hermit';
 import { School } from '../core/creatures/school';
@@ -12,6 +13,7 @@ import type { MotionMode } from '../core/movement/ShrimpMotion';
 import { seededRandom, seedOf } from '../core/random';
 import type { AreaDef, CreatureDef } from '../data/areas/types';
 import { CREATURES, FRAME, WORLD } from '../data/tuning';
+import { BurrowPairView } from '../entities/BurrowPairView';
 import { TurtleView } from '../entities/TurtleView';
 
 /** The kinds that move by themselves. The others are still pictures, drawn by the area loader. */
@@ -21,6 +23,7 @@ export const LIVE_KINDS: ReadonlySet<CreatureDef['kind']> = new Set([
   'hermitCrab',
   'smallFish',
   'turtle',
+  'pistolAndGoby',
 ]);
 
 /** The kinds the threats draw when they come. The area's entry is only where they come from. */
@@ -69,6 +72,12 @@ interface LiveTurtle {
   view: TurtleView;
 }
 
+interface LivePair {
+  def: CreatureDef;
+  rule: BurrowPair;
+  view: BurrowPairView;
+}
+
 interface LiveSchool {
   def: CreatureDef;
   rule: School;
@@ -94,6 +103,8 @@ export class Creatures {
   private readonly hermits: LiveHermit[] = [];
   private readonly schools: LiveSchool[] = [];
   private readonly turtles: LiveTurtle[] = [];
+  private readonly pairs: LivePair[] = [];
+  private flicked = 0;
 
   constructor(
     scene: Phaser.Scene,
@@ -109,6 +120,18 @@ export class Creatures {
         this.hermits.push(this.makeHermit(scene, def, bl, random));
       else if (def.kind === 'smallFish') this.schools.push(this.makeSchool(scene, def, bl, random));
       else if (def.kind === 'turtle') this.turtles.push(this.makeTurtle(scene, area, def, bl));
+      else if (def.kind === 'pistolAndGoby') {
+        const rule = new BurrowPair(def, bl, CREATURES.burrowPair, random);
+        const view = new BurrowPairView(
+          scene,
+          def,
+          def.heading ?? 0,
+          bl,
+          CREATURES.burrowPair.pile,
+        );
+        view.draw(rule, 0);
+        this.pairs.push({ def, rule, view });
+      }
     }
   }
 
@@ -169,6 +192,12 @@ export class Creatures {
       for (let index = 0; index < pieces; index++) turtle.rule.step(piece);
       turtle.view.draw(turtle.rule, dt, turtle.rule.gapTo(passer) <= 0);
     }
+    for (const pair of this.pairs) {
+      for (let index = 0; index < pieces; index++) {
+        if (pair.rule.step(piece, { x: passer.x, y: passer.y, fast })) this.flicked++;
+      }
+      pair.view.draw(pair.rule, dt);
+    }
     return gentle;
   }
 
@@ -187,9 +216,29 @@ export class Creatures {
     for (const school of this.schools) school.rule.startle(x, y);
   }
 
+  /** Times the goby has flicked its tail and gone, since this was last asked. */
+  takeFlicks(): number {
+    const flicked = this.flicked;
+    this.flicked = 0;
+    return flicked;
+  }
+
+  /** Whether an animal can be seen now: the goby and the pistol shrimp may be down their burrow. */
+  seen(id: string): boolean {
+    const pair = this.pairs.find((one) => one.def.id === id);
+    return pair ? pair.rule.seen : true;
+  }
+
+  /** Whether the player is within `reach` px of an animal, and can see it. */
+  watching(id: string, x: number, y: number, reach: number): boolean {
+    const at = this.where(id);
+    return at !== null && this.seen(id) && Math.hypot(at.x - x, at.y - y) <= reach;
+  }
+
   /** A threat's cue (step 7): the crabs go down their burrows and the schools burst. */
   cue(x: number, y: number): void {
     for (const crab of this.crabs) crab.rule.hide();
+    for (const pair of this.pairs) pair.rule.hide();
     for (const school of this.schools) school.rule.startle(x, y);
   }
 
@@ -205,6 +254,8 @@ export class Creatures {
     if (school) return { x: school.rule.x, y: school.rule.y };
     const turtle = this.turtles.find((one) => one.def.id === id);
     if (turtle) return { x: turtle.rule.x, y: turtle.rule.y };
+    const pair = this.pairs.find((one) => one.def.id === id);
+    if (pair) return { x: pair.def.x, y: pair.def.y };
     return null;
   }
 
@@ -218,6 +269,8 @@ export class Creatures {
     if (hermit) return [hermit.shell, hermit.legs];
     const turtle = this.turtles.find((one) => one.def.id === id);
     if (turtle) return turtle.view.images;
+    const pair = this.pairs.find((one) => one.def.id === id);
+    if (pair) return pair.view.images;
     return this.schools.find((one) => one.def.id === id)?.fish ?? [];
   }
 
@@ -276,6 +329,12 @@ export class Creatures {
         x: turtle.rule.x,
         y: turtle.rule.y,
         state: turtle.rule.phase,
+      })),
+      ...this.pairs.map((pair) => ({
+        id: pair.def.id,
+        x: pair.def.x,
+        y: pair.def.y,
+        state: pair.rule.inside ? 'in' : pair.rule.phase,
       })),
     ];
   }

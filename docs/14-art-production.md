@@ -238,7 +238,7 @@ Simple rigs, each a few images moved by code. No drawn frames.
 | Hunting fish | `fish.hunter.body`, `fish.hunter.tail` | The tail swings at its joint, slow or fast. The tail's joint `HUNTER_TAIL_OWN_JOINT` is pinned at `HUNTER_TAIL_JOINT` on the body, in `painters/lagoonAnimals.ts` |
 | Turtle | `turtle.shell`, `turtle.head`, `turtle.flipper.front` twice, `turtle.flipper.rear` twice | Flippers swing at the shoulder. The head turns and dips. The parts lie under the shell. `TURTLE_JOINTS` gives where each is pinned on the shell, `TURTLE_PART_JOINTS` each part's own joint. The lower flippers are the upper ones mirrored across the shell's middle. In play, `TurtleView` swings the front flippers 0.32 radians either way and the rear 0.14, half a stroke behind. Lowered, the head is drawn 22 % shorter and a little darker, as seen from above (T106) |
 | Goby | `goby` | Tail flick |
-| Pistol shrimp | `pistol.body`, `pistol.claw` | Slides out of the burrow pushing sand, slides back. The big claw's joint `PISTOL_CLAW_OWN_JOINT` is pinned at `PISTOL_CLAW_JOINT` on the body. Antennae are lines drawn by code: one rests on the goby's tail |
+| Pistol shrimp | `pistol.body`, `pistol.claw` | Slides out of the burrow pushing sand, slides back. The big claw's joint `PISTOL_CLAW_OWN_JOINT` is pinned at `PISTOL_CLAW_JOINT` on the body. Antennae are lines drawn by code: one rests on the goby's tail. In play, `BurrowPairView` slides it out of the mouth to its place beside the goby, its load `sand.load` ahead of it, and back in. The goby slides back down the hole in a fright, its tail end under a dark spot over the mouth (T107) |
 | Wading bird | `bird.shadow.body`, `bird.shadow.head`, `bird.foot` twice, `bird.beak`, `bird.splash` | See doc 10. The neck's shadow turns about `BIRD_NECK_START` in `painters/creatures.ts` |
 
 ## The manifest
@@ -340,6 +340,7 @@ This table is the checklist for the art. Update it in the same commit as a paint
 | `goby` | 130 by 60 | Built |
 | `pistol.body` | 100 by 60 | Built. The small claw is part of it |
 | `pistol.claw` | 70 by 44 | Built. Joint at the left |
+| `sand.load` | 96 | Built. Added. A load of wet sand the pistol shrimp pushes out, drawn 0.4 BL wide (T107) |
 
 ### Litter (D43)
 

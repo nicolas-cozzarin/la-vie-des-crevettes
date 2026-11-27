@@ -34,6 +34,8 @@ export interface StoryFrame {
   burrowed?: boolean;
   /** Soft after the molt, with a companion within 3 BL. */
   softNotAlone?: boolean;
+  /** The player is close to the pistol shrimp and goby, and they are out (doc 13, `narr.c2.door`). */
+  atTheDoor?: boolean;
   /** The name of a companion soft now, the player near her since her molt began. */
   herSoft?: string | null;
 }
@@ -76,6 +78,8 @@ export class StoryTeller {
   private everBurrowed: boolean;
   /** The shoal is smaller and has not yet been seen together since. */
   private fewerDue = false;
+  /** The pistol shrimp and goby were found: their line comes while the player watches them. */
+  private doorDue = false;
 
   constructor(
     private readonly bus: EventBus<GameEvents>,
@@ -184,6 +188,11 @@ export class StoryTeller {
     if (!this.life.narrated.has('narr.fewer')) this.fewerDue = true;
   }
 
+  /** Something new came into the journal. Some finds have a line (doc 13). */
+  found(id: string): void {
+    if (this.chapter === 2 && id === 'creature.pistolAndGoby') this.doorDue = true;
+  }
+
   /** The fish turned to face the shrimp and held still: the warning. */
   fishFaced(): void {
     this.narrator.say('narr.c2.faces');
@@ -234,6 +243,7 @@ export class StoryTeller {
     if (this.fewerDue && this.shoalNear >= STORY.regrouped && this.narrator.say('narr.fewer')) {
       this.fewerDue = false;
     }
+    if (this.doorDue && frame.atTheDoor && this.narrator.say('narr.c2.door')) this.doorDue = false;
     if (this.sinceFish !== null) this.sinceFish += dt;
     if (this.sinceMolt !== null) {
       const before = this.sinceMolt;

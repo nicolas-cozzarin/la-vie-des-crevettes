@@ -598,6 +598,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
         thing.x = now.x;
         thing.y = now.y;
       }
+      if (thing.ref) thing.away = !this.creatures.seen(thing.ref);
     }
     while (remaining > 1e-6) {
       const dt = Math.min(remaining, FRAME.step);
@@ -907,6 +908,12 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
         softNotAlone:
           this.molting.molt.stage === 'soft' && this.shoal.companionNear(x, y, NPC.molt.stay),
         herSoft: this.shoal.softStaying ? t(`companion.${this.shoal.softStaying}.name`) : null,
+        atTheDoor: this.creatures.watching(
+          'pistolAndGoby',
+          x,
+          y,
+          CREATURES.burrowPair.alarm * this.bodyLengthPx,
+        ),
       });
       if (teller.takeMoltDue()) this.answerMolt(this.molting.signal());
     }
@@ -1289,6 +1296,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
   private found(id: string): void {
     this.feelings.stimulus('discovery');
     this.bus.emit('discovery', { id });
+    this.teller?.found(id);
   }
 
   /** Zones entered on this frame, and the places found by entering them. */

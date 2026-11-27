@@ -17,6 +17,8 @@ export interface Discoverable {
   under?: number;
   /** For an animal that moves: its id in the area file, so its place can follow it. */
   ref?: string;
+  /** Out of sight now, as the goby down its burrow: it cannot be found until it is back. */
+  away?: boolean;
 }
 
 export interface DiscoveryTuning {
@@ -114,6 +116,10 @@ export class DiscoveryTracker {
     const found: string[] = [];
     for (const thing of things) {
       if (this.found.has(thing.id) || thing.kind === 'food') continue;
+      if (thing.away) {
+        this.near.delete(thing);
+        continue;
+      }
       const distance = Math.hypot(thing.x - x, thing.y - y);
       if (thing.under !== undefined) {
         if (distance < thing.under && this.add(thing.id)) found.push(thing.id);

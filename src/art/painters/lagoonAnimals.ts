@@ -1269,6 +1269,40 @@ const seaStar: Painter = {
   },
 };
 
+/**
+ * A load of sand the pistol shrimp has pushed out of its burrow: wet from
+ * below, so darker than the bed, with grains of dark and pale (T107).
+ */
+const sandLoad: Painter = {
+  width: 96,
+  height: 96,
+  paint(ctx, width, height) {
+    const cx = width / 2;
+    const cy = height / 2;
+    const heap = ctx.createRadialGradient(cx, cy, 0, cx, cy, 0.42 * width);
+    heap.addColorStop(0, 'rgba(198,178,134,0.95)');
+    heap.addColorStop(0.65, 'rgba(204,186,142,0.75)');
+    heap.addColorStop(1, 'rgba(204,186,142,0)');
+    ctx.fillStyle = heap;
+    ctx.fillRect(0, 0, width, height);
+    const grains = seededRandom(517);
+    for (let index = 0; index < 16; index++) {
+      const angle = grains() * TAU;
+      const distance = Math.sqrt(grains()) * 0.3 * width;
+      ctx.fillStyle = grains() < 0.5 ? 'rgba(130,112,78,0.6)' : 'rgba(246,238,214,0.7)';
+      ctx.beginPath();
+      ctx.arc(
+        cx + Math.cos(angle) * distance,
+        cy + Math.sin(angle) * distance,
+        0.03 * width,
+        0,
+        TAU,
+      );
+      ctx.fill();
+    }
+  },
+};
+
 export const lagoonAnimalPainters: Record<string, Painter> = {
   'turtle.shell': turtleShell,
   'turtle.head': turtleHead,
@@ -1279,5 +1313,6 @@ export const lagoonAnimalPainters: Record<string, Painter> = {
   goby,
   'pistol.body': pistolBody,
   'pistol.claw': pistolClaw,
+  'sand.load': sandLoad,
   seaStar,
 };

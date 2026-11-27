@@ -49,6 +49,17 @@ const AT_THE_CREEK = {
   journalSeen: [],
 };
 
+/**
+ * What a life in chapter 2 has said already: the first lines of each place, the
+ * first meeting, and its moods, named in chapter 1. Without them those must
+ * lines come first, and a later line waits through the 20 s between lines.
+ */
+const IN_CHAPTER_2 = {
+  moodsNamed: ['calm', 'hungry', 'content', 'curious', 'social', 'afraid'],
+  narrated: ['narr.c1.arrive', 'narr.c1.meet', 'narr.c2.arrive', 'narr.c2.sand', 'narr.c2.dusk'],
+  placesSeen: ['drift', 'mangrove', 'lagoon'],
+};
+
 test.describe('into the lagoon', () => {
   test('after the molt, the creek mouth leads on into the lagoon, by day', async ({ page }) => {
     const errors = watchErrors(page);
@@ -125,11 +136,10 @@ test.describe('day and night', () => {
     await waitForScene(page, 'Title');
     await page.evaluate((save) => localStorage.setItem('lvdc.save.v1', JSON.stringify(save)), {
       ...AT_THE_CREEK,
+      ...IN_CHAPTER_2,
       area: 'lagoon',
       at: { x: 5700, y: 4300 },
       hunger: 0.3,
-      narrated: ['narr.c1.arrive', 'narr.c2.arrive', 'narr.c2.sand', 'narr.c2.dusk'],
-      placesSeen: ['drift', 'mangrove', 'lagoon'],
     });
     await page.reload();
     await waitForScene(page, 'Title');
@@ -304,12 +314,11 @@ test.describe('the turtle', () => {
     await waitForScene(page, 'Title');
     await page.evaluate((save) => localStorage.setItem('lvdc.save.v1', JSON.stringify(save)), {
       ...AT_THE_CREEK,
+      ...IN_CHAPTER_2,
       area: 'lagoon',
       stage: 'subAdult',
       // In the meadow, just ahead of the turtle on its way to its first clump.
       at: { x: 4250, y: 820 },
-      narrated: ['narr.c1.arrive', 'narr.c2.arrive', 'narr.c2.sand', 'narr.c2.dusk'],
-      placesSeen: ['drift', 'mangrove', 'lagoon'],
     });
     await page.reload();
     await waitForScene(page, 'Title');
@@ -361,12 +370,11 @@ test.describe('the pistol shrimp and the goby', () => {
     await waitForScene(page, 'Title');
     await page.evaluate((save) => localStorage.setItem('lvdc.save.v1', JSON.stringify(save)), {
       ...AT_THE_CREEK,
+      ...IN_CHAPTER_2,
       area: 'lagoon',
       stage: 'subAdult',
       // A little over 2 BL from the burrow's mouth, in the rock garden.
       at: { x: 3520, y: 4270 },
-      narrated: ['narr.c1.arrive', 'narr.c2.arrive', 'narr.c2.sand', 'narr.c2.dusk'],
-      placesSeen: ['drift', 'mangrove', 'lagoon'],
     });
     await page.reload();
     await waitForScene(page, 'Title');
@@ -378,7 +386,7 @@ test.describe('the pistol shrimp and the goby', () => {
           window.__lvdc?.creatures()?.animals.find((one) => one.id === 'pistolAndGoby')?.state ??
           null,
       );
-    // Watching them, the line comes after the curious mood's own and the quiet between lines.
+    // Found while watching them, and said while they are watched.
     await page.waitForFunction(() => window.__lvdc?.player()?.narration === 'narr.c2.door', null, {
       timeout: 50_000,
     });
@@ -479,29 +487,21 @@ test.describe("a companion's molt", () => {
   test('with ?debug, Shift and F8: she finds cover and molts, and staying close counts', async ({
     page,
   }) => {
-    test.setTimeout(150_000);
+    // Her whole molt, from the first sign to hard again, is about a minute of the
+    // game's time. Without a graphics card, as on the CI machine, frames come so
+    // slowly that the game's time runs at about half speed, so each wait gets room.
+    test.setTimeout(300_000);
     const errors = watchErrors(page);
     await page.goto('./?debug');
     await waitForScene(page, 'Title');
     await page.evaluate((save) => localStorage.setItem('lvdc.save.v1', JSON.stringify(save)), {
       ...AT_THE_CREEK,
+      ...IN_CHAPTER_2,
       area: 'lagoon',
       stage: 'subAdult',
       // At the edge of the meadow, above the shoal's ground, where Brise rests.
       at: { x: 4200, y: 1700 },
       bonds: { brise: 0.3 },
-      // A life this far on has met others and named its moods in chapter 1. Without
-      // them, those must lines came first and her line could lose its turn until
-      // she had hardened (doc 12: a line that is not a must line waits 20 s).
-      moodsNamed: ['calm', 'hungry', 'content', 'curious', 'social', 'afraid'],
-      narrated: [
-        'narr.c1.arrive',
-        'narr.c1.meet',
-        'narr.c2.arrive',
-        'narr.c2.sand',
-        'narr.c2.dusk',
-      ],
-      placesSeen: ['drift', 'mangrove', 'lagoon'],
     });
     await page.reload();
     await waitForScene(page, 'Title');
@@ -522,7 +522,7 @@ test.describe("a companion's molt", () => {
     await page.waitForFunction(
       () => window.__lvdc?.shrimp()?.some((one) => one.id === 'brise' && one.molt === 'molt'),
       null,
-      { timeout: 30_000 },
+      { timeout: 60_000 },
     );
     expect((await brise())?.activity).toBe('hiding');
     await page.waitForFunction(
@@ -535,7 +535,7 @@ test.describe("a companion's molt", () => {
     await page.waitForFunction(
       () => window.__lvdc?.shrimp()?.some((one) => one.id === 'brise' && one.molt === 'none'),
       null,
-      { timeout: 60_000 },
+      { timeout: 120_000 },
     );
     const stats = await page.evaluate(() => window.__lvdc?.progress()?.stats ?? {});
     expect(stats.stayedThroughMolt).toBe(1);

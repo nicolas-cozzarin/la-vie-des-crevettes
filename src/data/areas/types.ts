@@ -93,6 +93,18 @@ export interface FoodDef {
   rotation?: number;
 }
 
+/** Food that rides the current along a stretch of water (doc 11, `food.seaweed`; T112). */
+export interface DriftingDef {
+  /** Each clump's id is this, a dot and a number. */
+  id: string;
+  kind: FoodKind;
+  /** Where the clumps ride. They come in at the upstream end and fade out at the other. */
+  run: Zone;
+  count: number;
+  /** Width the image is drawn at. */
+  size: number;
+}
+
 /** A thing with a picture and a place, and perhaps a journal entry. */
 export interface LandmarkDef {
   id: string;
@@ -201,6 +213,8 @@ export interface AreaDef {
   creatures?: CreatureDef[];
   shrimp?: ShrimpSpawnDef[];
   currents?: CurrentDef[];
+  /** Food that rides the currents. */
+  drifting?: DriftingDef[];
   zones?: NamedZone[];
   /** Shed shells on the bed. Each is found as `thing.shedShell`. */
   shedShells?: ShedShellDef[];

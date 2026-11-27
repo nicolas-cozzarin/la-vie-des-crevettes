@@ -105,6 +105,27 @@ describe('challenges', () => {
     expect(eat(true, true, true)).toContainEqual({ kind: 'done', id: 'c2.glow' });
   });
 
+  it('count seaweed eaten in one unbroken swim, keeping the best run (T112)', () => {
+    const p = progress();
+    const eat = (onTheMove: number) =>
+      p.hear({
+        kind: 'eaten',
+        food: 'seaweed',
+        area: 'channel',
+        full: false,
+        night: true,
+        onTheMove,
+      });
+    eat(1);
+    eat(2);
+    // The swim broke: a new run starts, and the best stays at two.
+    eat(1);
+    expect(p.stat('best.seaweedSwim')).toBe(2);
+    expect(p.value('c3.seaweed')).toBe(2);
+    eat(2);
+    expect(eat(3)).toContainEqual({ kind: 'done', id: 'c3.seaweed' });
+  });
+
   it('count a sidestep, and the shed shell and the neighbours as found', () => {
     const p = progress();
     p.hear({ kind: 'stat', stat: 'sidesteps' });

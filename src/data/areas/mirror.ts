@@ -63,6 +63,7 @@ export function mirrorArea(area: AreaDef): AreaDef {
       zone: zone(current.zone),
       vx: -current.vx,
     })),
+    drifting: area.drifting?.map((one) => ({ ...one, run: zone(one.run) })),
     zones: area.zones?.map((named) => ({ ...named, zone: zone(named.zone) })),
     shedShells: area.shedShells?.map((shell) => ({
       ...shell,

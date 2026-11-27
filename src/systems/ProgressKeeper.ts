@@ -53,9 +53,9 @@ export class ProgressKeeper {
       this.stops.push(bus.on(type, handler));
     const hear = (event: ProgressEvent) => this.hear(event);
 
-    on('food:eaten', ({ who, kind, full, night, glowing }) => {
+    on('food:eaten', ({ who, kind, full, night, glowing, onTheMove }) => {
       if (who !== PLAYER) return;
-      hear({ kind: 'eaten', food: kind, area, full, night: night ?? false, glowing });
+      hear({ kind: 'eaten', food: kind, area, full, night: night ?? false, glowing, onTheMove });
     });
     on('tailflip', ({ who }) => {
       if (who === PLAYER) hear({ kind: 'tailflip' });

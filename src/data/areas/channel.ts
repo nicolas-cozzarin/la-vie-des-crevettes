@@ -154,6 +154,17 @@ export const channel: AreaDef = {
     { id: 'young.3', who: 'young', x: 11300, y: 1850, heading: 3.1 },
   ],
 
+  // Zone B: clumps of seaweed riding the tide, coming in from the gathering.
+  drifting: [
+    {
+      id: 'seaweed.b',
+      kind: 'seaweed',
+      run: { x: 8500, y: 500, w: 2300, h: 1600 },
+      count: 9,
+      size: 280,
+    },
+  ],
+
   currents: [
     // The tide, zone by zone (doc 11): slow where it gathers, fast in the narrows.
     { zone: { x: 10500, y: 0, w: 1500, h: 2600 }, vx: tide(0.3), vy: 0 },

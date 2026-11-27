@@ -85,6 +85,8 @@ import { Threats } from '../systems/Threats';
 import { ScentField } from '../systems/ScentField';
 import { SandVolcanoes } from '../systems/SandVolcanoes';
 import { ShedShells } from '../systems/ShedShells';
+import { DriftingFoods } from '../systems/DriftingFoods';
+import { Streaks } from '../systems/Streaks';
 import { Shoal } from '../systems/Shoal';
 import { WaterLight } from '../systems/WaterLight';
 import type { HudScene } from './HudScene';
@@ -207,6 +209,10 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
   private creatures!: Creatures;
   private volcanoes!: SandVolcanoes;
   private shells!: ShedShells;
+  private drifting!: DriftingFoods;
+  private streaks!: Streaks;
+  /** Drifting food eaten in this unbroken swim (doc 12, `c3.seaweed`). */
+  private onTheMove = 0;
   private rim!: Rim;
   /** The bird and what it does, and the cornered sequence (step 7). */
   private threats!: Threats;
@@ -267,6 +273,9 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
     this.creatures = new Creatures(this, area, this.bodyLengthPx);
     this.volcanoes = new SandVolcanoes(this, area, this.bodyLengthPx);
     this.shells = new ShedShells(this, area, this.bodyLengthPx);
+    this.drifting = new DriftingFoods(this, area, this.bodyLengthPx);
+    this.streaks = new Streaks(this, area, this.bodyLengthPx);
+    this.onTheMove = 0;
     this.rim = new Rim();
     const obstacles = this.loaded.obstacles;
 
@@ -504,6 +513,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
       animals: this.creatures.snapshot,
       rim: this.rim.snapshot,
       puffing: this.volcanoes.puffing,
+      drifting: this.drifting.places,
     });
     debugState.threat = () => this.threats.snapshot;
     debugState.audio = () => this.audio.snapshot;
@@ -691,6 +701,9 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
     this.watchTurtle();
     this.volcanoes.update(frame);
     this.shells.update(frame);
+    this.eatOnTheMove();
+    this.drifting.update(frame);
+    this.streaks.update(frame, this.cameras.main.worldView);
     this.rim.set(this.rimmed());
     this.rim.update(frame);
     for (const [patch, image] of this.foodImages) image.setAlpha(0.15 + 0.85 * patch.amount);
@@ -1323,6 +1336,44 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
     this.bus.emit('discovery', { id });
     this.teller?.found(id);
     if (id === 'thing.crackle') this.audio.crackle();
+  }
+
+  /**
+   * Drifting food is eaten whole by touching it on the move, with no stop
+   * (doc 10, "Hunger"; T112). Stopping ends the swim that `c3.seaweed` counts.
+   * A full shrimp leaves it, as it leaves a patch, unless it has never tasted it.
+   */
+  private eatOnTheMove(): void {
+    if (!this.drifting.any) return;
+    if (this.motion.mode === 'rest' || this.activity.tucked) {
+      this.onTheMove = 0;
+      return;
+    }
+    const head = GRAZE.head * this.bodyLengthPx;
+    const clump = this.drifting.touching(
+      this.motion.x + Math.cos(this.motion.heading) * head,
+      this.motion.y + Math.sin(this.motion.heading) * head,
+    );
+    if (!clump) return;
+    const id = `food.${clump.kind}`;
+    const tasted = this.discovery.known.has(id);
+    if (tasted && this.feelings.values.hunger < GRAZE.full) return;
+    clump.eaten = true;
+    this.onTheMove += 1;
+    const first = this.discovery.add(id);
+    if (first) this.found(id);
+    if (first || clump.kind === this.favourite) this.wiggleLeft = GRAZE.wiggle;
+    this.feelings.eat(FOODS[clump.kind].removes);
+    this.bus.emit('food:eaten', {
+      who: PLAYER,
+      kind: clump.kind,
+      first,
+      full: this.feelings.values.hunger < GRAZE.full,
+      patchId: clump.id,
+      cleared: true,
+      night: this.day?.phase === 'night',
+      onTheMove: this.onTheMove,
+    });
   }
 
   /** The water carries the shrimp where a current runs, unless it holds on under cover (T110). */

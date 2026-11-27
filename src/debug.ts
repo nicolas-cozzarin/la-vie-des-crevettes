@@ -164,4 +164,6 @@ export interface CreaturesSnapshot {
   rim: number;
   /** The sand volcanoes puffing now. */
   puffing?: string[];
+  /** Food riding the current: each clump, and whether it is eaten on this pass (T112). */
+  drifting?: { id: string; x: number; y: number; eaten: boolean }[];
 }

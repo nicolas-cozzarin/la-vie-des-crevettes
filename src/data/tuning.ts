@@ -39,6 +39,32 @@ export const MOTION: MotionTuning = {
 export const CURRENT = {
   /** Share of the current that carries a shrimp walking or resting on the bed: its legs hold on. */
   onBed: 0.25,
+  /** Specks drawn out by fast water (`fx.streak`, doc 11). */
+  streaks: {
+    /** BL per second: slower water shows none. */
+    from: 0.25,
+    /** How many are in view at once. */
+    count: 36,
+    /** BL: a streak's length at 1 BL per second, and the most it grows to. */
+    length: 0.3,
+    longest: 0.8,
+    /** The most a streak shows, in the fastest water. */
+    alpha: 0.32,
+    /** Seconds each one lives, fading in and out. */
+    life: [1.2, 2.4] as [number, number],
+  },
+};
+
+/** Food that rides the current (doc 11, `food.seaweed`; T112). */
+export const DRIFTING = {
+  /** BL: a clump fades in and out over this much of each end of its run. */
+  fade: 1.5,
+  /** Radians per second: the most a clump turns as it rides. */
+  spin: 0.25,
+  /** BL: the mouth eats a clump when this close to its centre. */
+  reach: 0.55,
+  /** BL: how far below a clump its shadow lies on the bed. */
+  shadow: 0.35,
 };
 
 export const FRAME = {

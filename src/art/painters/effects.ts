@@ -38,6 +38,26 @@ const speck: Painter = {
   },
 };
 
+/**
+ * A speck drawn out by fast water (`fx.streak`): a short pale line, soft at
+ * both ends. The game stretches it with the water's speed and turns it the
+ * way the water runs.
+ */
+const streak: Painter = {
+  width: 64,
+  height: 8,
+  paint(ctx, width, height) {
+    const line = ctx.createLinearGradient(0, 0, width, 0);
+    line.addColorStop(0, 'rgba(220, 228, 236, 0)');
+    line.addColorStop(0.7, 'rgba(220, 228, 236, 0.9)');
+    line.addColorStop(1, 'rgba(220, 228, 236, 0)');
+    ctx.fillStyle = line;
+    ctx.beginPath();
+    ctx.ellipse(width / 2, height / 2, width / 2, height / 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+  },
+};
+
 /** A ring on the surface. The game widens and fades it. */
 const ripple: Painter = {
   width: 256,
@@ -256,6 +276,7 @@ const sandFilm: Painter = {
 export const effectPainters: Record<string, Painter> = {
   'fx.speck': speck,
   'fx.ripple': ripple,
+  'fx.streak': streak,
   'scent.food': scentFood,
   'scent.dot': scentDot,
   'scent.danger': scentDanger,

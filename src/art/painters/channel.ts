@@ -9,6 +9,7 @@ import {
   sampleCurve,
   softFill,
   speckle,
+  traceLeaf,
   tracePath,
   wrapped,
   type Painter,
@@ -33,6 +34,9 @@ const SHADE: Rgb = [14, 18, 28];
 const WEED: Rgb = [58, 66, 42];
 const WEED_DARK: Rgb = [30, 36, 24];
 
+const WRACK = hex('#6E5C2C');
+const WRACK_DARK: Rgb = [52, 42, 18];
+const WRACK_PALE: Rgb = [156, 136, 76];
 const FAN: Rgb = [150, 66, 44];
 const FAN_DARK: Rgb = [88, 34, 22];
 const FAN_PALE: Rgb = [210, 128, 88];
@@ -595,6 +599,91 @@ const murk: Painter = {
   },
 };
 
+/**
+ * Drifting seaweed (`food.seaweed`): a loose clump of olive-brown fronds
+ * riding the current, seen from above. Stems branch out from the middle,
+ * narrow toothless blades along them, and small round floats in clusters
+ * near the stems, each catching the moon on its upper left.
+ */
+const seaweed: Painter = {
+  width: 320,
+  height: 320,
+  paint(ctx, width, height) {
+    const random = seededRandom(1323);
+    const cx = width / 2;
+    const cy = height / 2;
+    glow(ctx, cx, cy, 120, WRACK_DARK, 0.35);
+    const floats: Point[] = [];
+    const stems = 8;
+    for (let index = 0; index < stems; index++) {
+      let angle = (index / stems) * TAU + (random() - 0.5) * 0.5;
+      const length = 80 + random() * 50;
+      const turn = (random() - 0.5) * 0.12;
+      const stem: Point[] = [{ x: cx + (random() - 0.5) * 16, y: cy + (random() - 0.5) * 16 }];
+      for (let step = 1; step <= 12; step++) {
+        angle += turn + (random() - 0.5) * 0.08;
+        const last = stem[stem.length - 1] as Point;
+        stem.push({
+          x: last.x + (Math.cos(angle) * length) / 12,
+          y: last.y + (Math.sin(angle) * length) / 12,
+        });
+      }
+      // Blades along the stem, on alternate sides, and floats between them.
+      for (let step = 2; step < stem.length; step += 1) {
+        const at = stem[step] as Point;
+        const before = stem[step - 1] as Point;
+        const heading = Math.atan2(at.y - before.y, at.x - before.x);
+        const side = step % 2 === 0 ? 1 : -1;
+        if (random() < 0.8) {
+          const blade = heading + side * (0.5 + random() * 0.5);
+          const bladeLength = 20 + random() * 16;
+          ctx.save();
+          ctx.translate(at.x, at.y);
+          ctx.rotate(blade);
+          traceLeaf(ctx, 0, 0, bladeLength, 3.5 + random() * 2.5, (random() - 0.5) * 4);
+          const tone = mix(WRACK, random() < 0.5 ? WRACK_PALE : WRACK_DARK, random() * 0.35);
+          ctx.fillStyle = rgba(tone, 0.95);
+          ctx.fill();
+          ctx.strokeStyle = rgba(WRACK_DARK, 0.5);
+          ctx.lineWidth = 0.8;
+          ctx.stroke();
+          ctx.restore();
+        }
+        if (random() < 0.4) {
+          const away = heading - side * (0.8 + random() * 0.6);
+          const reach = 5 + random() * 5;
+          floats.push({ x: at.x + Math.cos(away) * reach, y: at.y + Math.sin(away) * reach });
+        }
+      }
+      ctx.strokeStyle = rgba(WRACK_DARK, 0.85);
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.lineWidth = 2.6;
+      ctx.beginPath();
+      stem.forEach((point, step) => {
+        if (step === 0) ctx.moveTo(point.x, point.y);
+        else ctx.lineTo(point.x, point.y);
+      });
+      ctx.stroke();
+    }
+    for (const at of floats) {
+      const r = 3.6 + random() * 2.4;
+      ctx.fillStyle = rgba(WRACK_DARK, 0.7);
+      ctx.beginPath();
+      ctx.arc(at.x + 0.8, at.y + 1, r + 0.8, 0, TAU);
+      ctx.fill();
+      const fill = ctx.createRadialGradient(at.x - r * 0.4, at.y - r * 0.4, r * 0.1, at.x, at.y, r);
+      fill.addColorStop(0, rgba(mix(WRACK_PALE, MOON, 0.35), 1));
+      fill.addColorStop(0.5, rgba(WRACK_PALE, 1));
+      fill.addColorStop(1, rgba(WRACK, 1));
+      ctx.fillStyle = fill;
+      ctx.beginPath();
+      ctx.arc(at.x, at.y, r, 0, TAU);
+      ctx.fill();
+    }
+  },
+};
+
 export const channelPainters: Record<string, Painter> = {
   'channel.murk': murk,
   'channel.seaFan': seaFan,
@@ -604,4 +693,5 @@ export const channelPainters: Record<string, Painter> = {
   'channel.boulder.b': boulder(1311, 0.62),
   'channel.crevice': crevice,
   'light.moon': moon,
+  'food.seaweed': seaweed,
 };

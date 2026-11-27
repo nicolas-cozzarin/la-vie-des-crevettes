@@ -222,6 +222,21 @@ test.describe('explore', () => {
     await page.waitForFunction(() => (window.__lvdc?.player()?.x ?? 7400) < 7260);
     expect(errors).toEqual([]);
   });
+
+  test('in the channel the seaweed rides the tide toward the sea (T112)', async ({ page }) => {
+    await explore(page, 'channel&at=9700,1300');
+    const first = await page.evaluate(() => window.__lvdc?.creatures()?.drifting ?? []);
+    expect(first.length).toBe(9);
+    const id = first[4]?.id;
+    const from = first[4]?.x ?? 0;
+    await page.waitForFunction(
+      ([which, x]) =>
+        (window.__lvdc?.creatures()?.drifting ?? []).some(
+          (clump) => clump.id === which && clump.x < (x as number) - 70,
+        ),
+      [id, from] as const,
+    );
+  });
 });
 
 test.describe('controls', () => {

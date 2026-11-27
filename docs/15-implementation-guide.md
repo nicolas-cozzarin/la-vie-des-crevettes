@@ -409,7 +409,8 @@ The lagoon's data file is written: `src/data/areas/lagoon.ts`, with nine views o
 Release 0.3 is built in parts, each committed and pushed:
 
 1. Currents and the channel (T110, T111). `currentAt` and `carried` in `src/core/movement/currents.ts` know only water and a body; `drift` in `PlayScene` moves the shrimp by them after each step of its own motion, and `ShrimpRig` leans the antennae and tail fan downstream (`STREAM_LEAN`). The channel's data file is `src/data/areas/channel.ts`, its pictures `src/art/painters/channel.ts`. It opens with `?explore=channel`. The story goes there only once `channel` joins `STORY_AREAS` in `src/data/areas/index.ts`, when chapter 3's story is built. Pitfall: in a painter, never call `random()` inside the callback given to `wrapped()`, since each copy across the tile's edge would get different numbers and the seam would show.
-2. Still to build: the seaweed riding the current, the travellers, the streaks, the shoal going with the tide, the fish that follows, chapter 3's story steps and lines. Then the pond in zone D (D39), the shadow and the open sea.
+2. The channel's moving water (T112). `DriftingFood` in `src/core/food/drifting.ts` carries clumps along a run and brings each back in at the upstream end; `DriftingFoods` in `src/systems/` draws them, and `eatOnTheMove` in `PlayScene` eats one when the mouth touches it on the move. `food:eaten` carries `onTheMove`, the count in this unbroken swim, which `Progress` keeps as `best.seaweedSwim`. `Streaks` in `src/systems/` draws `fx.streak` where the water is fast. `__lvdc.creatures().drifting` gives each clump.
+3. Still to build: the travellers, the shoal going with the tide, the fish that follows, chapter 3's story steps and lines. Then the pond in zone D (D39), the shadow and the open sea.
 
 ## When stuck
 

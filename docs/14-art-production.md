@@ -261,6 +261,7 @@ This table is the checklist for the art. Update it in the same commit as a paint
 | `pebble` | 48 | Built |
 | `fx.speck` | 16 | Built |
 | `fx.ripple` | 256 | Built |
+| `fx.streak` | 64 by 8 | Built. Added. A short pale line, brightest toward its front, soft at both ends. Stretched with the water's speed and turned the way it runs, only where the water runs at 0.25 BL a second or more |
 | `fx.rim` | made in the game from the target's own image | |
 | `scent.food`, `scent.danger`, `scent.unknown` | 512 by 64 | Built. Each has its own shape as well as its own colour: a smooth wave, a zigzag, a line of loops |
 | `scent.dot` | 48 | Built |
@@ -361,11 +362,11 @@ Worn, faded and silted, never shiny. No print, word or mark. Each has a soft con
 
 | Name | Size | Status |
 |------|------|--------|
-| `channel.bed` | 1024, tile | Built. Grey-blue sand and gravel; ripple crests run up and down the picture, across the tide, with gravel in the troughs |
+| `channel.bed` | 1024, tile | Built. Grey-blue sand and gravel; ripple crests run up and down the picture, across the tide, in short bowed runs, with gravel in the troughs |
 | `channel.wall` | 1024 by 420, repeats sideways | Built. Rock in five ledges stepping down to the water, each lip moonlit; weed combed to the left and fallen stones at the foot. Solid to 0.7 of its height |
 | `channel.boulder.a`, `.b` | 640 | Built. Slate, layered, moonlit on the upper left, turf low on the far side. `b` is flatter |
 | `channel.crevice` | 340 by 150 | Built. A dark slot between two long slabs. Drawn as cover, over the shrimp |
-| `food.seaweed` | 320 | To paint |
+| `food.seaweed` | 320 | Built. Eight branching olive-brown stems, narrow blades on alternate sides, small round floats lit on the upper left. Drawn just over the bed with a soft shadow, turning slowly as it rides (T112) |
 | `light.moon` | 1024, tile | Built. A few long soft bands of `#C9D6E8`, very faint, clear between |
 | `channel.murk` | 512 by 288 | Built. Added. Blue-black water at night, the eye reaching a little way |
 | `shadow.hull` | 1024 by 280, shown four times larger | To paint |

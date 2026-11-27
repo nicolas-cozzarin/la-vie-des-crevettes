@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { imageFit } from '../../src/art/fit';
 import { PAINTERS } from '../../src/art/painters';
+import { inCurrent } from '../../src/core/movement/currents';
 import { AREA_IDS, FOOD_KINDS } from '../../src/core/world/kinds';
 import { lagoon } from '../../src/data/areas/lagoon';
 import { mangrove } from '../../src/data/areas/mangrove';
@@ -57,6 +58,7 @@ function imagesOf(area: AreaDef): [string, string][] {
   for (const scatter of area.scatter) images.push(['scatter', scatter.image]);
   for (const cover of area.cover ?? []) if (cover.image) images.push([cover.id, cover.image]);
   for (const food of area.food ?? []) images.push([food.id, `food.${food.kind}`]);
+  for (const run of area.drifting ?? []) images.push([run.id, `food.${run.kind}`]);
   for (const landmark of area.landmarks ?? []) images.push([landmark.id, landmark.image]);
   if (area.light?.dapple) images.push(['dapple', area.light.dapple]);
   if (area.light?.murk) images.push(['murk', area.light.murk]);
@@ -147,6 +149,16 @@ describe.each(asPlayed)('area %s', (_name, area) => {
 
   it('offers only foods from the closed list', () => {
     for (const food of area.food ?? []) expect(FOOD_KINDS, food.id).toContain(food.kind);
+    for (const run of area.drifting ?? []) expect(FOOD_KINDS, run.id).toContain(run.kind);
+  });
+
+  it('lets drifting food ride water that runs, inside the area (T112)', () => {
+    for (const run of area.drifting ?? []) {
+      expect(zoneInside(area, run.run), run.id).toBe(true);
+      const middle = { x: run.run.x + run.run.w / 2, y: run.run.y + run.run.h / 2 };
+      expect(inCurrent(area.currents ?? [], middle.x, middle.y), run.id).toBe(true);
+      expect(run.count, run.id).toBeGreaterThan(0);
+    }
   });
 
   it('keeps every thing inside the area', () => {

@@ -104,6 +104,8 @@ export type ProgressEvent =
       night: boolean;
       /** Among the thick glowing plankton, at night. */
       glowing?: boolean;
+      /** Eaten on the move: how many of this food in one unbroken swim, this one included. */
+      onTheMove?: number;
     }
   | { kind: 'tailflip' }
   | { kind: 'greeting'; other: string; area: AreaId }
@@ -224,6 +226,11 @@ export class Progress {
         if (event.full && event.night) this.add('nightMeals');
         if (event.full && event.night && event.glowing) this.add('glowMeals');
         if (event.full) this.add('mealsSinceMolt');
+        // The longest run in one swim, as `best.seaweedSwim` (doc 12, `c3.seaweed`).
+        if (event.onTheMove !== undefined) {
+          const best = `best.${event.food}Swim`;
+          record.stats[best] = Math.max(this.stat(best), event.onTheMove);
+        }
         break;
       case 'tailflip':
         this.add('tailFlips');

@@ -215,6 +215,11 @@ export interface AreaDef {
   currents?: CurrentDef[];
   /** Food that rides the currents. */
   drifting?: DriftingDef[];
+  /**
+   * The shoal's way with the tide, from where it gathers to where it leaves
+   * (T113). It keeps a little ahead of the player along this line.
+   */
+  journey?: { x: number; y: number }[];
   zones?: NamedZone[];
   /** Shed shells on the bed. Each is found as `thing.shedShell`. */
   shedShells?: ShedShellDef[];

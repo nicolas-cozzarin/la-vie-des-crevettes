@@ -55,6 +55,12 @@ export const CURRENT = {
   },
 };
 
+/** The shoal's journey with the tide (T113). */
+export const JOURNEY = {
+  /** BL along the way that the shoal keeps ahead of the player. */
+  ahead: 3,
+};
+
 /** Food that rides the current (doc 11, `food.seaweed`; T112). */
 export const DRIFTING = {
   /** BL: a clump fades in and out over this much of each end of its run. */
@@ -428,6 +434,8 @@ export const NPC = {
   graze: { stop: 0.2, range: 8 },
   greet: { base: 3, perSociability: 5, every: 30, touch: 1.2, giveUp: 8 },
   follow: { called: 0.9, near: 1.5, far: 3, seconds: 20, shoalFactor: 0.5, shoalSpan: 6 },
+  /** Travel with the tide (T113): above grazing, below freezing. BL from the shoal's goal. */
+  travel: { score: 0.85, arrive: 4 },
   groom: { factor: 0.5, min: 3, max: 6 },
   rest: { factor: 0.6, lagoonDay: 0.4, min: 3, span: 9, beside: 0.8 },
   wander: { base: 0.3, perActivity: 0.3, reach: 6, home: 8, giveUp: 10, waryCover: 3 },

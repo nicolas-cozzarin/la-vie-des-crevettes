@@ -165,6 +165,17 @@ export const channel: AreaDef = {
     },
   ],
 
+  // The shoal's way to the sea: down the middle, through the narrows and the
+  // pool, round the boulders, over the bar (T113).
+  journey: [
+    { x: 11500, y: 1300 },
+    { x: 4800, y: 1300 },
+    { x: 4150, y: 1600 },
+    { x: 3100, y: 1600 },
+    { x: 2300, y: 1300 },
+    { x: 600, y: 1300 },
+  ],
+
   currents: [
     // The tide, zone by zone (doc 11): slow where it gathers, fast in the narrows.
     { zone: { x: 10500, y: 0, w: 1500, h: 2600 }, vx: tide(0.3), vy: 0 },

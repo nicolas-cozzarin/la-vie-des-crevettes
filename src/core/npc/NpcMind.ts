@@ -69,6 +69,8 @@ export interface NpcWorld {
   leading?: FoodSpot | null;
   /** At Close: where the player keeps still, to rest touching (T105). */
   restBeside?: { x: number; y: number } | null;
+  /** Travelling with the tide: where the shoal makes for now, a little ahead of the player (T113). */
+  journey?: { x: number; y: number } | null;
 }
 
 /** What the shrimp presses on this step, as a player would. */
@@ -287,6 +289,9 @@ export class NpcMind {
         shoalGap: middle ? Math.hypot(middle.x - world.x, middle.y - world.y) / bl : null,
         lagoonDay: world.lagoonDay,
         restBeside: world.restBeside != null,
+        journeyGap: world.journey
+          ? Math.hypot(world.journey.x - world.x, world.journey.y - world.y) / bl
+          : null,
       },
       this.setup.temperament,
       npc,
@@ -371,6 +376,12 @@ export class NpcMind {
         );
       case 'follow':
         return !world.called && time >= this.until;
+      case 'travel':
+        return (
+          !world.journey ||
+          Math.hypot(world.journey.x - world.x, world.journey.y - world.y) <=
+            npc.travel.arrive * 0.5 * this.setup.bodyLengthPx
+        );
       case 'groom':
       case 'rest':
         return time >= this.until;
@@ -440,6 +451,16 @@ export class NpcMind {
         const middle = world.shoal ? shoalMiddle(this.id, world.shoal) : null;
         if (!middle) return NOTHING;
         return { ...NOTHING, axis: this.walkTo(here, middle, npc.walk.strength, true, world) };
+      }
+      case 'travel': {
+        // It swims for where the shoal makes for; the water does the rest.
+        const goal = world.journey;
+        if (!goal) return NOTHING;
+        return {
+          ...NOTHING,
+          axis: this.walkTo(here, goal, 1, false, world),
+          look: this.social(world),
+        };
       }
       case 'groom':
         return { ...NOTHING, grooming: true };
@@ -628,7 +649,8 @@ export class NpcMind {
       this.tuning.steer,
       strength,
     );
-    if (!world?.shoal || (this.behaviour !== 'wander' && this.behaviour !== 'follow')) return axis;
+    const pulled = ['wander', 'follow', 'travel'].includes(this.behaviour);
+    if (!world?.shoal || !pulled) return axis;
     if (axis.x === 0 && axis.y === 0) return axis;
     const self = world.shoal.find((member) => member.id === this.id) ?? {
       id: this.id,
@@ -739,6 +761,9 @@ export class NpcMind {
         centre = cover.cover;
         span = cover.cover.r + npc.wander.waryCover * bl;
       }
+    } else if (world.journey) {
+      // On the journey, home is where the shoal makes for.
+      centre = world.journey;
     } else if (world.shoal) {
       centre = shoalMiddle(this.id, world.shoal) ?? centre;
     }

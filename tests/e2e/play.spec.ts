@@ -223,6 +223,32 @@ test.describe('explore', () => {
     expect(errors).toEqual([]);
   });
 
+  test('in the channel the shoal goes seaward with the player, and waits ahead (T113)', async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    await explore(page, 'channel');
+    await page.keyboard.down('KeyA');
+    await page.waitForFunction(() => (window.__lvdc?.player()?.x ?? 12000) < 9000, null, {
+      timeout: 40_000,
+    });
+    await page.keyboard.up('KeyA');
+    // Once the player keeps still, the shoal gathers a few body lengths ahead, downstream.
+    await page.waitForFunction(
+      () => {
+        const me = window.__lvdc?.player();
+        const others = window.__lvdc?.shrimp() ?? [];
+        if (!me || others.length === 0) return false;
+        const ahead = others.filter(
+          (one) => one.x < me.x + 140 && Math.hypot(one.x - me.x, one.y - me.y) < 8 * 140,
+        );
+        return ahead.length >= others.length - 1;
+      },
+      null,
+      { timeout: 40_000 },
+    );
+  });
+
   test('in the channel the seaweed rides the tide toward the sea (T112)', async ({ page }) => {
     await explore(page, 'channel&at=9700,1300');
     const first = await page.evaluate(() => window.__lvdc?.creatures()?.drifting ?? []);

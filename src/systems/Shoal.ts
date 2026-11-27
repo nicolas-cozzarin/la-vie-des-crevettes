@@ -7,11 +7,13 @@ import type { FoodPatch } from '../core/food/FoodPatch';
 import type { BondStage, DayPhase, StimulusKind, ThreatView } from '../core/feelings/types';
 import type { GameEvents } from '../core/gameEvents';
 import { moveCircle, type Bounds, type Obstacle, type Point } from '../core/movement/collision';
+import { carried, currentAt, inCurrent } from '../core/movement/currents';
 import type { MotionMode } from '../core/movement/ShrimpMotion';
 import type { MoltEvent } from '../core/molt/Molt';
 import { AlarmNet, type Alarm } from '../core/npc/alarm';
 import { leadTo, sidestepNow, type Charge } from '../core/npc/close';
 import { pickMolter, StayingClose } from '../core/npc/companionMolt';
+import { shoalGoal } from '../core/npc/journey';
 import { NpcMind, type SeenShrimp } from '../core/npc/NpcMind';
 import type { LossCandidate } from '../core/npc/losses';
 import type { ShoalMember } from '../core/npc/shoal';
@@ -25,7 +27,9 @@ import {
   BOND,
   CLOSE,
   COMPANY,
+  CURRENT,
   GREET,
+  JOURNEY,
   LOSSES,
   MOTION,
   NPC,
@@ -169,6 +173,8 @@ export class Shoal {
   private stillFor = 0;
   /** Those who sidestepped the charge under way. */
   private readonly dodged = new Set<string>();
+  /** Where the shoal makes for on its journey with the tide, or null where there is none (T113). */
+  private goal: Point | null = null;
 
   constructor(
     scene: Phaser.Scene,
@@ -252,6 +258,11 @@ export class Shoal {
   step(dt: number, time: number, player: PlayerView): void {
     this.time = time;
     this.player = player;
+    const route = this.options.area.journey;
+    this.goal =
+      route && route.length > 1
+        ? shoalGoal(route, player, JOURNEY.ahead * this.options.bodyLengthPx)
+        : null;
     this.watchClose(dt, player);
     for (const alarm of this.alarm.due(time)) this.deliver(alarm);
     const playerSeen = this.seenPlayer(player);
@@ -588,6 +599,7 @@ export class Shoal {
         molting: npc.moltStage,
         leading: this.leading?.id === npc.id ? this.leading.food : null,
         restBeside,
+        journey: this.goal,
       },
       this.options.covers,
       this.options.foods,
@@ -604,16 +616,38 @@ export class Shoal {
             CLOSE.rest.touch * 1.5 * npc.bodyLengthPx,
         curiosityPull: 0,
         threat: this.threat?.view(npc.x, npc.y, false) ?? null,
-        inCurrent: false,
+        inCurrent: inCurrent(this.options.area.currents ?? [], npc.x, npc.y),
         dayPhase: null,
       },
     );
+    this.drift(npc, dt);
     if (npc.feelings.mood === 'afraid') this.frightened.add(npc.id);
     if (result.mood?.to === 'afraid' || (result.darted && npc.mind.behaviour === 'flee')) {
       this.alarm.raise(npc.id, npc.x, npc.y, time, this.everyone());
     }
     if (result.greeted) this.greetingDone(npc, result.greeted, time);
     if (result.molt) this.moltPhases(npc, result.molt);
+  }
+
+  /** The water carries it as it carries the player: all off the bed, a share on it, none tucked (T110). */
+  private drift(npc: NpcShrimp, dt: number): void {
+    const water = currentAt(this.options.area.currents ?? [], npc.x, npc.y);
+    if (water.vx === 0 && water.vy === 0) {
+      npc.downstream = null;
+      return;
+    }
+    npc.downstream = Math.atan2(water.vy, water.vx);
+    const { dx, dy } = carried(
+      water,
+      { mode: npc.motion.mode, tucked: npc.activity.tucked },
+      dt,
+      CURRENT,
+    );
+    const mover = this.movers.get(npc);
+    if (!mover || (dx === 0 && dy === 0)) return;
+    const to = mover(npc.x, npc.y, dx, dy);
+    npc.motion.x = to.x;
+    npc.motion.y = to.y;
   }
 
   /** The threats of the place, for the other shrimp to feel. */

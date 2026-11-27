@@ -67,3 +67,23 @@ export function pointAlong(route: readonly Point[], distance: number): Point {
 export function shoalGoal(route: readonly Point[], player: Point, ahead: number): Point {
   return pointAlong(route, along(route, player.x, player.y) + ahead);
 }
+
+/**
+ * The point `distance` pixels along the route, going on straight past
+ * either end along its first or last stretch: for those who come from
+ * beyond its start and leave beyond its end (T114).
+ */
+export function pointBeyond(route: readonly Point[], distance: number): Point {
+  const first = route[0];
+  const second = route[1];
+  if (!first || !second) return first ? { x: first.x, y: first.y } : { x: 0, y: 0 };
+  const total = routeLength(route);
+  if (distance >= 0 && distance <= total) return pointAlong(route, distance);
+  const [a, b, past] =
+    distance < 0
+      ? [second, first, -distance]
+      : [route[route.length - 2] as Point, route[route.length - 1] as Point, distance - total];
+  const length = Math.hypot(b.x - a.x, b.y - a.y);
+  if (length === 0) return { x: b.x, y: b.y };
+  return { x: b.x + ((b.x - a.x) / length) * past, y: b.y + ((b.y - a.y) / length) * past };
+}

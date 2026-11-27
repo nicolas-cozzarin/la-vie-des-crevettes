@@ -169,12 +169,14 @@ export const channel: AreaDef = {
   // pool, round the boulders, over the bar (T113).
   journey: [
     { x: 11500, y: 1300 },
-    { x: 4800, y: 1300 },
+    { x: 4800, y: 1450 },
     { x: 4150, y: 1600 },
     { x: 3100, y: 1600 },
     { x: 2300, y: 1300 },
     { x: 600, y: 1300 },
   ],
+  // Other shoals on their way to the sea pass through, strangers (doc 11; T114).
+  travellers: true,
 
   currents: [
     // The tide, zone by zone (doc 11): slow where it gathers, fast in the narrows.

@@ -237,13 +237,47 @@ test.describe('explore', () => {
     await page.waitForFunction(
       () => {
         const me = window.__lvdc?.player();
-        const others = window.__lvdc?.shrimp() ?? [];
+        // Strangers passing through keep their own way (T114).
+        const others = (window.__lvdc?.shrimp() ?? []).filter((one) => !one.traveller);
         if (!me || others.length === 0) return false;
         const ahead = others.filter(
           (one) => one.x < me.x + 140 && Math.hypot(one.x - me.x, one.y - me.y) < 8 * 140,
         );
         return ahead.length >= others.length - 1;
       },
+      null,
+      { timeout: 40_000 },
+    );
+  });
+
+  test('in the channel strangers pass through on their way to the sea, and go on (T114)', async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    await explore(page, 'channel&at=9000,1300&debug');
+    // F4 brings a group now. It comes in upstream, out of sight.
+    await page.keyboard.press('F4');
+    await page.waitForFunction(() => (window.__lvdc?.shrimp() ?? []).some((one) => one.traveller));
+    const me = await player(page);
+    const group = (await page.evaluate(() => window.__lvdc?.shrimp() ?? [])).filter(
+      (one) => one.traveller,
+    );
+    expect(group.length).toBeGreaterThanOrEqual(2);
+    expect(group.length).toBeLessThanOrEqual(4);
+    for (const one of group) {
+      expect(one.x, one.id).toBeGreaterThan(me.x + 600);
+      expect(one.stage, one.id).toBe('stranger');
+    }
+    // They swim past the player, downstream, keeping their distance as strangers do.
+    await page.waitForFunction(
+      (x) =>
+        (window.__lvdc?.shrimp() ?? []).some((one) => one.traveller && one.x < (x as number) - 280),
+      me.x,
+      { timeout: 40_000 },
+    );
+    // Then, out of sight, they have gone on.
+    await page.waitForFunction(
+      () => !(window.__lvdc?.shrimp() ?? []).some((one) => one.traveller),
       null,
       { timeout: 40_000 },
     );

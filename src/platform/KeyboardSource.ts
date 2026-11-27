@@ -10,12 +10,19 @@ type CaptureHandler = (code: string) => void;
  * and cannot be rebound. They do something only while a handler listens,
  * which the play scene does only with `?debug` (doc 15, steps 4 and 7).
  */
-const DEBUG_KEYS = { F7: 'time', F8: 'molt', F9: 'mood', F10: 'threat' } as const;
+const DEBUG_KEYS = {
+  F4: 'travellers',
+  F7: 'time',
+  F8: 'molt',
+  F9: 'mood',
+  F10: 'threat',
+} as const;
 
 /**
  * What a debug key does: F7 moves the day on to its next phase (release
  * 0.2), F8 brings the molt signal (step 8), and Shift and F8 a companion's
- * (T104), F9 cycles the mood, F10 calls a threat now (step 7).
+ * (T104), F9 cycles the mood, F10 calls a threat now (step 7), and F4
+ * brings strangers passing through, where a place has them (T114).
  */
 export type DebugKey = (typeof DEBUG_KEYS)[keyof typeof DEBUG_KEYS] | 'herMolt';
 

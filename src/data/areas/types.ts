@@ -220,6 +220,11 @@ export interface AreaDef {
    * (T113). It keeps a little ahead of the player along this line.
    */
   journey?: { x: number; y: number }[];
+  /**
+   * Small groups of strangers pass along the journey, from beyond its start
+   * to beyond its end (doc 11, `shrimp.traveller`; T114). Needs a journey.
+   */
+  travellers?: boolean;
   zones?: NamedZone[];
   /** Shed shells on the bed. Each is found as `thing.shedShell`. */
   shedShells?: ShedShellDef[];

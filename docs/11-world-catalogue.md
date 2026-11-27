@@ -343,7 +343,7 @@ x:  0      500        2500         4500        6500         8500       10500   1
 | `food.seaweed` | Food | 2 BL | A loose clump of olive-brown fronds with small round floats | Rides the current. Eaten on touch while moving |
 | `light.moon` | Effect | Tile | Pale blue-white bands `#C9D6E8`, long and soft | Slide across the bed |
 | `fx.streak` | Effect | | Specks drawn out into short lines | Shows how fast the water runs |
-| `shrimp.traveller` | Creature | 1 BL | Other shrimp, strangers, in small groups | Pass through, all heading left |
+| `shrimp.traveller` | Creature | 1 BL | Other shrimp, strangers, in small groups | Pass through, all heading left. As built: T114 |
 | `channel.seaFan` | Decor, *added* | 2 BL | A flat branching fan, rust-red, growing from the rock walls | Sways |
 | `pond.wall` | Edge strip, D39 | 2000 px, the top edge of zone D | A straight bank of packed earth, the only straight line in the wild. Grass tufts along its crest, cracked mud at its foot | Solid |
 | `pond.outlet` | Obstacle, D39 | 3 BL | A concrete sluice gate in the wall, stained green-brown, its opening closed by a mesh | Solid. Water pours out of it |

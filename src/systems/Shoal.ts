@@ -13,7 +13,7 @@ import type { MoltEvent } from '../core/molt/Molt';
 import { AlarmNet, type Alarm } from '../core/npc/alarm';
 import { leadTo, sidestepNow, type Charge } from '../core/npc/close';
 import { pickMolter, StayingClose } from '../core/npc/companionMolt';
-import { shoalGoal } from '../core/npc/journey';
+import { along, pointBeyond, shoalGoal } from '../core/npc/journey';
 import { NpcMind, type SeenShrimp } from '../core/npc/NpcMind';
 import type { LossCandidate } from '../core/npc/losses';
 import type { ShoalMember } from '../core/npc/shoal';
@@ -33,6 +33,7 @@ import {
   LOSSES,
   MOTION,
   NPC,
+  PASSING,
   SHOAL,
   STEER,
 } from '../data/tuning';
@@ -104,13 +105,18 @@ export interface ShrimpSnapshot {
   molt: string;
   /** Leading the player to its favourite food. */
   leading: boolean;
+  /** A stranger passing through, not one of the shoal (T114). */
+  traveller: boolean;
 }
 
 const PLAYER = 'player';
 
+/** How the save knows every traveller: they pass, and none is kept by name (T114). */
+const TRAVELLER = 'traveller';
+
 /** A temperament, size and look for an unnamed shrimp, from its own seed. */
-function unnamed(area: string, def: ShrimpSpawnDef): ShrimpKind {
-  const random = seededRandom(seedOf(`${area}:${def.id}`));
+function unnamed(seed: string, def: ShrimpSpawnDef): ShrimpKind {
+  const random = seededRandom(seedOf(`${seed}:${def.id}`));
   const between = (range: { min: number; max: number }) =>
     range.min + (range.max - range.min) * random();
   const shade = 1 - UNNAMED.tint * random();
@@ -175,6 +181,8 @@ export class Shoal {
   private readonly dodged = new Set<string>();
   /** Where the shoal makes for on its journey with the tide, or null where there is none (T113). */
   private goal: Point | null = null;
+  /** Where the strangers passing through make for, beyond the shoal's (T114). */
+  private travellersGoal: Point | null = null;
 
   constructor(
     scene: Phaser.Scene,
@@ -193,60 +201,122 @@ export class Shoal {
     );
     const defs = all.filter((def) => !gone.has(def.id));
     defs.forEach((def, index) => {
-      const named = def.who !== 'young';
-      const kind = def.who === 'young' ? unnamed(area.id, def) : COMPANIONS[def.who];
-      const size = bl * kind.size;
-      this.favourites.set(def.id, kind.favourite);
-      const random = seededRandom(seedOf(`${area.id}:${def.id}:mind`));
-      const antenna =
-        def.who === 'young'
-          ? UNNAMED.antenna.min + (UNNAMED.antenna.max - UNNAMED.antenna.min) * random()
-          : 1;
-      const stageLook = STAGE_LOOKS[options.stage];
-      const look: Partial<RigLook> = {
-        ...stageLook,
-        ...kind.look,
-        antennaLength: (stageLook.antennaLength ?? 1) * antenna,
-      };
-      const mind = new NpcMind(
-        {
-          id: def.id,
-          temperament: kind.temperament,
-          bodyLengthPx: size,
-          radiusPx: MOTION.radius * size,
-          home: { x: def.x, y: def.y },
-          obstacles: options.obstacles,
-          bounds: options.bounds,
-          random,
-          firstChoice: (index / Math.max(1, defs.length)) * NPC.decideEvery,
-        },
-        {
-          npc: NPC,
-          steer: STEER,
-          shoal: SHOAL,
-          greetReach: GREET.reach,
-          dartEvery: MOTION.dartTime + MOTION.glideTime,
-          close: CLOSE,
-        },
-      );
-      const hunger = NPC.hunger.min + (NPC.hunger.max - NPC.hunger.min) * random();
-      const npc = new NpcShrimp(
-        scene,
-        def.id,
-        named,
-        mind,
-        size,
-        { x: def.x, y: def.y, heading: def.heading ?? 0 },
-        look,
-        hunger,
-        options.depth,
-        area.sand ? area.ground : null,
-      );
-      this.members.push(npc);
-      this.movers.set(npc, (x, y, dx, dy) =>
-        moveCircle(x, y, dx, dy, npc.motion.radiusPx, options.obstacles, options.bounds),
-      );
+      this.members.push(this.make(scene, def, area.id, index / Math.max(1, defs.length), null));
     });
+  }
+
+  /**
+   * One other shrimp, made from its spawn. `seed` makes each unnamed one
+   * itself. `firstChoice` spreads their first choices over the decision
+   * time. A traveller may leave the area: its edge does not hold it (T114).
+   */
+  private make(
+    scene: Phaser.Scene,
+    def: ShrimpSpawnDef,
+    seed: string,
+    firstChoice: number,
+    traveller: Bounds | null,
+  ): NpcShrimp {
+    const { options } = this;
+    const { area, bodyLengthPx: bl } = options;
+    const named = def.who !== 'young';
+    const kind = def.who === 'young' ? unnamed(seed, def) : COMPANIONS[def.who];
+    const size = bl * kind.size;
+    if (!traveller) this.favourites.set(def.id, kind.favourite);
+    const bounds = traveller ?? options.bounds;
+    const random = seededRandom(seedOf(`${seed}:${def.id}:mind`));
+    const antenna =
+      def.who === 'young'
+        ? UNNAMED.antenna.min + (UNNAMED.antenna.max - UNNAMED.antenna.min) * random()
+        : 1;
+    const stageLook = STAGE_LOOKS[options.stage];
+    const look: Partial<RigLook> = {
+      ...stageLook,
+      ...kind.look,
+      antennaLength: (stageLook.antennaLength ?? 1) * antenna,
+    };
+    const mind = new NpcMind(
+      {
+        id: def.id,
+        temperament: kind.temperament,
+        bodyLengthPx: size,
+        radiusPx: MOTION.radius * size,
+        home: { x: def.x, y: def.y },
+        obstacles: options.obstacles,
+        bounds,
+        random,
+        firstChoice: firstChoice * NPC.decideEvery,
+      },
+      {
+        npc: NPC,
+        steer: STEER,
+        shoal: SHOAL,
+        greetReach: GREET.reach,
+        dartEvery: MOTION.dartTime + MOTION.glideTime,
+        close: CLOSE,
+      },
+    );
+    const hunger = NPC.hunger.min + (NPC.hunger.max - NPC.hunger.min) * random();
+    const npc = new NpcShrimp(
+      scene,
+      def.id,
+      named,
+      mind,
+      size,
+      { x: def.x, y: def.y, heading: def.heading ?? 0 },
+      look,
+      hunger,
+      options.depth,
+      area.sand ? area.ground : null,
+    );
+    npc.traveller = traveller !== null;
+    this.movers.set(npc, (x, y, dx, dy) =>
+      moveCircle(x, y, dx, dy, npc.motion.radiusPx, options.obstacles, bounds),
+    );
+    return npc;
+  }
+
+  /**
+   * A group of strangers comes in, at these places, facing downstream
+   * (doc 11, `shrimp.traveller`; T114). Each group is new shrimp: `group`
+   * makes them so. Returns their ids.
+   */
+  addTravellers(
+    scene: Phaser.Scene,
+    group: number,
+    places: readonly Point[],
+    heading: number,
+  ): string[] {
+    const { area, bounds, bodyLengthPx: bl } = this.options;
+    // Far enough past the edge for a whole body to be out of sight.
+    const margin = (PASSING.beyond + PASSING.spread * 2) * bl;
+    const wide: Bounds = {
+      x: bounds.x - margin,
+      y: bounds.y - margin,
+      w: bounds.w + margin * 2,
+      h: bounds.h + margin * 2,
+    };
+    const ids: string[] = [];
+    places.forEach((place, index) => {
+      const def: ShrimpSpawnDef = {
+        id: `${TRAVELLER}.${group}.${index + 1}`,
+        who: 'young',
+        x: place.x,
+        y: place.y,
+        heading,
+      };
+      const npc = this.make(scene, def, `${area.id}:passing`, index / places.length, wide);
+      this.members.push(npc);
+      ids.push(npc.id);
+    });
+    return ids;
+  }
+
+  /** The strangers passing through now (T114). */
+  get travellers(): { id: string; x: number; y: number; bodyLengthPx: number }[] {
+    return this.members
+      .filter((npc) => npc.traveller)
+      .map((npc) => ({ id: npc.id, x: npc.x, y: npc.y, bodyLengthPx: npc.bodyLengthPx }));
   }
 
   /** The bond's stage with a shrimp, for company and for how it treats the player. */
@@ -262,6 +332,15 @@ export class Shoal {
     this.goal =
       route && route.length > 1
         ? shoalGoal(route, player, JOURNEY.ahead * this.options.bodyLengthPx)
+        : null;
+    // Strangers keep their own way, a little ahead of their own middle and on past the end.
+    const middle = this.middleOf(this.members.filter((npc) => npc.traveller));
+    this.travellersGoal =
+      route && route.length > 1 && middle
+        ? pointBeyond(
+            route,
+            along(route, middle.x, middle.y) + PASSING.ahead * this.options.bodyLengthPx,
+          )
         : null;
     this.watchClose(dt, player);
     for (const alarm of this.alarm.due(time)) this.deliver(alarm);
@@ -567,7 +646,8 @@ export class Shoal {
         heading: other.motion.heading,
         mode: other.motion.mode,
         player: false,
-        stage: 'familiar',
+        // The shoal know each other, and the strangers passing know each other.
+        stage: other.traveller === npc.traveller ? 'familiar' : 'stranger',
         busy: other.activity.name !== 'free' && other.activity.name !== 'greeting',
       });
     }
@@ -594,12 +674,16 @@ export class Shoal {
         called:
           (time < this.calledUntil && this.options.bonds.value(npc.id) >= BOND.stages.companion) ||
           (this.playerMolting && this.options.bonds.value(npc.id) >= BOND.stages.close),
-        shoal: this.options.together ? this.shoalMembers() : null,
+        shoal: npc.traveller
+          ? this.shoalMembers(true)
+          : this.options.together
+            ? this.shoalMembers(false)
+            : null,
         lagoonDay: this.dayPhase === 'day' && this.options.area.sand === true,
         molting: npc.moltStage,
         leading: this.leading?.id === npc.id ? this.leading.food : null,
         restBeside,
-        journey: this.goal,
+        journey: npc.traveller ? this.travellersGoal : this.goal,
       },
       this.options.covers,
       this.options.foods,
@@ -684,7 +768,7 @@ export class Shoal {
     const reach = COMPANY.radius * this.options.bodyLengthPx;
     const named: string[] = [];
     for (const npc of this.members) {
-      if (!this.frightened.has(npc.id)) continue;
+      if (!this.frightened.has(npc.id) || npc.traveller) continue;
       if (Math.hypot(npc.x - x, npc.y - y) > reach) continue;
       this.report(this.options.bonds.add(npc.id, BOND.flee));
       if (npc.named) named.push(npc.id);
@@ -726,6 +810,11 @@ export class Shoal {
   playerGreeted(time: number, id: string): void {
     const npc = this.members.find((one) => one.id === id);
     if (!npc) return;
+    // A stranger passing through is met, and goes on: no bond is kept with it.
+    if (npc.traveller) {
+      this.options.bus.emit('greeting', { a: PLAYER, b: TRAVELLER });
+      return;
+    }
     this.options.bus.emit('greeting', { a: PLAYER, b: id });
     this.report(this.options.bonds.greet(id, time, npc.named));
     if (this.stage(id) !== 'stranger' && npc.mind.canGreet(time)) npc.mind.greetBack(time, PLAYER);
@@ -776,22 +865,28 @@ export class Shoal {
     return this.members.some((npc) => this.options.bonds.value(npc.id) >= BOND.stages.companion);
   }
 
-  /** How many other shrimp are within `reach` px of a point. */
+  /** How many of the shoal are within `reach` px of a point. Strangers passing are not. */
   near(x: number, y: number, reach: number): number {
-    return this.members.filter((npc) => Math.hypot(npc.x - x, npc.y - y) <= reach).length;
+    return this.members.filter((npc) => !npc.traveller && Math.hypot(npc.x - x, npc.y - y) <= reach)
+      .length;
   }
 
   /** The middle of the other shrimp within `reach` px of a point, if two or more are there. */
   middleNear(x: number, y: number, reach: number): { x: number; y: number } | null {
     const close = this.members.filter((npc) => Math.hypot(npc.x - x, npc.y - y) <= reach);
-    if (close.length < 2) return null;
+    return close.length < 2 ? null : this.middleOf(close);
+  }
+
+  /** The middle of some shrimp, or null for none. */
+  private middleOf(some: readonly NpcShrimp[]): Point | null {
+    if (some.length === 0) return null;
     let sx = 0;
     let sy = 0;
-    for (const npc of close) {
+    for (const npc of some) {
       sx += npc.x;
       sy += npc.y;
     }
-    return { x: sx / close.length, y: sy / close.length };
+    return { x: sx / some.length, y: sy / some.length };
   }
 
   /** Another shrimp tucked under cover within `reach` px, for "Side by side". */
@@ -854,24 +949,28 @@ export class Shoal {
       stage: this.stage(npc.id),
       molt: npc.moltStage,
       leading: this.leading?.id === npc.id,
+      traveller: npc.traveller,
     }));
   }
 
   /** Every shrimp of the shoal, for choosing who goes missing (D42). */
   lossCandidates(view: { contains(x: number, y: number): boolean }): LossCandidate[] {
-    return this.members.map((npc) => ({
-      id: npc.id,
-      named: npc.named,
-      x: npc.x,
-      y: npc.y,
-      // A little beyond the view's edge counts as in view: a body length might show.
-      inView:
-        view.contains(npc.x, npc.y) ||
-        view.contains(npc.x + npc.bodyLengthPx, npc.y) ||
-        view.contains(npc.x - npc.bodyLengthPx, npc.y) ||
-        view.contains(npc.x, npc.y + npc.bodyLengthPx) ||
-        view.contains(npc.x, npc.y - npc.bodyLengthPx),
-    }));
+    // Strangers passing through are not of the shoal.
+    return this.members
+      .filter((npc) => !npc.traveller)
+      .map((npc) => ({
+        id: npc.id,
+        named: npc.named,
+        x: npc.x,
+        y: npc.y,
+        // A little beyond the view's edge counts as in view: a body length might show.
+        inView:
+          view.contains(npc.x, npc.y) ||
+          view.contains(npc.x + npc.bodyLengthPx, npc.y) ||
+          view.contains(npc.x - npc.bodyLengthPx, npc.y) ||
+          view.contains(npc.x, npc.y + npc.bodyLengthPx) ||
+          view.contains(npc.x, npc.y - npc.bodyLengthPx),
+      }));
   }
 
   /** These shrimp are gone, out of view, with no trace. */
@@ -888,7 +987,7 @@ export class Shoal {
 
   /** How many of the shoal are here. */
   get count(): number {
-    return this.members.length;
+    return this.members.filter((npc) => !npc.traveller).length;
   }
 
   destroy(): void {
@@ -908,6 +1007,10 @@ export class Shoal {
   }
 
   private greetingDone(npc: NpcShrimp, with_: string, time: number): void {
+    if (with_ === PLAYER && npc.traveller) {
+      this.options.bus.emit('greeting', { a: TRAVELLER, b: PLAYER });
+      return;
+    }
     if (with_ === PLAYER) {
       this.options.bus.emit('greeting', { a: npc.id, b: PLAYER });
       this.report(this.options.bonds.greet(npc.id, time, npc.named));
@@ -921,6 +1024,7 @@ export class Shoal {
   private gainBonds(dt: number, time: number, player: PlayerView): void {
     const reach = BOND.grazeReach * this.options.bodyLengthPx;
     for (const npc of this.members) {
+      if (npc.traveller) continue;
       if (player.eating && npc.eating && Math.hypot(npc.x - player.x, npc.y - player.y) <= reach) {
         this.report(this.options.bonds.grazeNear(npc.id, dt));
       }
@@ -965,13 +1069,16 @@ export class Shoal {
     return all;
   }
 
-  private shoalMembers(): ShoalMember[] {
-    return this.members.map((npc) => ({
-      id: npc.id,
-      x: npc.x,
-      y: npc.y,
-      heading: npc.motion.heading,
-    }));
+  /** The shoal, or the strangers passing through: each keeps together with its own. */
+  private shoalMembers(travellers: boolean): ShoalMember[] {
+    return this.members
+      .filter((npc) => npc.traveller === travellers)
+      .map((npc) => ({
+        id: npc.id,
+        x: npc.x,
+        y: npc.y,
+        heading: npc.motion.heading,
+      }));
   }
 
   private isFar(npc: NpcShrimp, player: PlayerView): boolean {

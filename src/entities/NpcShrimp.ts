@@ -70,6 +70,9 @@ export class NpcShrimp {
   /** In a current: the way the water runs, for the antennae and tail fan to lean (T110). */
   downstream: number | null = null;
 
+  /** A stranger passing through, not one of the shoal (doc 11, `shrimp.traveller`; T114). */
+  traveller = false;
+
   get x(): number {
     return this.motion.x;
   }

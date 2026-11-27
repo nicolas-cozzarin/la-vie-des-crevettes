@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { imageFit } from '../../src/art/fit';
 import { PAINTERS } from '../../src/art/painters';
 import { inCurrent } from '../../src/core/movement/currents';
+import { isClear } from '../../src/core/npc/steer';
 import { AREA_IDS, FOOD_KINDS } from '../../src/core/world/kinds';
 import { lagoon } from '../../src/data/areas/lagoon';
 import { mangrove } from '../../src/data/areas/mangrove';
@@ -158,6 +159,28 @@ describe.each(asPlayed)('area %s', (_name, area) => {
       const middle = { x: run.run.x + run.run.w / 2, y: run.run.y + run.run.h / 2 };
       expect(inCurrent(area.currents ?? [], middle.x, middle.y), run.id).toBe(true);
       expect(run.count, run.id).toBeGreaterThan(0);
+    }
+  });
+
+  it('lays the journey inside the area, clear of rock, and sends travellers only along one (T113, T114)', () => {
+    const route = area.journey ?? [];
+    if (area.travellers) expect(route.length, 'travellers need a journey').toBeGreaterThan(1);
+    const solid = [...area.obstacles, ...(area.blocks ?? [])];
+    // A shrimp's half width, about a third of a body length.
+    const radius = (area.bodyLengthPx ?? 110) * 0.3;
+    for (let index = 1; index < route.length; index++) {
+      const a = route[index - 1] as { x: number; y: number };
+      const b = route[index] as { x: number; y: number };
+      expect(inside(area, a.x, a.y) && inside(area, b.x, b.y), `journey ${index}`).toBe(true);
+      const steps = Math.ceil(Math.hypot(b.x - a.x, b.y - a.y) / 40);
+      for (let step = 0; step <= steps; step++) {
+        const x = a.x + ((b.x - a.x) * step) / steps;
+        const y = a.y + ((b.y - a.y) * step) / steps;
+        expect(
+          isClear(x, y, radius, solid, null),
+          `journey at ${Math.round(x)},${Math.round(y)}`,
+        ).toBe(true);
+      }
     }
   });
 

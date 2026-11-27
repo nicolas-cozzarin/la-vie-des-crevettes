@@ -88,6 +88,7 @@ import { ShedShells } from '../systems/ShedShells';
 import { DriftingFoods } from '../systems/DriftingFoods';
 import { Streaks } from '../systems/Streaks';
 import { Shoal } from '../systems/Shoal';
+import { Travellers } from '../systems/Travellers';
 import { WaterLight } from '../systems/WaterLight';
 import type { HudScene } from './HudScene';
 import type { JournalHost } from './JournalScene';
@@ -203,6 +204,8 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
   /** The other shrimp, and the player's bonds with them. Bonds are kept in the life. */
   private bonds!: Bonds;
   private shoal!: Shoal;
+  /** Strangers passing through, where the area has them (T114). */
+  private travellers: Travellers | null = null;
   /** How much brighter the other shrimp are drawn while the player is social (doc 10, "Screen"). */
   private lift = 0;
   /** The crabs, snails and fish that move, and the pale rim on what the shrimp is curious about. */
@@ -382,6 +385,9 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
         .filter((key) => key.startsWith(`led.${area.id}.`))
         .map((key) => key.slice(`led.${area.id}.`.length)),
     });
+    this.travellers = area.travellers
+      ? new Travellers(this, this.shoal, area, this.bodyLengthPx, obstacles, bounds)
+      : null;
     this.lossRandom = seededRandom(seedOf(`${area.id}:losses`));
     this.lift = 0;
 
@@ -536,6 +542,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
           else if (key === 'threat') this.threats.callThreat();
           else if (key === 'time') this.nextTime();
           else if (key === 'herMolt') this.shoal.moltNearest();
+          else if (key === 'travellers') this.travellers?.now();
           else this.answerMolt(this.molting.signal());
         })
       : null;
@@ -661,6 +668,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
         eating,
         hunger: this.feelings.values.hunger,
       });
+      this.travellers?.update(dt, this.cameras.main.worldView, this.motion);
       // A Close companion began to lead the player to food: once a chapter. A favourite seen eaten.
       for (const id of this.shoal.takeLed()) this.keeper.count(`led.${this.areaId}.${id}`);
       for (const id of this.shoal.takeFavourites()) this.keeper.count(`favourites.${id}`);

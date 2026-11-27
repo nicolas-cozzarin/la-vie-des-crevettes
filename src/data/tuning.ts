@@ -61,6 +61,26 @@ export const JOURNEY = {
   ahead: 3,
 };
 
+/** Strangers passing through, down the journey and out past its end (doc 11, `shrimp.traveller`; T114). */
+export const PASSING = {
+  /** Seconds before the first group, from arriving. */
+  first: [15, 30] as const,
+  /** Seconds from one group to the next, counted once the last has gone. */
+  every: [40, 90] as const,
+  /** How many in a group. */
+  group: [2, 4] as const,
+  /** Seconds to wait when no place out of view lets a group come in. */
+  retry: 3,
+  /** BL along the way that a group makes for, ahead of its own middle. */
+  ahead: 8,
+  /** BL beyond the view's edge, or beyond the journey's start, where a group comes in. */
+  beyond: 4,
+  /** BL the group trails behind its first, and to either side of the way. */
+  spread: 1.5,
+  /** BL from the player beyond which one out of view has gone on. */
+  gone: 20,
+};
+
 /** Food that rides the current (doc 11, `food.seaweed`; T112). */
 export const DRIFTING = {
   /** BL: a clump fades in and out over this much of each end of its run. */

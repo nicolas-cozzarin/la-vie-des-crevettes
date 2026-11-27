@@ -236,8 +236,24 @@ export const lagoon: AreaDef = {
   ],
 
   creatures: [
-    // Zone C: the turtle grazes on a slow loop through the meadow.
-    { id: 'turtle', kind: 'turtle', x: 4620, y: 900, heading: Math.PI },
+    // Zone C: the turtle grazes on a slow loop through the meadow, about 44 BL round (T106).
+    {
+      id: 'turtle',
+      kind: 'turtle',
+      x: 4620,
+      y: 900,
+      heading: Math.PI,
+      route: [
+        'grass.3',
+        'grass.2',
+        'grass.8',
+        'grass.9',
+        'grass.14',
+        'grass.10',
+        'grass.5',
+        'grass.4',
+      ],
+    },
     { id: 'fish.meadow.1', kind: 'smallFish', x: 3500, y: 850, heading: Math.PI, count: 24 },
     { id: 'fish.meadow.2', kind: 'smallFish', x: 5400, y: 1300, heading: 0.2, count: 20 },
     // Zone D.

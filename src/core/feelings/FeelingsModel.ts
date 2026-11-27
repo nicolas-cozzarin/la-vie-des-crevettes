@@ -93,9 +93,11 @@ export class FeelingsModel {
     return CONDITIONS.filter((condition) => this.conditions.has(condition));
   }
 
-  /** For the molt: soft for this many seconds. */
+  /** For the molt: soft for this many seconds, from this moment, not from the next step. */
   setSoft(seconds: number): void {
     this.softLeft = seconds;
+    if (seconds > 0) this.conditions.add('soft');
+    else this.conditions.delete('soft');
   }
 
   /** For the molt: waiting to molt, from the signal until the molt begins. */

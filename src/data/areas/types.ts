@@ -118,6 +118,8 @@ export interface CreatureDef {
   heading?: number;
   /** For animals that live in groups. */
   count?: number;
+  /** For an animal that goes round: the cover it visits, by id, in order (T106). */
+  route?: readonly string[];
 }
 
 /** Another shrimp. `who` is a companion's name or a seed for an unnamed one. */

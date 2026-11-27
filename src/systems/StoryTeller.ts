@@ -295,6 +295,11 @@ export class StoryTeller {
     if (this.chapter === 2) this.narrator.say('narr.c2.alarm');
   }
 
+  /** The turtle's shadow over the player, the first time (doc 13, `narr.c2.turtle`). */
+  turtleShadow(): void {
+    if (this.chapter === 2) this.narrator.say('narr.c2.turtle');
+  }
+
   /** The player's tail flip startled a shrimp that does not know it yet. */
   startledStranger(): void {
     this.narrator.say('narr.tooFast');

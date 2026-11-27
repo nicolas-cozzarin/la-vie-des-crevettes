@@ -7,10 +7,12 @@ import { Crab } from '../core/creatures/crab';
 import { Hermit } from '../core/creatures/hermit';
 import { School } from '../core/creatures/school';
 import { Snail } from '../core/creatures/snail';
+import { Turtle } from '../core/creatures/turtle';
 import type { MotionMode } from '../core/movement/ShrimpMotion';
 import { seededRandom, seedOf } from '../core/random';
 import type { AreaDef, CreatureDef } from '../data/areas/types';
 import { CREATURES, FRAME, WORLD } from '../data/tuning';
+import { TurtleView } from '../entities/TurtleView';
 
 /** The kinds that move by themselves. The others are still pictures, drawn by the area loader. */
 export const LIVE_KINDS: ReadonlySet<CreatureDef['kind']> = new Set([
@@ -18,6 +20,7 @@ export const LIVE_KINDS: ReadonlySet<CreatureDef['kind']> = new Set([
   'snail',
   'hermitCrab',
   'smallFish',
+  'turtle',
 ]);
 
 /** The kinds the threats draw when they come. The area's entry is only where they come from. */
@@ -60,6 +63,12 @@ interface LiveHermit {
   legsAt: number;
 }
 
+interface LiveTurtle {
+  def: CreatureDef;
+  rule: Turtle;
+  view: TurtleView;
+}
+
 interface LiveSchool {
   def: CreatureDef;
   rule: School;
@@ -84,6 +93,7 @@ export class Creatures {
   private readonly snails: LiveSnail[] = [];
   private readonly hermits: LiveHermit[] = [];
   private readonly schools: LiveSchool[] = [];
+  private readonly turtles: LiveTurtle[] = [];
 
   constructor(
     scene: Phaser.Scene,
@@ -98,6 +108,7 @@ export class Creatures {
       else if (def.kind === 'hermitCrab')
         this.hermits.push(this.makeHermit(scene, def, bl, random));
       else if (def.kind === 'smallFish') this.schools.push(this.makeSchool(scene, def, bl, random));
+      else if (def.kind === 'turtle') this.turtles.push(this.makeTurtle(scene, area, def, bl));
     }
   }
 
@@ -154,7 +165,21 @@ export class Creatures {
           .setRotation(fish.heading);
       });
     }
+    for (const turtle of this.turtles) {
+      for (let index = 0; index < pieces; index++) turtle.rule.step(piece);
+      turtle.view.draw(turtle.rule, dt, turtle.rule.gapTo(passer) <= 0);
+    }
     return gentle;
+  }
+
+  /** Whether the dark of the turtle's shadow lies over the point. */
+  turtleShades(x: number, y: number): boolean {
+    return this.turtles.some((turtle) => turtle.rule.shades({ x, y }));
+  }
+
+  /** Whether the point is within `reach` BL of the turtle's shell. */
+  turtleNear(x: number, y: number, reach: number): boolean {
+    return this.turtles.some((turtle) => turtle.rule.gapTo({ x, y }) <= reach);
   }
 
   /** A tail flip at (x, y): a school close by bursts apart. */
@@ -178,6 +203,8 @@ export class Creatures {
     if (hermit) return { x: hermit.rule.x, y: hermit.rule.y };
     const school = this.schools.find((one) => one.def.id === id);
     if (school) return { x: school.rule.x, y: school.rule.y };
+    const turtle = this.turtles.find((one) => one.def.id === id);
+    if (turtle) return { x: turtle.rule.x, y: turtle.rule.y };
     return null;
   }
 
@@ -189,6 +216,8 @@ export class Creatures {
     if (snail) return [snail.shell];
     const hermit = this.hermits.find((one) => one.def.id === id);
     if (hermit) return [hermit.shell, hermit.legs];
+    const turtle = this.turtles.find((one) => one.def.id === id);
+    if (turtle) return turtle.view.images;
     return this.schools.find((one) => one.def.id === id)?.fish ?? [];
   }
 
@@ -241,6 +270,12 @@ export class Creatures {
         y: school.rule.y,
         state: school.rule.scattered > 0.5 ? 'scattered' : 'holding',
         scattered: school.rule.scattered,
+      })),
+      ...this.turtles.map((turtle) => ({
+        id: turtle.def.id,
+        x: turtle.rule.x,
+        y: turtle.rule.y,
+        state: turtle.rule.phase,
       })),
     ];
   }
@@ -407,6 +442,20 @@ export class Creatures {
     hermit.shadow.setPosition(rule.x + 3, rule.y + 5).setRotation(rule.heading);
     // In its shell the legs are drawn back into it, out of sight.
     hermit.legs.setX(hermit.legsAt - (1 - rule.out) * 70).setAlpha(rule.out);
+  }
+
+  /** The turtle on its round of the meadow, from clump to clump of the area's cover. */
+  private makeTurtle(scene: Phaser.Scene, area: AreaDef, def: CreatureDef, bl: number): LiveTurtle {
+    const covers = area.cover ?? [];
+    const route = (def.route ?? []).flatMap((id) => {
+      const cover = covers.find((one) => one.id === id);
+      return cover ? [{ x: cover.x, y: cover.y }] : [];
+    });
+    const tuning = CREATURES.turtle;
+    const rule = new Turtle({ x: def.x, y: def.y, heading: def.heading ?? 0 }, route, bl, tuning);
+    const view = new TurtleView(scene, bl, tuning.shadow);
+    view.draw(rule);
+    return { def, rule, view };
   }
 
   private makeSchool(

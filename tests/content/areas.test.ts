@@ -376,6 +376,25 @@ describe('the lagoon', () => {
     }
   });
 
+  it('sends the turtle round the meadow from clump to clump, about 40 BL round (T106)', () => {
+    const turtle = (lagoon.creatures ?? []).find((each) => each.kind === 'turtle');
+    const route = (turtle?.route ?? []).map((id) =>
+      (lagoon.cover ?? []).find((cover) => cover.id === id),
+    );
+    expect(route.length).toBeGreaterThan(3);
+    const meadow = zoneOf(lagoon, 'C');
+    let round = 0;
+    route.forEach((cover, index) => {
+      expect(cover?.kind).toBe('seagrass');
+      if (!cover) return;
+      expect(inZone(meadow, cover.x, cover.y), cover.id).toBe(true);
+      const next = route[(index + 1) % route.length];
+      if (next) round += Math.hypot(next.x - cover.x, next.y - cover.y) / bl;
+    });
+    expect(round).toBeGreaterThan(35);
+    expect(round).toBeLessThan(50);
+  });
+
   it('leaves the way in from the mangrove open', () => {
     const open = openAlong(lagoon, column(lagoon.size.w - 300, 1800, 3500), bl * 0.25);
     expect(open).toBeGreaterThan(6 * bl);

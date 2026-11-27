@@ -513,6 +513,23 @@ export const CREATURES = {
     drag: 2.4,
     reach: 5,
   },
+  /** Doc 11, "Green turtle" (T106). BL, seconds and radians. */
+  turtle: {
+    speed: 0.6,
+    turn: 0.3,
+    reach: 4,
+    crop: 6,
+    dip: 1,
+    stroke: 3.2,
+    slowStroke: 3,
+    ease: 2.5,
+    shell: { half: 3, side: 2.4 },
+    shadow: { long: 8.4, wide: 6.4, dx: 0.3, dy: 0.4, felt: 0.8 },
+    /** BL from its shell that counts as following it, for "Follow the turtle". */
+    follow: 4,
+    /** The fear the first time its shadow crosses the shrimp (doc 10, "Startles with no danger"). */
+    startle: 0.25,
+  },
   /** How bright the pale rim on a curiosity target is, and its width in pixels (doc 11, `fx.rim`). */
   rim: { color: 0xf4f1e4, strength: 0.35, width: 6 },
 };

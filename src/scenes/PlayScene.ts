@@ -41,6 +41,7 @@ import {
   BOND,
   BURROW,
   CAMERA,
+  CREATURES,
   CURIOSITY,
   DAY,
   FEELINGS,
@@ -186,6 +187,8 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
   /** Last frame's activity and tuck, to tell when Sense or cover is left. */
   private wasSensing = 0;
   private wasTucked = false;
+  /** The turtle's shadow lies over the player now, and whether this is the first time. */
+  private turtleShade = { over: false, first: false };
 
   /** The other shrimp, and the player's bonds with them. Bonds are kept in the life. */
   private bonds!: Bonds;
@@ -336,6 +339,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
     this.promptNow = null;
     this.wasSensing = 0;
     this.wasTucked = false;
+    this.turtleShade = { over: false, first: false };
 
     // Other shrimp. From chapter 2 they keep together as a shoal.
     this.bonds = new Bonds(BOND);
@@ -666,6 +670,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
     this.loaded.update(frame, this.motion.x, this.motion.y);
     // Walking up to a hermit crab without sending it into its shell (doc 12, "Slowly").
     if (this.creatures.update(frame, this.motion) > 0) this.keeper.count('gentle.hermitCrab');
+    this.watchTurtle();
     this.rim.set(this.rimmed());
     this.rim.update(frame);
     for (const [patch, image] of this.foodImages) image.setAlpha(0.15 + 0.85 * patch.amount);
@@ -731,6 +736,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
     this.keeper.update(frame, {
       watchWave: this.creatures.wavingNear(x, y, 3 * bl),
       hiddenTogether: tucked && this.shoal.hiddenNear(x, y, 1.5 * bl),
+      followTurtle: this.creatures.turtleNear(x, y, CREATURES.turtle.follow),
     });
     if (this.explore) return;
     const resting =
@@ -1044,6 +1050,24 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
       }
       this.teller?.moltPhase(phase);
     }
+  }
+
+  /**
+   * The turtle's shadow crossing the player. The first time in a life it is
+   * a harmless startle, and the line is said while the shadow is over (doc
+   * 10, "Startles with no danger"; doc 13, `narr.c2.turtle`).
+   */
+  private watchTurtle(): void {
+    const over = this.creatures.turtleShades(this.motion.x, this.motion.y);
+    const shade = this.turtleShade;
+    if (over && !shade.over && (this.life.stats.turtleShadow ?? 0) === 0) {
+      this.feelings.stimulus('startle', CREATURES.turtle.startle);
+      this.keeper.count('turtleShadow');
+      shade.first = true;
+    }
+    if (!over) shade.first = false;
+    shade.over = over;
+    if (shade.first) this.teller?.turtleShadow();
   }
 
   /** What the threat director needs from the player on this step. */

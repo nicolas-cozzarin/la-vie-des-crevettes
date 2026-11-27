@@ -236,10 +236,77 @@ test.describe('the hunting fish', () => {
       )
       .toBe('chase');
     if (held) await page.keyboard.up(held);
-    await page.waitForFunction(() => (window.__lvdc?.threat()?.fish?.charges ?? 0) >= 1, null, {
-      timeout: 20_000,
-    });
+    try {
+      await page.waitForFunction(() => (window.__lvdc?.threat()?.fish?.charges ?? 0) >= 1, null, {
+        timeout: 20_000,
+      });
+    } catch (error) {
+      // Says what the fish and the shrimp were doing, for a failure seen only on a slow machine.
+      const fish = (await threat(page))?.fish;
+      const me = await player(page);
+      const feel = await page.evaluate(() => window.__lvdc?.feelings()?.conditions);
+      throw new Error(
+        `No charge. Stages ${JSON.stringify(await stages())}, fish ${JSON.stringify(fish)}, ` +
+          `player ${JSON.stringify(me)}, conditions ${JSON.stringify(feel)}.`,
+        { cause: error },
+      );
+    }
     expect(await stages()).toContain('chase');
+    expect(errors).toEqual([]);
+  });
+});
+
+test.describe('the turtle', () => {
+  test('glides through the meadow and crops; its first shadow startles, once', async ({ page }) => {
+    test.setTimeout(120_000);
+    const errors = watchErrors(page);
+    await page.goto('./');
+    await waitForScene(page, 'Title');
+    await page.evaluate((save) => localStorage.setItem('lvdc.save.v1', JSON.stringify(save)), {
+      ...AT_THE_CREEK,
+      area: 'lagoon',
+      stage: 'subAdult',
+      // In the meadow, just ahead of the turtle on its way to its first clump.
+      at: { x: 4250, y: 820 },
+      narrated: ['narr.c1.arrive', 'narr.c2.arrive', 'narr.c2.sand', 'narr.c2.dusk'],
+      placesSeen: ['drift', 'mangrove', 'lagoon'],
+    });
+    await page.reload();
+    await waitForScene(page, 'Title');
+    await page.keyboard.press('Enter');
+    await page.waitForFunction(() => window.__lvdc?.player()?.area === 'lagoon');
+    const turtle = () =>
+      page.evaluate(
+        () => window.__lvdc?.creatures()?.animals.find((one) => one.id === 'turtle') ?? null,
+      );
+    const start = await turtle();
+    expect(start?.state).toBe('glide');
+    await page.waitForFunction(
+      () => window.__lvdc?.player()?.narration === 'narr.c2.turtle',
+      null,
+      {
+        timeout: 30_000,
+      },
+    );
+    const stats = () => page.evaluate(() => window.__lvdc?.progress()?.stats ?? {});
+    expect((await stats()).turtleShadow).toBe(1);
+    expect((await page.evaluate(() => window.__lvdc?.feelings()?.conditions)) ?? []).toContain(
+      'wary',
+    );
+    // It stops at the clump ahead and crops, its head in the blades.
+    await page.waitForFunction(
+      () =>
+        window.__lvdc?.creatures()?.animals.find((one) => one.id === 'turtle')?.state === 'crop',
+      null,
+      { timeout: 30_000 },
+    );
+    const cropping = await turtle();
+    expect(cropping && start && cropping.x < start.x).toBe(true);
+    // Staying beside it counts toward following it.
+    expect(
+      await page.evaluate(() => window.__lvdc?.progress()?.challenges['c2.turtle'] ?? 0),
+    ).toBeGreaterThan(0);
+    expect((await stats()).turtleShadow).toBe(1);
     expect(errors).toEqual([]);
   });
 });

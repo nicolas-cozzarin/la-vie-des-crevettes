@@ -62,6 +62,7 @@ export const NARRATION_LINES: Readonly<Record<string, NarrationLine>> = {
   'narr.c2.glow': {},
   'narr.c2.brise': {},
   'narr.c2.ecume': {},
+  'narr.c2.turtle': {},
   'narr.c2.call': {},
   'narr.c2.faces': {},
   'narr.c2.fishGone': {},

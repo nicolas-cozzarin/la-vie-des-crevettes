@@ -262,7 +262,7 @@ The player comes in from the mangrove on the right and leaves for the channel on
 | H. North-west rocks | 200, 200, 2200, 1500 | Boulders with crevices between | A quiet corner. A good place for the molt |
 | I. Weed bank | 200, 3900, 2400, 1000 | Drifted seagrass blades and seaweed | Shed shells gather here |
 
-The edges are in T47. Every position is in `src/data/areas/lagoon.ts`. The shed shells of zone I are drawn by the shrimp's rig and are not placed yet.
+The edges are in T47. Every position is in `src/data/areas/lagoon.ts`. The shed shells of zone I are drawn by the shrimp's rig, and placed as `shedShells` in the area file (T108).
 
 Beats: arrive by day, burrow, rest until dusk. At dusk the shoal comes out: graze with it. Night: plankton, turtle, the burrow, bonds. Dawn: the fish. Then the molt, with a companion staying close. Then the pull of the tide.
 

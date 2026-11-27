@@ -121,6 +121,14 @@ export class AudioDirector {
     if (bells === 2) this.bellLeft = SECOND_BELL;
   }
 
+  /**
+   * The crackle of the rock garden, found by staying there (T108). Its sound
+   * is part of the lagoon's ambience; the caption says it is there.
+   */
+  crackle(): void {
+    this.caption({ key: 'caption.crackle', params: {} }, null);
+  }
+
   /** A companion takes fright and the player feels it: only a caption (doc 10, "Alarm"). */
   alarmed(name: string): void {
     this.caption({ key: 'caption.alarm', params: { name } }, null);

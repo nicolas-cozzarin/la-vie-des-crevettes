@@ -122,6 +122,14 @@ export interface CreatureDef {
   route?: readonly string[];
 }
 
+/** A shed shell lying on the bed, drawn by the shrimp's rig, pale (doc 11, `thing.shedShell`; T108). */
+export interface ShedShellDef {
+  id: string;
+  x: number;
+  y: number;
+  heading: number;
+}
+
 /** Another shrimp. `who` is a companion's name or a seed for an unnamed one. */
 export interface ShrimpSpawnDef {
   id: string;
@@ -144,6 +152,8 @@ export interface NamedZone {
   zone: Zone;
   /** The journal entry found by entering. */
   discovery?: string;
+  /** Seconds the shrimp must stay inside before the entry is found, as for a sound (T108). */
+  after?: number;
 }
 
 export interface TriggerDef {
@@ -192,6 +202,8 @@ export interface AreaDef {
   shrimp?: ShrimpSpawnDef[];
   currents?: CurrentDef[];
   zones?: NamedZone[];
+  /** Shed shells on the bed. Each is found as `thing.shedShell`. */
+  shedShells?: ShedShellDef[];
   triggers?: TriggerDef[];
   /** The threats that may come here, by doc 11's "Threat" line. Only those built so far. */
   threats?: ThreatKind[];

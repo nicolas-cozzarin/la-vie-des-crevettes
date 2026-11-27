@@ -93,6 +93,27 @@ describe('challenges', () => {
     expect(p.isDone('c1.branch')).toBe(true);
     expect(p.isDone('c0.larva')).toBe(true);
   });
+
+  it('count a graze under the glowing plankton only when full, at night, and in it (T109)', () => {
+    const p = progress();
+    const eat = (full: boolean, night: boolean, glowing: boolean) =>
+      p.hear({ kind: 'eaten', food: 'sandFilm', area: 'lagoon', full, night, glowing });
+    eat(true, false, false);
+    eat(false, true, true);
+    eat(true, true, false);
+    expect(p.isDone('c2.glow')).toBe(false);
+    expect(eat(true, true, true)).toContainEqual({ kind: 'done', id: 'c2.glow' });
+  });
+
+  it('count a sidestep, and the shed shell and the neighbours as found', () => {
+    const p = progress();
+    p.hear({ kind: 'stat', stat: 'sidesteps' });
+    p.hear({ kind: 'discovery', id: 'thing.shedShell', area: 'lagoon' });
+    p.hear({ kind: 'discovery', id: 'creature.pistolAndGoby', area: 'lagoon' });
+    for (const id of ['c2.sidestep', 'c2.shell', 'c2.neighbours']) {
+      expect(p.isDone(id)).toBe(true);
+    }
+  });
 });
 
 describe('achievements', () => {
@@ -114,6 +135,26 @@ describe('achievements', () => {
     expect(p.hear({ kind: 'greeting', other: 'young.1', area: 'mangrove' })).not.toContainEqual({
       kind: 'achievement',
       id: 'antenna',
+    });
+  });
+
+  it('night grazer: ten full grazes at night, and slow company after the turtle (T109)', () => {
+    const p = progress();
+    const news: ProgressNews[] = [];
+    for (let index = 0; index < 9; index++) {
+      news.push(
+        ...p.hear({ kind: 'eaten', food: 'sandFilm', area: 'lagoon', full: true, night: true }),
+      );
+    }
+    p.hear({ kind: 'eaten', food: 'sandFilm', area: 'lagoon', full: true, night: false });
+    p.hear({ kind: 'eaten', food: 'sandFilm', area: 'lagoon', full: false, night: true });
+    expect(news).not.toContainEqual({ kind: 'achievement', id: 'nightGrazer' });
+    expect(
+      p.hear({ kind: 'eaten', food: 'sandFilm', area: 'lagoon', full: true, night: true }),
+    ).toContainEqual({ kind: 'achievement', id: 'nightGrazer' });
+    expect(hold(p, 20.1, { followTurtle: true })).toContainEqual({
+      kind: 'achievement',
+      id: 'slowCompany',
     });
   });
 

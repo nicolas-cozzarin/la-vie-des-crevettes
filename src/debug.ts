@@ -162,4 +162,6 @@ export interface CreaturesSnapshot {
   /** A school also says how far its fish are from their places, in BL. */
   animals: { id: string; x: number; y: number; state: string; scattered?: number }[];
   rim: number;
+  /** The sand volcanoes puffing now. */
+  puffing?: string[];
 }

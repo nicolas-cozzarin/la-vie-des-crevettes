@@ -540,6 +540,15 @@ export const CREATURES = {
     round: { dig: { min: 3, max: 6 }, push: 1.6, dump: 0.7, back: 1.2 },
     pile: 14,
   },
+  /** Doc 11, `thing.sandVolcano` (T108). Seconds, and BL for the puff's size. */
+  sandVolcano: {
+    every: { min: 5, max: 14 },
+    puff: 2.5,
+    size: { from: 0.5, to: 1.3 },
+    grains: 7,
+  },
+  /** Shed shells in the weed bank (T108): how far they rock, in radians, and drift, in BL. */
+  shedShell: { rock: 0.07, rockEvery: 5, drift: 0.25, driftEvery: 23 },
   /** How bright the pale rim on a curiosity target is, and its width in pixels (doc 11, `fx.rim`). */
   rim: { color: 0xf4f1e4, strength: 0.35, width: 6 },
 };

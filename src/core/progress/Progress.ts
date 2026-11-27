@@ -96,7 +96,15 @@ export interface ProgressRecord {
 
 /** What Progress hears from the game. */
 export type ProgressEvent =
-  | { kind: 'eaten'; food: FoodKind; area: AreaId; full: boolean; night: boolean }
+  | {
+      kind: 'eaten';
+      food: FoodKind;
+      area: AreaId;
+      full: boolean;
+      night: boolean;
+      /** Among the thick glowing plankton, at night. */
+      glowing?: boolean;
+    }
   | { kind: 'tailflip' }
   | { kind: 'greeting'; other: string; area: AreaId }
   | { kind: 'touched'; what: string }
@@ -214,6 +222,7 @@ export class Progress {
         this.set(`tastedIn.${event.area}.${event.food}`);
         if (event.full) this.add('meals');
         if (event.full && event.night) this.add('nightMeals');
+        if (event.full && event.night && event.glowing) this.add('glowMeals');
         if (event.full) this.add('mealsSinceMolt');
         break;
       case 'tailflip':

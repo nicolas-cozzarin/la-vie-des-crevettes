@@ -1303,6 +1303,40 @@ const sandLoad: Painter = {
   },
 };
 
+/**
+ * A puff of sand blown out of a sand volcano: fine pale silt lit from
+ * above, lighter than the bed, thinning to nothing at its edge (T108).
+ */
+const sandPuff: Painter = {
+  width: 128,
+  height: 128,
+  paint(ctx, width, height) {
+    const cx = width / 2;
+    const cy = height / 2;
+    const cloud = ctx.createRadialGradient(cx, cy, 0, cx, cy, 0.5 * width);
+    cloud.addColorStop(0, 'rgba(244,238,220,0.9)');
+    cloud.addColorStop(0.4, 'rgba(236,228,206,0.6)');
+    cloud.addColorStop(1, 'rgba(230,222,200,0)');
+    ctx.fillStyle = cloud;
+    ctx.fillRect(0, 0, width, height);
+    const motes = seededRandom(733);
+    for (let index = 0; index < 22; index++) {
+      const angle = motes() * TAU;
+      const distance = Math.sqrt(motes()) * 0.4 * width;
+      ctx.fillStyle = `rgba(250,246,232,${0.3 + 0.4 * motes()})`;
+      ctx.beginPath();
+      ctx.arc(
+        cx + Math.cos(angle) * distance,
+        cy + Math.sin(angle) * distance,
+        0.012 * width + 0.012 * width * motes(),
+        0,
+        TAU,
+      );
+      ctx.fill();
+    }
+  },
+};
+
 export const lagoonAnimalPainters: Record<string, Painter> = {
   'turtle.shell': turtleShell,
   'turtle.head': turtleHead,
@@ -1314,5 +1348,6 @@ export const lagoonAnimalPainters: Record<string, Painter> = {
   'pistol.body': pistolBody,
   'pistol.claw': pistolClaw,
   'sand.load': sandLoad,
+  'fx.sandPuff': sandPuff,
   seaStar,
 };

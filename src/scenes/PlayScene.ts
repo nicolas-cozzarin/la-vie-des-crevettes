@@ -80,6 +80,8 @@ import { Narrator } from '../systems/Narrator';
 import { StoryTeller } from '../systems/StoryTeller';
 import { Threats } from '../systems/Threats';
 import { ScentField } from '../systems/ScentField';
+import { SandVolcanoes } from '../systems/SandVolcanoes';
+import { ShedShells } from '../systems/ShedShells';
 import { Shoal } from '../systems/Shoal';
 import { WaterLight } from '../systems/WaterLight';
 import type { HudScene } from './HudScene';
@@ -128,6 +130,9 @@ function discoverables(area: AreaDef): Discoverable[] {
     if (landmark.discovery) {
       things.push({ id: landmark.discovery, kind: 'thing', x: landmark.x, y: landmark.y });
     }
+  }
+  for (const shell of area.shedShells ?? []) {
+    things.push({ id: 'thing.shedShell', kind: 'thing', x: shell.x, y: shell.y });
   }
   for (const cover of area.cover ?? []) {
     if (cover.discovery) {
@@ -197,6 +202,8 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
   private lift = 0;
   /** The crabs, snails and fish that move, and the pale rim on what the shrimp is curious about. */
   private creatures!: Creatures;
+  private volcanoes!: SandVolcanoes;
+  private shells!: ShedShells;
   private rim!: Rim;
   /** The bird and what it does, and the cornered sequence (step 7). */
   private threats!: Threats;
@@ -255,6 +262,8 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
     this.loaded = loadArea(this, area);
     this.bodyLengthPx = this.loaded.bodyLengthPx;
     this.creatures = new Creatures(this, area, this.bodyLengthPx);
+    this.volcanoes = new SandVolcanoes(this, area, this.bodyLengthPx);
+    this.shells = new ShedShells(this, area, this.bodyLengthPx);
     this.rim = new Rim();
     const obstacles = this.loaded.obstacles;
 
@@ -488,7 +497,11 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
         : null;
     debugState.scent = () => this.scent.snapshot;
     debugState.shrimp = () => this.shoal.snapshot;
-    debugState.creatures = () => ({ animals: this.creatures.snapshot, rim: this.rim.snapshot });
+    debugState.creatures = () => ({
+      animals: this.creatures.snapshot,
+      rim: this.rim.snapshot,
+      puffing: this.volcanoes.puffing,
+    });
     debugState.threat = () => this.threats.snapshot;
     debugState.audio = () => this.audio.snapshot;
     debugState.feelings = () => ({
@@ -663,7 +676,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
       remaining -= dt;
     }
 
-    this.enterZones();
+    this.enterZones(frame);
     this.leaveBy();
     this.stepDay(frame);
     this.threats.enter(this.motion.x, this.motion.y);
@@ -672,6 +685,8 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
     // Walking up to a hermit crab without sending it into its shell (doc 12, "Slowly").
     if (this.creatures.update(frame, this.motion) > 0) this.keeper.count('gentle.hermitCrab');
     this.watchTurtle();
+    this.volcanoes.update(frame);
+    this.shells.update(frame);
     this.rim.set(this.rimmed());
     this.rim.update(frame);
     for (const [patch, image] of this.foodImages) image.setAlpha(0.15 + 0.85 * patch.amount);
@@ -829,7 +844,10 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
       this.feelings.eat(food.graze(dt) * (dusk ? DAY.effects.duskFilm : 1));
     }
     if (before === 'grazing' && this.activity.name !== 'grazing' && this.meal) {
+      const night = this.day?.phase === 'night';
       this.bus.emit('food:eaten', {
+        night,
+        glowing: night && (this.dayNight?.thickAt(this.motion.x, this.motion.y) ?? false),
         who: PLAYER,
         kind: this.meal.food.kind,
         first: this.meal.first,
@@ -1130,6 +1148,9 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
           hit: event.hit,
         });
         if (event.hit) this.threats.cornered.start();
+      } else if (event.type === 'sidestep') {
+        // A charge that missed during or just after a tail flip (doc 12, `c2.sidestep`).
+        this.keeper.count('sidesteps');
       } else if (event.type === 'faced') {
         this.teller?.fishFaced();
       } else if (event.type === 'escaped') {
@@ -1297,14 +1318,19 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
     this.feelings.stimulus('discovery');
     this.bus.emit('discovery', { id });
     this.teller?.found(id);
+    if (id === 'thing.crackle') this.audio.crackle();
   }
 
-  /** Zones entered on this frame, and the places found by entering them. */
-  private enterZones(): void {
-    const { entered } = this.zones.update(this.motion.x, this.motion.y);
-    for (const id of entered) {
+  /**
+   * Zones entered on this frame, and the places found by entering them, or
+   * by staying a while, as the crackle of the rock garden is (T108).
+   */
+  private enterZones(dt = 0): void {
+    this.zones.update(this.motion.x, this.motion.y, dt);
+    for (const id of this.zones.current) {
       const zone = this.loaded.zones.find((spot) => spot.id === id);
-      if (zone?.discovery && this.discovery.add(zone.discovery)) this.found(zone.discovery);
+      if (!zone?.discovery || this.zones.inFor(id) < (zone.after ?? 0) - 1e-6) continue;
+      if (this.discovery.add(zone.discovery)) this.found(zone.discovery);
     }
   }
 

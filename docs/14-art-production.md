@@ -341,6 +341,7 @@ This table is the checklist for the art. Update it in the same commit as a paint
 | `pistol.body` | 100 by 60 | Built. The small claw is part of it |
 | `pistol.claw` | 70 by 44 | Built. Joint at the left |
 | `sand.load` | 96 | Built. Added. A load of wet sand the pistol shrimp pushes out, drawn 0.4 BL wide (T107) |
+| `fx.sandPuff` | 128 | Built. Added. A puff of pale silt from a sand volcano, lighter than the bed, swelling to 1.1 BL as it thins (T108) |
 
 ### Litter (D43)
 

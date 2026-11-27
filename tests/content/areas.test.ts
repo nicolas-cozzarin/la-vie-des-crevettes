@@ -138,6 +138,7 @@ describe.each(asPlayed)('area %s', (_name, area) => {
       ...(area.creatures ?? []),
       ...(area.shrimp ?? []),
       ...(area.triggers ?? []),
+      ...(area.shedShells ?? []),
     ].map((thing) => thing.id);
     expect(new Set(ids).size).toBe(ids.length);
     const zones = (area.zones ?? []).map((zone) => zone.id);
@@ -156,6 +157,7 @@ describe.each(asPlayed)('area %s', (_name, area) => {
       ...(area.landmarks ?? []),
       ...(area.creatures ?? []),
       ...(area.shrimp ?? []),
+      ...(area.shedShells ?? []),
     ];
     for (const thing of things) expect(inside(area, thing.x, thing.y), thing.id).toBe(true);
     for (const zone of area.zones ?? []) expect(zoneInside(area, zone.zone), zone.id).toBe(true);
@@ -174,6 +176,9 @@ describe.each(asPlayed)('area %s', (_name, area) => {
       expect(blocked(area, shrimp.x, shrimp.y, bl * 0.25), shrimp.id).toBe(false);
     }
     for (const food of area.food ?? []) expect(blocked(area, food.x, food.y), food.id).toBe(false);
+    for (const shell of area.shedShells ?? []) {
+      expect(blocked(area, shell.x, shell.y, bl * 0.5), shell.id).toBe(false);
+    }
   });
 
   it('sizes round obstacles and edge strips from the fit table', () => {
@@ -257,6 +262,7 @@ describe('the mirror', () => {
       ...(each.landmarks ?? []),
       ...(each.creatures ?? []),
       ...(each.shrimp ?? []),
+      ...(each.shedShells ?? []),
     ];
     const before = points(area);
     const after = points(twice);
@@ -362,11 +368,15 @@ describe('the lagoon', () => {
       nacre: 'A',
       seaStar: 'H',
       'burrow.pistol': 'D',
+      'shell.1': 'I',
+      'shell.2': 'I',
+      'shell.3': 'I',
     };
     const things = [
       ...(lagoon.creatures ?? []),
       ...(lagoon.shrimp ?? []),
       ...(lagoon.landmarks ?? []),
+      ...(lagoon.shedShells ?? []),
     ];
     for (const [id, zoneId] of Object.entries(where)) {
       const thing = things.find((each) => each.id === id);

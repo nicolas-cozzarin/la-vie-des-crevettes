@@ -26,6 +26,10 @@ export type GameEvents = {
     patchId: string;
     /** The patch was eaten to nothing. */
     cleared?: boolean;
+    /** At night (doc 12, `nightGrazer`). */
+    night?: boolean;
+    /** At night, among the thick glowing plankton of the shallows (doc 12, `c2.glow`; T109). */
+    glowing?: boolean;
   };
   'sense:used': { seconds: number };
   'ribbon:followed': { kind: FoodKind; patchId: string };

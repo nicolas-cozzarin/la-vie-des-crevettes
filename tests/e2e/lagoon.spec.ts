@@ -113,6 +113,46 @@ test.describe('day and night', () => {
     await page.keyboard.up('ArrowLeft');
     expect((await day(page))?.lit).toBeGreaterThan(0);
   });
+
+  test('a full graze at night in the bright shallows is a graze under the plankton', async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    const errors = watchErrors(page);
+    // A life a little hungry, on the golden film in zone F, where the plankton is thickest (T109).
+    // One film takes off a quarter of the hunger, so this one meal ends full.
+    await page.goto('./?debug');
+    await waitForScene(page, 'Title');
+    await page.evaluate((save) => localStorage.setItem('lvdc.save.v1', JSON.stringify(save)), {
+      ...AT_THE_CREEK,
+      area: 'lagoon',
+      at: { x: 5700, y: 4300 },
+      hunger: 0.3,
+      narrated: ['narr.c1.arrive', 'narr.c2.arrive', 'narr.c2.sand', 'narr.c2.dusk'],
+      placesSeen: ['drift', 'mangrove', 'lagoon'],
+    });
+    await page.reload();
+    await waitForScene(page, 'Title');
+    await page.keyboard.press('Enter');
+    await page.waitForFunction(() => window.__lvdc?.player()?.area === 'lagoon');
+    for (const phase of ['dusk', 'night']) {
+      await page.keyboard.press('F7');
+      await page.waitForFunction((want) => window.__lvdc?.day()?.phase === want, phase);
+    }
+    await page.keyboard.down('KeyE');
+    await page.waitForFunction(() => window.__lvdc?.player()?.activity === 'grazing');
+    // Full, the shrimp stops grazing by itself.
+    await page.waitForFunction(() => window.__lvdc?.player()?.activity === 'free', null, {
+      timeout: 40_000,
+    });
+    await page.keyboard.up('KeyE');
+    const progress = await page.evaluate(() => window.__lvdc?.progress() ?? null);
+    expect((await day(page))?.phase).toBe('night');
+    expect(progress?.stats.nightMeals).toBe(1);
+    expect(progress?.stats.glowMeals).toBe(1);
+    expect(progress?.challenges['c2.glow']).toBe(1);
+    expect(errors).toEqual([]);
+  });
 });
 
 const player = (page: Page) => page.evaluate(() => window.__lvdc?.player() ?? null);
@@ -369,6 +409,37 @@ test.describe('the pistol shrimp and the goby', () => {
   });
 });
 
+test.describe("the lagoon's small things", () => {
+  test('the sand volcanoes puff, the crackle is heard by staying, shed shells lie in the weed', async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    const errors = watchErrors(page);
+    const found = (id: string) =>
+      page.evaluate((want) => window.__lvdc?.feelings()?.discovered.includes(want) ?? false, id);
+    await openLagoon(page, '&at=5150,2330');
+    await page.waitForFunction(() => (window.__lvdc?.creatures()?.puffing ?? []).length > 0, null, {
+      timeout: 30_000,
+    });
+    // The crackle of the rock garden: not at once, but after 3 s there.
+    await openLagoon(page, '&at=3000,4050');
+    expect(await found('thing.crackle')).toBe(false);
+    await page.waitForFunction(
+      () => window.__lvdc?.feelings()?.discovered.includes('thing.crackle'),
+      null,
+      { timeout: 10_000 },
+    );
+    // A shed shell in the weed bank.
+    await openLagoon(page, '&at=800,4380');
+    await page.waitForFunction(
+      () => window.__lvdc?.feelings()?.discovered.includes('thing.shedShell'),
+      null,
+      { timeout: 10_000 },
+    );
+    expect(errors).toEqual([]);
+  });
+});
+
 test.describe('the dawn fish', () => {
   test('in the story, the first dawn brings the fish in from the pass', async ({ page }) => {
     test.setTimeout(90_000);
@@ -419,7 +490,17 @@ test.describe("a companion's molt", () => {
       // At the edge of the meadow, above the shoal's ground, where Brise rests.
       at: { x: 4200, y: 1700 },
       bonds: { brise: 0.3 },
-      narrated: ['narr.c1.arrive', 'narr.c2.arrive', 'narr.c2.sand', 'narr.c2.dusk'],
+      // A life this far on has met others and named its moods in chapter 1. Without
+      // them, those must lines came first and her line could lose its turn until
+      // she had hardened (doc 12: a line that is not a must line waits 20 s).
+      moodsNamed: ['calm', 'hungry', 'content', 'curious', 'social', 'afraid'],
+      narrated: [
+        'narr.c1.arrive',
+        'narr.c1.meet',
+        'narr.c2.arrive',
+        'narr.c2.sand',
+        'narr.c2.dusk',
+      ],
       placesSeen: ['drift', 'mangrove', 'lagoon'],
     });
     await page.reload();

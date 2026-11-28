@@ -85,7 +85,7 @@ export const CHAPTERS: readonly ChapterDef[] = [
   { chapter: 0, area: 'drift', end: 's0.brown', hunted: false },
   { chapter: 1, area: 'mangrove', end: 's1.molt', hunted: true },
   { chapter: 2, area: 'lagoon', end: 's2.molt', hunted: true },
-  { chapter: 3, area: 'channel', end: 's3.fish2', hunted: true },
+  { chapter: 3, area: 'channel', end: 's3.fish2', hunted: true, finish: 'F' },
   { chapter: 4, area: 'shadow', end: 's4.shoal', hunted: true },
   { chapter: 5, area: 'openSea', end: 's5.spawn', hunted: false },
 ];

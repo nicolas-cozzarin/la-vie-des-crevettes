@@ -88,6 +88,7 @@ export class ProgressKeeper {
       hear({ kind: 'escaped', threat: kind, clean, still });
     });
     on('cornered', () => hear({ kind: 'cornered', area }));
+    on('zone:entered', ({ area: where, zone }) => hear({ kind: 'zone', area: where, zone }));
     on('molt:done', ({ who, molts }) => {
       if (who === PLAYER) hear({ kind: 'molt', molts });
     });

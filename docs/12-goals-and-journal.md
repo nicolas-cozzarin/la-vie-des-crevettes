@@ -131,7 +131,10 @@ Being "followed" for `nose`: Sense showed a food ribbon to a patch, and the play
 |-----|--------|
 | `tailFlips` | Tail flips |
 | `cornered` | Times cornered, this generation |
-| `corneredInChannel` | Times cornered in the channel, this visit |
+| `cornered.<area>` | Times cornered in an area, this visit. The channel's is `cornered.channel` (T115) |
+| `cleanRun.<area>` | 1 once a clean run through the area is counted, this visit (T115) |
+| `cleanRuns` | Clean runs, for `c3.uncornered` (T115) |
+| `released.<area>.<threat>` | Visits of a threat that reached release in an area, so the story counts them across a save (T115) |
 | `ribbonsFollowed` | See `nose` |
 | `nightMeals` | Full grazes at night |
 | `grooms` | Completed grooming bouts |

@@ -66,6 +66,8 @@ export interface ChapterDef {
   area: AreaId;
   end: string;
   hunted: boolean;
+  /** The zone that ends the way through the place: reached with no `cornered` there, a clean run (doc 12, `c3.uncornered`). */
+  finish?: string;
 }
 
 export interface ProgressDefs {
@@ -122,6 +124,7 @@ export type ProgressEvent =
   | { kind: 'mood'; from: Mood; to: Mood }
   | { kind: 'coverLeft'; wary: boolean }
   | { kind: 'area'; area: AreaId }
+  | { kind: 'zone'; area: AreaId; zone: string }
   | { kind: 'bond'; with: string; value: number }
   /** A count with no event of its own: the yolk ending, a change of shape, landfall. */
   | { kind: 'stat'; stat: string };
@@ -254,6 +257,8 @@ export class Progress {
         break;
       case 'threat':
         if (event.stage === 'chase') this.add(`chases.${event.area}`);
+        // Kept so the story can count visits across a save (doc 12, `s3.fish2`).
+        if (event.stage === 'release') this.add(`released.${event.area}.${event.threat}`);
         break;
       case 'escaped':
         this.add(`escaped.${event.threat}`);
@@ -289,7 +294,19 @@ export class Progress {
         // "This visit" counts start again.
         record.stats[`chases.${event.area}`] = 0;
         record.stats[`cornered.${event.area}`] = 0;
+        record.stats[`cleanRun.${event.area}`] = 0;
         break;
+      case 'zone': {
+        // Through the place to its far end, never cornered on the way: once a visit.
+        const chapter = this.defs.chapters.find(
+          (one) => one.area === event.area && one.finish === event.zone,
+        );
+        if (!chapter || this.stat(`cleanRun.${event.area}`) > 0) break;
+        if (this.stat(`cornered.${event.area}`) > 0) break;
+        record.stats[`cleanRun.${event.area}`] = 1;
+        this.add('cleanRuns');
+        break;
+      }
       case 'bond':
         record.bonds[event.with] = event.value;
         break;

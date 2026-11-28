@@ -151,6 +151,25 @@ describe('story', () => {
     expect(story.current(1)).toBe('s1.fill');
   });
 
+  it('follows the tide to the pool, and gets away from the fish twice in the channel (chapter 3)', () => {
+    const story = new Story(STORY_STEPS);
+    expect(story.hear({ kind: 'zone', area: 'channel', zone: 'C' })).toEqual([]);
+    expect(story.hear({ kind: 'zone', area: 'channel', zone: 'D' })).toEqual(['s3.tide']);
+    const away = { kind: 'threat', threat: 'fish', stage: 'release', area: 'channel' } as const;
+    // The lagoon's fish is not the channel's.
+    expect(story.hear({ ...away, area: 'lagoon' })).toEqual(['s2.fish']);
+    expect(story.hear(away)).toEqual([]);
+    expect(story.hear(away)).toEqual(['s3.fish2']);
+    expect(story.current(3)).toBeNull();
+  });
+
+  it('remembers a fish that went before the save (T115)', () => {
+    const story = new Story(STORY_STEPS, new Set(), { 'released.channel.fish': 1, tailFlips: 4 });
+    expect(
+      story.hear({ kind: 'threat', threat: 'fish', stage: 'release', area: 'channel' }),
+    ).toEqual(['s3.fish2']);
+  });
+
   it('starts from the steps an earlier part of the life finished', () => {
     const story = new Story(STORY_STEPS, new Set(['s0.motes', 's0.brown']));
     expect(story.current(0)).toBeNull();

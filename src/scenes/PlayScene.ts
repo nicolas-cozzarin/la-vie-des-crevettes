@@ -404,10 +404,12 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
       seed: Date.now() >>> 0,
       // In the story the first bird waits for Sense, and one ambient bird may follow it.
       // Once it has gone, it does not come again on coming back from the save.
+      // The channel's fish follow the shoal until they have come and gone twice.
       armed: story
         ? (id) =>
-            id !== 'bird.first' ||
-            (life.stepsDone.has('s1.sense') && !life.stepsDone.has('s1.bird'))
+            id === 'bird.first'
+              ? life.stepsDone.has('s1.sense') && !life.stepsDone.has('s1.bird')
+              : !id.startsWith('fish.') || !life.stepsDone.has('s3.fish2')
         : undefined,
       ambient: story ? ambientInStory(area.id, life.stepsDone) : undefined,
     });
@@ -778,6 +780,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
       watchWave: this.creatures.wavingNear(x, y, 3 * bl),
       hiddenTogether: tucked && this.shoal.hiddenNear(x, y, 1.5 * bl),
       followTurtle: this.creatures.turtleNear(x, y, CREATURES.turtle.follow),
+      allThreeClose: this.shoal.allCompanionsNear(x, y, STORY.allThree * bl),
     });
     if (this.explore) return;
     const resting =
@@ -957,6 +960,8 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
           y,
           CREATURES.burrowPair.alarm * this.bodyLengthPx,
         ),
+        seaweedNear: this.drifting.near(x, y, STORY.seaweedNear * this.bodyLengthPx),
+        zones: this.zones.current,
       });
       if (teller.takeMoltDue()) this.answerMolt(this.molting.signal());
     }
@@ -1405,7 +1410,8 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
    * by staying a while, as the crackle of the rock garden is (T108).
    */
   private enterZones(dt = 0): void {
-    this.zones.update(this.motion.x, this.motion.y, dt);
+    const { entered } = this.zones.update(this.motion.x, this.motion.y, dt);
+    for (const zone of entered) this.bus.emit('zone:entered', { area: this.areaId, zone });
     for (const id of this.zones.current) {
       const zone = this.loaded.zones.find((spot) => spot.id === id);
       if (!zone?.discovery || this.zones.inFor(id) < (zone.after ?? 0) - 1e-6) continue;

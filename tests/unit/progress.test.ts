@@ -267,6 +267,39 @@ describe('the record', () => {
     expect(news).toEqual([{ kind: 'progress', id: 'c0.motes', value: 11, target: 15 }]);
   });
 
+  it('keeps how many visits of each threat reached release in each place (T115)', () => {
+    const p = progress();
+    p.hear({ kind: 'threat', threat: 'fish', stage: 'release', area: 'channel' });
+    p.hear({ kind: 'threat', threat: 'fish', stage: 'chase', area: 'channel' });
+    p.hear({ kind: 'threat', threat: 'fish', stage: 'release', area: 'channel' });
+    expect(p.stat('released.channel.fish')).toBe(2);
+  });
+
+  it('counts a clean run on reaching the bar never cornered in the channel, once a visit (c3.uncornered)', () => {
+    const p = progress();
+    p.hear({ kind: 'area', area: 'channel' });
+    // The bar of another place, or another zone, is not the end of the run.
+    p.hear({ kind: 'zone', area: 'lagoon', zone: 'F' });
+    p.hear({ kind: 'zone', area: 'channel', zone: 'E' });
+    expect(p.stat('cleanRuns')).toBe(0);
+    expect(p.hear({ kind: 'zone', area: 'channel', zone: 'F' })).toContainEqual({
+      kind: 'done',
+      id: 'c3.uncornered',
+    });
+    p.hear({ kind: 'zone', area: 'channel', zone: 'F' });
+    expect(p.stat('cleanRuns')).toBe(1);
+
+    const cornered = progress();
+    cornered.hear({ kind: 'area', area: 'channel' });
+    cornered.hear({ kind: 'cornered', area: 'channel' });
+    cornered.hear({ kind: 'zone', area: 'channel', zone: 'F' });
+    expect(cornered.stat('cleanRuns')).toBe(0);
+    // A new visit starts clean.
+    cornered.hear({ kind: 'area', area: 'channel' });
+    cornered.hear({ kind: 'zone', area: 'channel', zone: 'F' });
+    expect(cornered.stat('cleanRuns')).toBe(1);
+  });
+
   it('counts a visit afresh each time a place is entered', () => {
     const p = progress();
     p.hear({ kind: 'area', area: 'mangrove' });

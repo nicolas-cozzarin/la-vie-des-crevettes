@@ -743,6 +743,10 @@ export const STORY = {
   regrouped: 3,
   /** Seconds the view takes to fade out on the way to the next place. */
   leaveFade: 1.5,
+  /** Chapter 3: seaweed riding the current this close has come to the shrimp (`narr.c3.food`). BL. */
+  seaweedNear: 3,
+  /** All three companions this close keep the shoal together (doc 12, `c3.together`). BL. */
+  allThree: 6,
 };
 
 /** Saving at rest (doc 02, "Saving"). Seconds. */

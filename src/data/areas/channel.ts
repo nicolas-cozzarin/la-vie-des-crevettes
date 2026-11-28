@@ -197,6 +197,13 @@ export const channel: AreaDef = {
     { id: 'F', zone: { x: 500, y: 0, w: 2000, h: 2600 } },
   ],
 
+  // The fish follows the shoal down: the first time in the narrows, the second
+  // among the boulders (doc 11). A `fish.` trigger calls it from upstream.
+  triggers: [
+    { id: 'fish.first', zone: { x: 6500, y: 0, w: 2000, h: 2600 }, once: true },
+    { id: 'fish.second', zone: { x: 2500, y: 0, w: 2000, h: 2600 }, once: true },
+  ],
+
   // Over the bar to the open bed outside, once the fish has been escaped twice.
   exits: [{ to: 'shadow', zone: { x: 0, y: 0, w: 90, h: 2600 }, needsStep: 's3.fish2' }],
 

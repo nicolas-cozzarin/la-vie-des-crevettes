@@ -777,6 +777,15 @@ export class Shoal {
     return named;
   }
 
+  /** Every named companion here is within `reach` px of a point, and there are three (doc 12, `c3.together`). */
+  allCompanionsNear(x: number, y: number, reach: number): boolean {
+    const named = this.members.filter((npc) => npc.named);
+    return (
+      named.length >= Object.keys(COMPANIONS).length &&
+      named.every((npc) => Math.hypot(npc.x - x, npc.y - y) <= reach)
+    );
+  }
+
   /** The companions within the company radius of a point. */
   companionsNear(x: number, y: number): string[] {
     const reach = COMPANY.radius * this.options.bodyLengthPx;

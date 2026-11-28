@@ -22,7 +22,11 @@ export const STAGE_IN: Record<PlayableArea, LifeStage> = {
  * The areas the story leads into. An area joins when its chapter's story is
  * built; until then it opens in explore mode only (T111).
  */
-export const STORY_AREAS: ReadonlySet<PlayableArea> = new Set<PlayableArea>(['mangrove', 'lagoon']);
+export const STORY_AREAS: ReadonlySet<PlayableArea> = new Set<PlayableArea>([
+  'mangrove',
+  'lagoon',
+  'channel',
+]);
 
 /** The area the story starts in, until the Drift is built (step 8). */
 export const FIRST_AREA: PlayableArea = 'mangrove';

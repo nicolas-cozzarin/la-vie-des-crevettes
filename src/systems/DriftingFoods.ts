@@ -79,6 +79,14 @@ export class DriftingFoods {
     return null;
   }
 
+  /** A clump showing, not eaten, within `reach` px of a point. */
+  near(x: number, y: number, reach: number): boolean {
+    return this.drawn.some(
+      ({ clump, food }) =>
+        !clump.eaten && food.shown(clump) > 0.5 && Math.hypot(clump.x - x, clump.y - y) <= reach,
+    );
+  }
+
   /** Where each clump is, for the journal and the test. */
   get places(): { id: string; x: number; y: number; eaten: boolean }[] {
     return this.drawn.map(({ clump }) => ({

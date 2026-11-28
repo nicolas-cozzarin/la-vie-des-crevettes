@@ -58,7 +58,13 @@ export class Story {
     private readonly steps: readonly StoryStep[],
     /** Steps already done in this life. */
     readonly done: Set<string> = new Set(),
-  ) {}
+    /** Threat visits that reached release before, by area and kind, as `released.<area>.<threat>` in the stats. */
+    released: Readonly<Record<string, number>> = {},
+  ) {
+    for (const [key, count] of Object.entries(released)) {
+      if (key.startsWith('released.')) this.visits.set(`${key.slice(9)}.release`, count);
+    }
+  }
 
   /** Hears one thing the game did. Returns the steps it finished. */
   hear(event: StoryEvent): string[] {

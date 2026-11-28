@@ -14,6 +14,7 @@ import type { MoltEvent } from '../core/molt/Molt';
 import { approach, rotateToward } from '../core/movement/angles';
 import { moveCircle, type Bounds } from '../core/movement/collision';
 import { carried, currentAt, inCurrent } from '../core/movement/currents';
+import { overBed } from '../core/movement/openWater';
 import { pickMissing } from '../core/npc/losses';
 import { seededRandom, seedOf } from '../core/random';
 import { RibbonMemory, ribbons, type Ribbon } from '../core/scent/ribbons';
@@ -87,6 +88,7 @@ import { SandVolcanoes } from '../systems/SandVolcanoes';
 import { ShedShells } from '../systems/ShedShells';
 import { DriftingFoods } from '../systems/DriftingFoods';
 import { Streaks } from '../systems/Streaks';
+import { SeaSnow } from '../entities/SeaSnow';
 import { Shoal } from '../systems/Shoal';
 import { Travellers } from '../systems/Travellers';
 import { Pond, POND_ONE } from '../systems/Pond';
@@ -217,6 +219,8 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
   private shells!: ShedShells;
   private drifting!: DriftingFoods;
   private streaks!: Streaks;
+  /** Marine snow, where the place has it (doc 11, `fx.snow`). */
+  private snow: SeaSnow | null = null;
   /** Drifting food eaten in this unbroken swim (doc 12, `c3.seaweed`). */
   private onTheMove = 0;
   private rim!: Rim;
@@ -281,6 +285,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
     this.shells = new ShedShells(this, area, this.bodyLengthPx);
     this.drifting = new DriftingFoods(this, area, this.bodyLengthPx);
     this.streaks = new Streaks(this, area, this.bodyLengthPx);
+    this.snow = area.snow ? new SeaSnow(this) : null;
     this.onTheMove = 0;
     this.rim = new Rim();
     const obstacles = this.loaded.obstacles;
@@ -707,6 +712,8 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
         this.keeper.count('stayedThroughMolt');
         this.keeper.count(`stayedWith.${id}`);
       }
+      // Beyond the bed, in open water, the shrimp only swims (T122).
+      this.motion.bed = overBed(this.area.bed, this.motion.x, this.motion.y);
       const moved = this.motion.step(dt, { x: axis.x, y: axis.y, dart }, this.mover);
       this.drift(dt);
       this.stepMolt(dt);
@@ -747,6 +754,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
     this.eatOnTheMove();
     this.drifting.update(frame);
     this.streaks.update(frame, this.cameras.main.worldView);
+    this.snow?.update(frame, this.cameras.main.worldView);
     this.rim.set(this.rimmed());
     this.rim.update(frame);
     for (const [patch, image] of this.foodImages) image.setAlpha(0.15 + 0.85 * patch.amount);
@@ -1607,7 +1615,12 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
       return near ? { id: `pinned.${id}`, kind: 'creature', x: near.x, y: near.y } : null;
     }
     const thing = this.things.find((one) => one.id === target.discovery);
-    return thing ? { id: `pinned.${id}`, kind: thing.kind, x: thing.x, y: thing.y } : null;
+    if (thing) return { id: `pinned.${id}`, kind: thing.kind, x: thing.x, y: thing.y };
+    // A place found by going there, as the deepest point: the middle of its zone.
+    const zone = (this.area.zones ?? []).find((one) => one.discovery === target.discovery)?.zone;
+    return zone
+      ? { id: `pinned.${id}`, kind: 'thing', x: zone.x + zone.w / 2, y: zone.y + zone.h / 2 }
+      : null;
   }
 
   /** The journal, over the paused game (doc 12, "The journal"). */

@@ -235,6 +235,37 @@ test.describe('explore', () => {
     expect(errors).toEqual([]);
   });
 
+  test('in the open sea the shrimp swims at once, and hangs in the water when it stops (T122)', async ({
+    page,
+  }) => {
+    const errors = watchErrors(page);
+    // Far out in the blue, with no bed below.
+    await explore(page, 'openSea&at=3500,2300');
+    expect((await player(page)).area).toBe('openSea');
+    await page.keyboard.down('ArrowLeft');
+    await page.waitForFunction(() => window.__lvdc?.player()?.mode === 'swim', null, {
+      timeout: 1500,
+    });
+    await page.waitForTimeout(800);
+    await page.keyboard.up('ArrowLeft');
+    await page.waitForTimeout(1500);
+    const still = await player(page);
+    expect(still.mode).toBe('rest');
+    expect(still.height).toBeGreaterThan(0.9);
+    expect(errors).toEqual([]);
+  });
+
+  test('in the open sea Hide under the ledge tucks the shrimp, and the deepest point is found (T122)', async ({
+    page,
+  }) => {
+    await explore(page, 'openSea&at=5420,3250');
+    await page.keyboard.down('ShiftLeft');
+    await page.waitForFunction(() => window.__lvdc?.player()?.tucked === true);
+    await page.keyboard.up('ShiftLeft');
+    await explore(page, 'openSea&at=1200,3000');
+    await page.waitForFunction(() => window.__lvdc?.progress()?.discoveries.includes('place.deep'));
+  });
+
   test('in the gutter the water carries a resting shrimp toward the creek (T110)', async ({
     page,
   }) => {

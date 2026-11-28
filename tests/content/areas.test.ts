@@ -255,7 +255,13 @@ describe.each(asPlayed)('area %s', (_name, area) => {
     for (const piece of (area.landmarks ?? []).filter((thing) =>
       thing.image.startsWith('waste.'),
     )) {
-      expect(piece.layer, piece.id).toBe('ground');
+      // Over open water, with no bed beneath, it floats and drifts overhead instead (doc 11; T122).
+      if (area.bed) {
+        expect(piece.layer, piece.id).toBe('surface');
+        expect(piece.drift, piece.id).toBeDefined();
+      } else {
+        expect(piece.layer, piece.id).toBe('ground');
+      }
       expect(Math.abs(piece.rotation ?? 0), piece.id).toBeLessThanOrEqual(0.6);
       for (const food of area.food ?? []) {
         const gap =

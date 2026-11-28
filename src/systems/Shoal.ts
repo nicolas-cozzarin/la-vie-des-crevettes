@@ -13,6 +13,7 @@ import type { MoltEvent } from '../core/molt/Molt';
 import { AlarmNet, type Alarm } from '../core/npc/alarm';
 import { leadTo, sidestepNow, type Charge } from '../core/npc/close';
 import { pickMolter, StayingClose } from '../core/npc/companionMolt';
+import { overBed } from '../core/movement/openWater';
 import { along, pointBeyond, shoalGoal } from '../core/npc/journey';
 import { NpcMind, type SeenShrimp } from '../core/npc/NpcMind';
 import type { LossCandidate } from '../core/npc/losses';
@@ -707,6 +708,7 @@ export class Shoal {
     }
     const values = npc.feelings.values;
     const restBeside = this.restBesideFor(npc, player);
+    npc.motion.bed = overBed(this.options.area.bed, npc.x, npc.y);
     const result = npc.step(
       dt,
       {

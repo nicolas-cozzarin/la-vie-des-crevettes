@@ -1,4 +1,5 @@
 import { angleDiff, approach, rotateToward, wrapAngle } from './angles';
+import { AFLOAT_BELOW } from './openWater';
 
 /**
  * How a shrimp moves on the flat bed: it turns to face the held direction,
@@ -88,6 +89,11 @@ export class ShrimpMotion {
   mode: MotionMode = 'rest';
   /** 0 on the bed, 1 when swimming, higher for a moment in a dart. Visual only. */
   height = 0;
+  /**
+   * How much bed lies beneath, from 1 over it to 0 in open water (`overBed`).
+   * The scene sets it; the shadow fades with it.
+   */
+  bed = 1;
 
   private moveTime = 0;
   private idleTime = 0;
@@ -104,6 +110,15 @@ export class ShrimpMotion {
     this.x = start.x;
     this.y = start.y;
     this.heading = wrapAngle(start.heading ?? 0);
+  }
+
+  /**
+   * In open water, with no bed beneath (doc 11, "Chapter 5"; T122): it swims
+   * from the first moment it moves, and when still it hangs in the water
+   * instead of settling.
+   */
+  get afloat(): boolean {
+    return this.bed < AFLOAT_BELOW;
   }
 
   /** True during the recovery that follows several darts in a row. */
@@ -169,7 +184,7 @@ export class ShrimpMotion {
       const maxSpeed = t.swimSpeed * t.bodyLengthPx;
       const walkSpeed = t.walkSpeed * t.bodyLengthPx;
       const coast = (maxSpeed / t.coastTime) * elapsed;
-      const swimming = hasInput && this.moveTime >= t.walkToSwim;
+      const swimming = hasInput && (this.afloat || this.moveTime >= t.walkToSwim);
 
       if (hasInput) {
         this.heading = rotateToward(this.heading, inputAngle, t.turnRate * elapsed);
@@ -193,7 +208,10 @@ export class ShrimpMotion {
       const distance = this.speed * elapsed;
       dx = Math.cos(this.heading) * distance;
       dy = Math.sin(this.heading) * distance;
-      this.mode = swimming ? 'swim' : hasInput || this.speed > 0 ? 'walk' : 'rest';
+      // Afloat, a shrimp coasting still swims: there is nothing to walk on.
+      const coasting = this.speed > 0;
+      if (swimming || (this.afloat && coasting)) this.mode = 'swim';
+      else this.mode = hasInput || coasting ? 'walk' : 'rest';
     }
 
     const before = { x: this.x, y: this.y };
@@ -274,6 +292,7 @@ export class ShrimpMotion {
     } else if (this.mode === 'swim') {
       target = 1;
     }
+    if (this.afloat) target = Math.max(target, 1);
     this.height += (target - this.height) * approach(dt, time);
     if (this.height < 0.001) this.height = 0;
   }

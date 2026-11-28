@@ -61,6 +61,28 @@ export const JOURNEY = {
   ahead: 3,
 };
 
+/** The open sea (doc 11, "Chapter 5"; T122). */
+export const SEA = {
+  /** Litter floating overhead: how much of it shows, and how dark its shadow is on the bed. */
+  floating: { alpha: 0.8, shadow: 0.28 },
+  /**
+   * Marine snow in three layers, far to near: how many specks, their size in
+   * pixels, how strongly they show, how far they move with the view (1 is
+   * with the bed), and the seconds a speck takes to sink out of sight.
+   */
+  snow: {
+    count: [60, 36, 14] as const,
+    size: [
+      [3, 5],
+      [5, 8],
+      [10, 15],
+    ] as const,
+    alpha: [0.3, 0.42, 0.3] as const,
+    parallax: [0.55, 0.85, 1.25] as const,
+    sink: [26, 18, 12] as const,
+  },
+};
+
 /** Strangers passing through, down the journey and out past its end (doc 11, `shrimp.traveller`; T114). */
 export const PASSING = {
   /** Seconds before the first group, from arriving. */

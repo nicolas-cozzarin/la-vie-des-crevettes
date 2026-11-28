@@ -77,7 +77,7 @@ describe('challenges', () => {
       if (!target) continue;
       const found = Object.values(AREAS).some((area) =>
         'discovery' in target
-          ? [...(area.landmarks ?? []), ...(area.cover ?? [])].some(
+          ? [...(area.landmarks ?? []), ...(area.cover ?? []), ...(area.zones ?? [])].some(
               (thing) => thing.discovery === target.discovery,
             )
           : (area.creatures ?? []).some((creature) => creature.kind === target.creature),

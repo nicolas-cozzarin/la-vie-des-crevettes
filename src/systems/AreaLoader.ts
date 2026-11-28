@@ -5,6 +5,7 @@ import { makeStills, MID_WATER, OVER_COVER, STILL_REACH, type Stills } from '../
 import { ensureTexture } from '../art/TextureFactory';
 import { DEPTH, GAME_HEIGHT, GAME_WIDTH } from '../config';
 import type { Obstacle } from '../core/movement/collision';
+import { overBed } from '../core/movement/openWater';
 import { seededRandom } from '../core/random';
 import type { CoverSpot } from '../core/world/cover';
 import type {
@@ -12,10 +13,12 @@ import type {
   CoverDef,
   CreatureDef,
   FoodDef,
+  LandmarkDef,
   NamedZone,
+  SeaBedDef,
   WallDef,
 } from '../data/areas/types';
-import { CAMERA, COVER, WORLD } from '../data/tuning';
+import { CAMERA, COVER, SEA, WORLD } from '../data/tuning';
 import { LIVE_KINDS, THREAT_KINDS } from './Creatures';
 
 /**
@@ -158,6 +161,14 @@ export function loadArea(scene: Phaser.Scene, area: AreaDef): LoadedArea {
       .setDepth(DEPTH.bed + 0.5);
   });
 
+  // 2b. Open water (T122): the deep's darker water, very large and soft; the bed only
+  // where it lies, its sand fading into the water on each side inside the place.
+  // The wash lies over the bed's fade too, so the two darken together.
+  if (area.bed) drawSeaBed(scene, area.bed, area.size);
+  for (const wash of area.washes ?? []) {
+    centred(wash.image, wash.x, wash.y, wash.width, DEPTH.bed + 0.47);
+  }
+
   // 3. Scatter. Same numbers, in the same order, as the atelier draws.
   for (const scatter of area.scatter) {
     const random = seededRandom(scatter.seed);
@@ -275,6 +286,37 @@ export function loadArea(scene: Phaser.Scene, area: AreaDef): LoadedArea {
       spots.push({ id: landmark.discovery, x: landmark.x, y: landmark.y, images: [picture] });
     }
   }
+  // Floating at the surface: above everything in the water, its shadow below where the bed is.
+  const floating: {
+    def: LandmarkDef;
+    x: number;
+    y: number;
+    image: Phaser.GameObjects.Image;
+    shade: Phaser.GameObjects.Image;
+  }[] = [];
+  for (const landmark of area.landmarks ?? []) {
+    if (landmark.layer !== 'surface') continue;
+    const turn = landmark.rotation ?? 0;
+    const shade = shadow(
+      landmark.x + 0.6 * bl,
+      landmark.y + 0.8 * bl,
+      landmark.width * 1.1,
+      landmark.width * 0.55,
+      0,
+      DEPTH.bed + 2,
+      turn,
+    );
+    const image = centred(
+      landmark.image,
+      landmark.x,
+      landmark.y,
+      landmark.width,
+      DEPTH.surfaceLight - 1,
+      turn,
+    ).setAlpha(SEA.floating.alpha);
+    floating.push({ def: landmark, x: landmark.x, y: landmark.y, image, shade });
+  }
+
   const covers: CoverHandle[] = [];
   for (const cover of area.cover ?? []) {
     const images: Phaser.GameObjects.Image[] = [];
@@ -338,6 +380,18 @@ export function loadArea(scene: Phaser.Scene, area: AreaDef): LoadedArea {
       ground.setPosition(left, top).setTilePosition(left / groundScale, top / groundScale);
     },
     update(dt, playerX, playerY) {
+      for (const one of floating) {
+        const drift = one.def.drift;
+        if (drift) {
+          const within = drift.within;
+          one.x = wrap(one.x + drift.x * dt, within.x, within.x + within.w);
+          one.y = wrap(one.y + drift.y * dt, within.y, within.y + within.h);
+          one.image.setPosition(one.x, one.y);
+        }
+        const sx = one.x + 0.6 * bl;
+        const sy = one.y + 0.8 * bl;
+        one.shade.setPosition(sx, sy).setAlpha(SEA.floating.shadow * overBed(area.bed, sx, sy));
+      }
       for (const cover of covers) {
         const drift = cover.def.drift;
         if (drift) {
@@ -360,6 +414,56 @@ export function loadArea(scene: Phaser.Scene, area: AreaDef): LoadedArea {
       }
     },
   };
+}
+
+/**
+ * The bed under open water: its picture tiled over the bed's zone and the
+ * fade beyond it, and over the fade a band of the water's colour, clear at
+ * the bed's edge and full at the fade's end.
+ */
+function drawSeaBed(scene: Phaser.Scene, bed: SeaBedDef, size: { w: number; h: number }): void {
+  const { zone, fade } = bed;
+  const left = zone.x > 0 ? Math.max(0, zone.x - fade) : zone.x;
+  const top = zone.y > 0 ? Math.max(0, zone.y - fade) : zone.y;
+  const right =
+    zone.x + zone.w < size.w ? Math.min(size.w, zone.x + zone.w + fade) : zone.x + zone.w;
+  const bottom =
+    zone.y + zone.h < size.h ? Math.min(size.h, zone.y + zone.h + fade) : zone.y + zone.h;
+  scene.add
+    .tileSprite(left, top, right - left, bottom - top, ensureTexture(scene, bed.image))
+    .setOrigin(0)
+    .setTileScale(1 / IMAGE_SCALE)
+    .setTilePosition(left * IMAGE_SCALE, top * IMAGE_SCALE)
+    .setDepth(DEPTH.bed + 0.4);
+  const key = `fade.${bed.water}`;
+  if (!scene.textures.exists(key)) {
+    const texture = scene.textures.createCanvas(key, 256, 4);
+    if (!texture) throw new Error(`Could not create the image "${key}"`);
+    const ctx = texture.context;
+    const fill = ctx.createLinearGradient(0, 0, 256, 0);
+    fill.addColorStop(0, `${bed.water}00`);
+    fill.addColorStop(1, `${bed.water}ff`);
+    ctx.fillStyle = fill;
+    ctx.fillRect(0, 0, 256, 4);
+    texture.refresh();
+  }
+  // Each band runs from the bed's edge outward: clear there, the water's colour at its end.
+  const band = (x: number, y: number, length: number, across: number, turn: number): void => {
+    scene.add
+      .image(x, y, key)
+      .setOrigin(0, 0.5)
+      .setDisplaySize(length, across)
+      .setRotation(turn)
+      .setDepth(DEPTH.bed + 0.45);
+  };
+  const midY = zone.y + zone.h / 2;
+  const midX = zone.x + zone.w / 2;
+  if (zone.x - left > 0) band(zone.x, midY, zone.x - left, bottom - top, Math.PI);
+  if (right - (zone.x + zone.w) > 0)
+    band(zone.x + zone.w, midY, right - zone.x - zone.w, bottom - top, 0);
+  if (zone.y - top > 0) band(midX, zone.y, zone.y - top, right - left, -Math.PI / 2);
+  if (bottom - (zone.y + zone.h) > 0)
+    band(midX, zone.y + zone.h, bottom - zone.y - zone.h, right - left, Math.PI / 2);
 }
 
 function wrap(value: number, min: number, max: number): number {

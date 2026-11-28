@@ -47,6 +47,11 @@ export function mirrorArea(area: AreaDef): AreaDef {
       ...landmark,
       x: x(landmark.x),
       rotation: turn(landmark.rotation),
+      drift: landmark.drift && {
+        x: -landmark.drift.x,
+        y: landmark.drift.y,
+        within: zone(landmark.drift.within),
+      },
     })),
     creatures: area.creatures?.map((creature) => ({
       ...creature,
@@ -65,6 +70,8 @@ export function mirrorArea(area: AreaDef): AreaDef {
     })),
     drifting: area.drifting?.map((one) => ({ ...one, run: zone(one.run) })),
     journey: area.journey?.map((point) => ({ ...point, x: x(point.x) })),
+    bed: area.bed && { ...area.bed, zone: zone(area.bed.zone) },
+    washes: area.washes?.map((wash) => ({ ...wash, x: x(wash.x) })),
     pond: area.pond && {
       ...area.pond,
       gate: { ...area.pond.gate, x: x(area.pond.gate.x) },

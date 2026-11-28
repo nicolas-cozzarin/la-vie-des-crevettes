@@ -372,7 +372,10 @@ Worn, faded and silted, never shiny. No print, word or mark. Each has a soft con
 | `shadow.hull` | 1024 by 280, shown four times larger | Built. One long dark shape, darkest along the keel, blunt at the stern and drawn out to a point at the bow, on the right. Blurred, with a faint halo. No light painted in, so it may be turned any way |
 | `shadow.grid` | 440 by 1024 | Built. Changed (T119): the whole band, not a tile, shown 6 by 14 BL and moving toward its right. A diamond mesh drawn out along the pull, cells about half a BL, its strands blurred and sagging a little; a faint shade over all; ragged soft edges; at half strength |
 | `fx.silt` | 256 | Built. A lumpy soft puff of pale grey-brown silt, thinning to nothing at its rim |
-| `sea.ledge` | 760 by 420 | To paint |
+| `sea.blue` | 1024, tile | Built. The open sea's water, `#0A2E6E`, with very large, very faint patches a little lighter and darker. No bed |
+| `sea.deep` | 256 | Built. Added (T122). One round wash of the deep's `#061A40`, full in the middle and fading to nothing at its rim, shown very large over the blue so the water darkens toward the deepest point: doc 11's wash |
+| `sea.ledge` | 760 by 420 | Built. The last rock: a long slab lit on its upper left, faint layers across it, its lower edge overhanging a dark hollow, its shadow on the sand below. Drawn as cover |
+| `fx.snow` | 32 | Built. One speck of marine snow, `#DCE9FF`, soft, brighter in the middle. Shown in three layers that sink, the far ones small and dim |
 | `channel.seaFan` | 360 by 300 | Built. Added. Its foot, where it holds the rock, is at the left middle. It sways about that point |
 | `fx.egg` | 16 | To paint |
 | `pond.wall` | 1024 by 360, repeats sideways | Built. D39. A straight dike of packed earth, pebbles pressed in, a dark band of grass on its crest leaning over, cracked mud at a dead straight foot. Solid to 0.7 of its height |

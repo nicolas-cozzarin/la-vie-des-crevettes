@@ -206,6 +206,11 @@ export interface LightDef {
    * so that it still covers the screen when the shrimp is near its edge.
    */
   murk?: string;
+  /**
+   * Share of colour the place's water takes away, from 0 to 1, under what the
+   * mood takes (doc 04: the shadow is the channel, drained of colour).
+   */
+  drain?: number;
 }
 
 export interface AreaDef {

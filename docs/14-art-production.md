@@ -369,9 +369,9 @@ Worn, faded and silted, never shiny. No print, word or mark. Each has a soft con
 | `food.seaweed` | 320 | Built. Eight branching olive-brown stems, narrow blades on alternate sides, small round floats lit on the upper left. Drawn just over the bed with a soft shadow, turning slowly as it rides (T112) |
 | `light.moon` | 1024, tile | Built. A few long soft bands of `#C9D6E8`, very faint, clear between |
 | `channel.murk` | 512 by 288 | Built. Added. Blue-black water at night, the eye reaching a little way |
-| `shadow.hull` | 1024 by 280, shown four times larger | To paint |
-| `shadow.grid` | 512, tile | To paint |
-| `fx.silt` | 256 | To paint |
+| `shadow.hull` | 1024 by 280, shown four times larger | Built. One long dark shape, darkest along the keel, blunt at the stern and drawn out to a point at the bow, on the right. Blurred, with a faint halo. No light painted in, so it may be turned any way |
+| `shadow.grid` | 440 by 1024 | Built. Changed (T119): the whole band, not a tile, shown 6 by 14 BL and moving toward its right. A diamond mesh drawn out along the pull, cells about half a BL, its strands blurred and sagging a little; a faint shade over all; ragged soft edges; at half strength |
+| `fx.silt` | 256 | Built. A lumpy soft puff of pale grey-brown silt, thinning to nothing at its rim |
 | `sea.ledge` | 760 by 420 | To paint |
 | `channel.seaFan` | 360 by 300 | Built. Added. Its foot, where it holds the rock, is at the left middle. It sways about that point |
 | `fx.egg` | 16 | To paint |

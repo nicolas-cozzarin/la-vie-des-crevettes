@@ -196,6 +196,19 @@ test.describe('explore', () => {
     await page.waitForFunction(() => window.__lvdc?.player()?.activity === 'free');
   });
 
+  test('the shadow opens, and Hide by an outcrop tucks the shrimp into its crevice (T119)', async ({
+    page,
+  }) => {
+    const errors = watchErrors(page);
+    // Beside the open end of the crevice at 5850, 2100.
+    await explore(page, 'shadow&at=6040,2040');
+    expect((await player(page)).area).toBe('shadow');
+    await page.keyboard.down('ShiftLeft');
+    await page.waitForFunction(() => window.__lvdc?.player()?.tucked === true);
+    await page.keyboard.up('ShiftLeft');
+    expect(errors).toEqual([]);
+  });
+
   test('in the gutter the water carries a resting shrimp toward the creek (T110)', async ({
     page,
   }) => {

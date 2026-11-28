@@ -23,6 +23,8 @@ export interface MoodPresenterOptions {
   nameFeelings: () => boolean;
   /** The mood's name in the player's language. */
   word: (mood: Mood) => string;
+  /** Share of colour the place's water takes away, under the mood's own (`LightDef.drain`). */
+  drain?: number;
 }
 
 /** Everything the screen does for a mood, as numbers that ease. */
@@ -147,12 +149,13 @@ export class MoodPresenter {
   }
 
   /**
-   * One colour matrix: take some colour away, wash toward the warm colour,
+   * One colour matrix: take some colour away (the place's and the mood's), wash toward the warm colour,
    * then multiply by the cool one, and by the dimming of Sense. A wash lifts the picture a little, which
    * suits content. A multiply darkens it a little, which suits fear.
    */
   private applyColour(): void {
-    const { grey, warm, cool, dim } = this.now;
+    const { warm, cool, dim } = this.now;
+    const grey = 1 - (1 - this.now.grey) * (1 - (this.options.drain ?? 0));
     if (grey < NOTHING && warm < NOTHING && cool < NOTHING && dim < NOTHING) {
       this.grade.active = false;
       return;

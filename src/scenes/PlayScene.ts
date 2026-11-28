@@ -433,6 +433,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
       reducedMotion: () => app.settings.reducedMotion,
       nameFeelings: () => app.settings.nameFeelings,
       word: (mood) => t(`mood.${mood}`),
+      drain: this.area.light?.drain,
     });
     this.view = { x: spawn.x, y: spawn.y };
     this.lead = { x: 0, y: 0 };

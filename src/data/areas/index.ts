@@ -4,10 +4,11 @@ import { channel } from './channel';
 import { lagoon } from './lagoon';
 import { mangrove } from './mangrove';
 import { mirrorArea } from './mirror';
+import { shadow } from './shadow';
 import type { AreaDef } from './types';
 
 /** Every area that can be played. More join as their data is written (doc 11). */
-export const AREAS = { mangrove, lagoon, channel } as const;
+export const AREAS = { mangrove, lagoon, channel, shadow } as const;
 
 export type PlayableArea = keyof typeof AREAS;
 
@@ -16,6 +17,7 @@ export const STAGE_IN: Record<PlayableArea, LifeStage> = {
   mangrove: 'juvenile',
   lagoon: 'subAdult',
   channel: 'subAdult',
+  shadow: 'subAdult',
 };
 
 /**

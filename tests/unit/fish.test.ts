@@ -310,4 +310,24 @@ describe('the hunting fish keeps room to charge', () => {
     expect(faced).toBeDefined();
     expect(Math.hypot(fish.x - 3000, fish.y - 2500) / BL).toBeGreaterThanOrEqual(FISH.room - 0.2);
   });
+
+  it('just at the edge of its room, it still finishes turning and charges, whichever way it was swimming', () => {
+    // Turning to face brought it back inside its room, and it began again, forever (CI, T102).
+    for (let way = 0; way < 16; way++) {
+      for (let side = 0; side < 8; side++) {
+        const angle = (side / 8) * Math.PI * 2;
+        const fish = new HuntingFish(FISH, BL, SHOAL, Math.PI, 1);
+        fish.x = 3000 + Math.cos(angle) * FISH.room * BL;
+        fish.y = 2500 + Math.sin(angle) * FISH.room * BL;
+        fish.heading = (way / 16) * Math.PI * 2;
+        fish.speed = FISH.patrol.speed;
+        fish.hunt();
+        let charged = false;
+        for (let time = 0; time < 8 && !charged; time += DT) {
+          charged = fish.chase(DT, prey(), COVERS, BOUNDS).some((e) => e.type === 'charge');
+        }
+        expect(charged, `heading ${way}/16, from ${side}/8`).toBe(true);
+      }
+    }
+  });
 });

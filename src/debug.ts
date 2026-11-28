@@ -35,6 +35,8 @@ export interface PlayerSnapshot {
   leaving: string | null;
   /** The activity's prompt on screen, by its key, or null. */
   prompt: string | null;
+  /** Where a pond is seen (D39): whether the player is in its water, and one waits at its mesh. */
+  pond: { water: boolean; atMesh: boolean } | null;
 }
 
 /** What the browser test can ask about the time of day, where a place has one. */

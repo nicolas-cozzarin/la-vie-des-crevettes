@@ -65,6 +65,15 @@ export function mirrorArea(area: AreaDef): AreaDef {
     })),
     drifting: area.drifting?.map((one) => ({ ...one, run: zone(one.run) })),
     journey: area.journey?.map((point) => ({ ...point, x: x(point.x) })),
+    pond: area.pond && {
+      ...area.pond,
+      gate: { ...area.pond.gate, x: x(area.pond.gate.x) },
+      plume: {
+        ...area.pond.plume,
+        from: { ...area.pond.plume.from, x: x(area.pond.plume.from.x) },
+        to: { ...area.pond.plume.to, x: x(area.pond.plume.to.x) },
+      },
+    },
     zones: area.zones?.map((named) => ({ ...named, zone: zone(named.zone) })),
     shedShells: area.shedShells?.map((shell) => ({
       ...shell,

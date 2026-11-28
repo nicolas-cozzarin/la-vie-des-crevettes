@@ -283,6 +283,33 @@ test.describe('explore', () => {
     );
   });
 
+  test('in the pool a farm pond lets out its water, and one behind the mesh comes to it (D39)', async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    await explore(page, 'channel&at=5600,800');
+    expect((await player(page)).pond).toEqual({ water: false, atMesh: false });
+    // Up toward the gate, into the pond's water, until one comes to the mesh.
+    await page.keyboard.down('ArrowUp');
+    await page.waitForFunction(() => window.__lvdc?.player()?.pond?.water === true, null, {
+      timeout: 20_000,
+    });
+    await page.waitForFunction(() => window.__lvdc?.player()?.pond?.atMesh === true, null, {
+      timeout: 30_000,
+    });
+    await page.keyboard.up('ArrowUp');
+    // Antennae touch through the mesh: a greeting.
+    await page.waitForFunction(() => window.__lvdc?.player()?.prompt === 'prompt.greet', null, {
+      timeout: 10_000,
+    });
+    await page.keyboard.press('KeyF');
+    await page.waitForFunction(
+      () => (window.__lvdc?.progress()?.stats['greeted.pond.one'] ?? 0) > 0,
+      null,
+      { timeout: 10_000 },
+    );
+  });
+
   test('in the channel the seaweed rides the tide toward the sea (T112)', async ({ page }) => {
     await explore(page, 'channel&at=9700,1300');
     const first = await page.evaluate(() => window.__lvdc?.creatures()?.drifting ?? []);

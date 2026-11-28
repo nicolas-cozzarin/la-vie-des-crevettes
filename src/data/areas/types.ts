@@ -181,6 +181,20 @@ export interface ExitDef {
   needsStep?: string;
 }
 
+/**
+ * A farm pond behind a straight bank on one edge of the area, its outlet
+ * gate in the bank, and the plume of its water in the channel (doc 18,
+ * "Level 3"; D39). The bank itself is one of the area's walls, `pond.wall`.
+ */
+export interface PondDef {
+  /** The middle of the gate where it meets the water, and its width across. */
+  gate: { x: number; y: number; width: number };
+  /** The plume: a band from the gate to where the current has bent it, and how wide. */
+  plume: { from: { x: number; y: number }; to: { x: number; y: number }; width: number };
+  /** How many shapes pass behind the mesh. */
+  crowd: number;
+}
+
 /** What lies over the picture: light from above, and how far the eye reaches. */
 export interface LightDef {
   /** A tile of light patches, laid over the bed with a blend that only lightens. */
@@ -225,6 +239,8 @@ export interface AreaDef {
    * to beyond its end (doc 11, `shrimp.traveller`; T114). Needs a journey.
    */
   travellers?: boolean;
+  /** A farm pond seen through its outlet's mesh (D39). */
+  pond?: PondDef;
   zones?: NamedZone[];
   /** Shed shells on the bed. Each is found as `thing.shedShell`. */
   shedShells?: ShedShellDef[];

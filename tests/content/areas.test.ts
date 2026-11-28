@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { imageFit } from '../../src/art/fit';
 import { PAINTERS } from '../../src/art/painters';
-import { inCurrent } from '../../src/core/movement/currents';
+import { currentAt, inCurrent } from '../../src/core/movement/currents';
+import { inPlume } from '../../src/core/pond/plume';
 import { isClear } from '../../src/core/npc/steer';
 import { AREA_IDS, FOOD_KINDS } from '../../src/core/world/kinds';
+import { channel } from '../../src/data/areas/channel';
 import { lagoon } from '../../src/data/areas/lagoon';
 import { mangrove } from '../../src/data/areas/mangrove';
 import { AREAS, areaFor, isPlayableArea } from '../../src/data/areas/index';
@@ -473,9 +475,119 @@ describe('litter (D43)', () => {
   const count = (area: AreaDef): number =>
     (area.landmarks ?? []).filter((thing) => thing.image.startsWith('waste.')).length;
 
-  it('grows toward the farm: rare in the mangrove, more in the lagoon', () => {
+  it('grows toward the farm: rare in the mangrove, more in the lagoon, most in the channel', () => {
     expect(count(mangrove)).toBeGreaterThan(0);
     expect(count(mangrove)).toBeLessThanOrEqual(3);
     expect(count(lagoon)).toBeGreaterThan(count(mangrove));
+    expect(count(channel)).toBeGreaterThan(count(lagoon));
+  });
+
+  it('lies about half within 10 BL of the pond gate in the channel (doc 11)', () => {
+    const gate = channel.pond?.gate;
+    const bl = channel.bodyLengthPx ?? 110;
+    const pieces = (channel.landmarks ?? []).filter((thing) => thing.image.startsWith('waste.'));
+    const near = pieces.filter(
+      (piece) => gate && Math.hypot(piece.x - gate.x, piece.y - gate.y) <= 10 * bl,
+    );
+    expect(pieces.length).toBeGreaterThanOrEqual(18);
+    expect(near.length).toBeGreaterThanOrEqual(pieces.length * 0.4);
+  });
+
+  it('has sacks and pipes only near a farm', () => {
+    for (const area of Object.values(areas)) {
+      const bl = area.bodyLengthPx ?? 110;
+      for (const piece of area.landmarks ?? []) {
+        if (piece.image !== 'waste.sack' && piece.image !== 'waste.pipe') continue;
+        const gate = area.pond?.gate;
+        expect(gate, `${area.id}: ${piece.id}`).toBeDefined();
+        if (!gate) continue;
+        const away = Math.hypot(piece.x - gate.x, piece.y - gate.y) / bl;
+        expect(away, `${area.id}: ${piece.id}`).toBeLessThanOrEqual(15);
+      }
+    }
+  });
+
+  it('is never in the first view of an area', () => {
+    for (const area of Object.values(areas)) {
+      const bl = area.bodyLengthPx ?? 110;
+      for (const piece of area.landmarks ?? []) {
+        if (!piece.image.startsWith('waste.')) continue;
+        // The view is about 12 by 7 body lengths; a piece reaches half its width beyond its middle.
+        const reach = piece.width / 2;
+        const seen =
+          Math.abs(piece.x - area.spawn.x) < 6 * bl + reach &&
+          Math.abs(piece.y - area.spawn.y) < 3.5 * bl + reach;
+        expect(seen, `${area.id}: ${piece.id}`).toBe(false);
+      }
+    }
+  });
+});
+
+describe('the pond seen from the channel (D39)', () => {
+  describe.each([
+    ['as written', channel],
+    ['mirrored', mirrorArea(channel)],
+  ])('%s', (_name, area) => {
+    const pond = area.pond;
+    const bl = area.bodyLengthPx ?? 110;
+    if (!pond) throw new Error('The channel has no pond');
+    const { gate, plume } = pond;
+
+    it('has its gate in the pond bank along the top edge of the pool', () => {
+      const bank = (area.walls ?? []).find((wall) => wall.image === 'pond.wall');
+      expect(bank?.side).toBe('top');
+      const from = bank?.from ?? 0;
+      const to = bank?.to ?? 0;
+      expect(to - from).toBe(2000);
+      expect(gate.x - gate.width / 2).toBeGreaterThan(from);
+      expect(gate.x + gate.width / 2).toBeLessThan(to);
+      expect(gate.y).toBeGreaterThanOrEqual(bank?.depth ?? 0);
+      const pool = area.zones?.find((zone) => zone.id === 'D')?.zone;
+      expect(pool && gate.x > pool.x && gate.x < pool.x + pool.w).toBe(true);
+    });
+
+    it('is 3 BL across, and stands out as a block the shrimp cannot pass', () => {
+      expect(gate.width / bl).toBeCloseTo(3, 1);
+      const apron = (area.blocks ?? []).find(
+        (block) =>
+          block.shape === 'rect' &&
+          block.x <= gate.x - gate.width / 2 + 1 &&
+          block.x + block.w >= gate.x + gate.width / 2 - 1 &&
+          block.y + block.h >= gate.y,
+      );
+      expect(apron).toBeDefined();
+    });
+
+    it('lets out a plume about 10 BL long, from the gate, bent downstream by the tide', () => {
+      expect(Math.hypot(plume.from.x - gate.x, plume.from.y - gate.y)).toBeLessThan(
+        plume.width / 2,
+      );
+      const length = Math.hypot(plume.to.x - plume.from.x, plume.to.y - plume.from.y) / bl;
+      expect(length).toBeGreaterThan(8);
+      expect(length).toBeLessThan(12);
+      const tide = currentAt(area.currents ?? [], gate.x, gate.y + 400);
+      expect(tide.vx).not.toBe(0);
+      expect(Math.sign(plume.to.x - plume.from.x)).toBe(Math.sign(tide.vx));
+      expect(plume.to.y).toBeGreaterThan(plume.from.y);
+    });
+
+    it('has no food in its water', () => {
+      for (const food of area.food ?? []) {
+        expect(inPlume(plume, food.x, food.y), food.id).toBe(false);
+        const edge = Math.min(
+          ...[0, 0.25, 0.5, 0.75, 1].map((t) =>
+            Math.hypot(
+              plume.from.x + (plume.to.x - plume.from.x) * t - food.x,
+              plume.from.y + (plume.to.y - plume.from.y) * t - food.y,
+            ),
+          ),
+        );
+        expect(edge - plume.width / 2 - food.size / 2, food.id).toBeGreaterThan(0);
+      }
+    });
+
+    it('has a crowd behind the mesh', () => {
+      expect(pond.crowd).toBeGreaterThanOrEqual(6);
+    });
   });
 });

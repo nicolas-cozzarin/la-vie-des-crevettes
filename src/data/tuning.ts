@@ -81,6 +81,30 @@ export const PASSING = {
   gone: 20,
 };
 
+/** The farm pond seen from the channel (doc 18, "Level 3"; D39). */
+export const POND = {
+  /** BL per second the shapes behind the mesh move along the wall, slowest and fastest. */
+  crowdSpeed: [0.35, 0.6] as const,
+  /** BL per second for the one that comes to the mesh. */
+  come: 0.8,
+  /** BL from the mesh within which the player brings one to it. */
+  near: 3,
+  /** BL from the gate's middle the shapes pass, to either side: most of it behind the concrete. */
+  loop: 3,
+  /** BL behind the mesh the shapes keep, nearest and farthest. */
+  behind: [0.35, 1.5] as const,
+  /** How strong the plume's colour is over what lies beneath, at the gate. */
+  plumeAlpha: 0.85,
+  /** The plume is drawn as soft stains along it: their gap, in plume widths. */
+  stainStep: 0.4,
+  /** Each stain's size in plume widths, at the gate and at the far end. */
+  stainSize: [1.1, 1.7] as const,
+  /** How strong the far end's stain is, against the gate's. */
+  stainFade: 0.35,
+  /** How much the shapes show through the water and the mesh. */
+  crowdAlpha: 0.55,
+};
+
 /** Food that rides the current (doc 11, `food.seaweed`; T112). */
 export const DRIFTING = {
   /** BL: a clump fades in and out over this much of each end of its run. */
@@ -662,6 +686,7 @@ export const FISH = {
   arrive: { from: 6, speed: 3 },
   turn: 0.9,
   room: 3,
+  roomMargin: 1,
   face: 0.6,
   pause: 0.5,
   charge: { speed: 9, reach: 10 },

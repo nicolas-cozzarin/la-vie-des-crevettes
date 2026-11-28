@@ -1,3 +1,4 @@
+import { waste } from '../waste';
 import type { AreaDef, CoverDef, ObstacleDef, WallDef } from './types';
 
 /**
@@ -12,6 +13,8 @@ import type { AreaDef, CoverDef, ObstacleDef, WallDef } from './types';
 
 /** Pixels per second for a current given in body lengths per second (doc 11). */
 const BL = 140;
+/** The shrimp is 12 cm long here (doc 11, "Scale"). */
+const PX_PER_CM = BL / 12;
 const tide = (blPerSecond: number): number => -blPerSecond * BL;
 
 /** The walls' depth: the usual, and at the narrows. */
@@ -54,7 +57,10 @@ export const channel: AreaDef = {
   ambience: 'amb.channel',
 
   walls: [
-    ...both(0, 6500, WIDE),
+    { image: 'channel.wall', side: 'top', from: 0, to: 4500, depth: WIDE },
+    // Zone D: along the pool's top edge, the bank of a farm pond (D39).
+    { image: 'pond.wall', side: 'top', from: 4500, to: 6500, depth: WIDE },
+    { image: 'channel.wall', side: 'bottom', from: 0, to: 6500, depth: WIDE },
     // Zone C: the narrows.
     ...both(6500, 8500, NARROW),
     ...both(8500, 12000, WIDE),
@@ -69,6 +75,8 @@ export const channel: AreaDef = {
     boulder(6500, 2180, 290, 'b', -0.3),
     boulder(8500, 420, 290, 'b', 0.4),
     boulder(8500, 2180, 290, 'a', -0.1),
+    // Where the rock gives way to the pond's bank.
+    boulder(4500, 330, 260, 'a', -0.4),
     // The ends of the rock by the pass.
     boulder(11880, 960, 170, 'a', 0.3),
     boulder(11880, 1640, 170, 'b', -0.2),
@@ -85,6 +93,17 @@ export const channel: AreaDef = {
     // Zone F: one rock on the bar.
     boulder(1500, 1950, 170, 'b', 0.3),
   ],
+
+  // The pond's gate stands out from its bank a little (D39).
+  blocks: [{ shape: 'rect', x: 5390, y: 0, w: 420, h: 360 }],
+
+  // Through the gate's mesh, the pond: its water comes out into the pool and
+  // the tide bends it downstream (doc 18, "Level 3").
+  pond: {
+    gate: { x: 5600, y: 340, width: 420 },
+    plume: { from: { x: 5600, y: 420 }, to: { x: 4350, y: 960 }, width: 420 },
+    crowd: 14,
+  },
 
   cover: [
     // Zone C: crevices in both walls, where the fish cannot follow.
@@ -142,6 +161,27 @@ export const channel: AreaDef = {
       rotation: -Math.PI / 2,
       layer: 'ground',
     },
+    // Litter along both sides, half of it within 10 BL of the pond's gate (D43).
+    waste('waste.1', 'pipe', 5080, 540, PX_PER_CM, 0.35),
+    waste('waste.2', 'sack', 4600, 2050, PX_PER_CM, 0.3),
+    waste('waste.3', 'bottle', 6050, 470, PX_PER_CM, -0.5),
+    waste('waste.4', 'bag', 4800, 1400, PX_PER_CM, -0.3),
+    waste('waste.5', 'bottle', 6600, 1150, PX_PER_CM, 0.2),
+    waste('waste.6', 'foam', 5200, 1250, PX_PER_CM),
+    waste('waste.7', 'bottle', 4650, 640, PX_PER_CM, -0.3),
+    waste('waste.8', 'bag', 6280, 920, PX_PER_CM, 0.4),
+    waste('waste.9', 'bottle', 5500, 720, PX_PER_CM, 0.1),
+    waste('waste.10', 'foam', 6180, 640, PX_PER_CM, 0.5),
+    waste('waste.11', 'bottle', 9200, 520, PX_PER_CM, 0.3),
+    waste('waste.12', 'bag', 9900, 2080, PX_PER_CM, -0.4),
+    waste('waste.13', 'foam', 8900, 2120, PX_PER_CM, 0.2),
+    waste('waste.14', 'bottle', 7400, 830, PX_PER_CM, -0.2),
+    waste('waste.15', 'sack', 7050, 1640, PX_PER_CM, 0.15),
+    waste('waste.16', 'bag', 3300, 520, PX_PER_CM, 0.3),
+    waste('waste.17', 'bottle', 3500, 2150, PX_PER_CM, -0.4),
+    waste('waste.18', 'sandal', 1900, 600, PX_PER_CM, 0.4),
+    waste('waste.19', 'bag', 1000, 2120, PX_PER_CM, -0.2),
+    waste('waste.20', 'foam', 2300, 2150, PX_PER_CM, 0.1),
   ],
 
   shrimp: [

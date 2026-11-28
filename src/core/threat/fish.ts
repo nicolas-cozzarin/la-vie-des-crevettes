@@ -22,6 +22,11 @@ export interface FishTuning {
   turn: number;
   /** BL it keeps from the shrimp before it turns to face it: it needs room to charge. */
   room: number;
+  /**
+   * BL further it swims, once too close, before it turns: turning to face
+   * brings it a little nearer, and without this it would never finish.
+   */
+  roomMargin: number;
   /** Seconds to turn and point at the shrimp, then seconds held dead straight: the warning. */
   face: number;
   pause: number;
@@ -95,6 +100,8 @@ export class HuntingFish {
   /** The way it turns after a charge. */
   private recoverWay = 1;
   private leaveWay = 1;
+  /** Too close to charge: swimming away until it has room and a little more. */
+  private makingRoom = false;
 
   constructor(
     private readonly tuning: FishTuning,
@@ -132,6 +139,7 @@ export class HuntingFish {
 
   /** The chase begins: it turns to face the shrimp. */
   hunt(): void {
+    this.makingRoom = false;
     this.enter('face');
   }
 
@@ -153,7 +161,9 @@ export class HuntingFish {
       case 'face': {
         // Too close to charge: it swims away first, to have room.
         const gap = Math.hypot(prey.x - this.x, prey.y - this.y);
-        if (gap < t.room * this.bl) {
+        if (gap < t.room * this.bl) this.makingRoom = true;
+        else if (gap >= (t.room + t.roomMargin) * this.bl) this.makingRoom = false;
+        if (this.makingRoom) {
           this.heading = rotateToward(this.heading, toPrey + Math.PI, t.turn * 3 * dt);
           this.speed = approach(this.speed, t.patrol.speed, dt, 0.4);
           this.glide(dt, bounds);

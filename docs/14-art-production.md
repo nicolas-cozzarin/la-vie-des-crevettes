@@ -375,9 +375,10 @@ Worn, faded and silted, never shiny. No print, word or mark. Each has a soft con
 | `sea.ledge` | 760 by 420 | To paint |
 | `channel.seaFan` | 360 by 300 | Built. Added. Its foot, where it holds the rock, is at the left middle. It sways about that point |
 | `fx.egg` | 16 | To paint |
-| `pond.wall` | 1024 by 360, repeats sideways | To paint. D39. Packed earth, straight, grass tufts on the crest, cracked mud at the foot |
-| `pond.outlet` | 420 by 300 | To paint. D39. A concrete gate stained green-brown, its opening closed by a mesh |
-| `pond.plume` | 1024 by 512 | To paint. D39. A soft green-brown stain, densest at the left edge where it leaves the gate |
+| `pond.wall` | 1024 by 360, repeats sideways | Built. D39. A straight dike of packed earth, pebbles pressed in, a dark band of grass on its crest leaning over, cracked mud at a dead straight foot. Solid to 0.7 of its height |
+| `pond.outlet` | 588 by 560 | Built. D39. Drawn 420 wide, the gate's width. Two concrete cheeks with board grooves, stained green-brown from the water up; between them the pond's green water, darker toward the pond; the mesh across the mouth, 340 of 400 down, silt caught on it; the water pouring out below |
+| `pond.plume` | 256 | Built. Changed (T116). One soft round stain of greener water with silt in it; the plume is a row of them from the gate, growing and thinning |
+| `pond.shape` | 252 by 112 | Built. Added (T116). One of the pond's shrimp seen through its water: a pale shape facing right, tail fan spread, the joins of the abdomen faint, the long antennae swept back. Never pink, never curled |
 
 ### The pond life (D39)
 

@@ -153,11 +153,23 @@ describe('what is heard, and what is captioned', () => {
     expect(strikeCue('fish')).toEqual({ sound: 'rush', caption: 'caption.rush' });
   });
 
+  it('the net: its engine far off, then overhead', () => {
+    expect(stageCue('net', 'cue')).toEqual({ sound: 'threatCue', caption: 'caption.engineFar' });
+    expect(stageCue('net', 'presence')).toEqual({ sound: null, caption: 'caption.engineNear' });
+    expect(stageCue('net', 'release')).toBeNull();
+  });
+
   it('every caption is written in both languages', () => {
     const english: Record<string, string> = en;
     const french: Record<string, string> = fr;
     const keys = ['caption.shadow', 'caption.step', 'caption.strike', 'caption.rush'];
-    for (const key of [...keys, 'caption.relief', 'caption.alarm']) {
+    for (const key of [
+      ...keys,
+      'caption.relief',
+      'caption.alarm',
+      'caption.engineFar',
+      'caption.engineNear',
+    ]) {
       expect(english[key], key).toMatch(/^\[.+\]$/);
       expect(french[key], key).toMatch(/^\[.+\]$/);
     }

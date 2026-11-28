@@ -209,6 +209,32 @@ test.describe('explore', () => {
     expect(errors).toEqual([]);
   });
 
+  test('in the shadow the net comes; hidden in a crevice, the shrimp lets it pass over (T120)', async ({
+    page,
+  }) => {
+    test.setTimeout(180_000);
+    const errors = watchErrors(page);
+    // Beside the open end of the crevice at 4775, 1100, inside the net's trigger.
+    await explore(page, 'shadow&at=4951,1196');
+    await page.keyboard.down('ShiftLeft');
+    await page.waitForFunction(() => window.__lvdc?.player()?.tucked === true);
+    await page.waitForFunction(() => window.__lvdc?.threat()?.kind === 'net', null, {
+      timeout: 20_000,
+    });
+    await page.waitForFunction(() => window.__lvdc?.threat()?.net?.band != null, null, {
+      timeout: 60_000,
+    });
+    await page.waitForFunction(() => (window.__lvdc?.progress()?.stats.netCrevice ?? 0) > 0, null, {
+      timeout: 100_000,
+    });
+    const threat = await page.evaluate(() => window.__lvdc?.threat());
+    expect(threat?.net?.wasUnder).toBe(true);
+    expect(threat?.silt).toBeGreaterThan(0);
+    expect((await player(page)).tucked).toBe(true);
+    await page.keyboard.up('ShiftLeft');
+    expect(errors).toEqual([]);
+  });
+
   test('in the gutter the water carries a resting shrimp toward the creek (T110)', async ({
     page,
   }) => {

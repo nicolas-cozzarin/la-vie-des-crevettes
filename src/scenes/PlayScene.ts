@@ -553,7 +553,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
     const stopDebug = debugRequested()
       ? app.keyboard.onDebugKey((key) => {
           if (key === 'mood') this.cycleMood();
-          else if (key === 'threat') this.threats.callThreat();
+          else if (key === 'threat') this.threats.callThreat(this.motion.x, this.motion.y);
           else if (key === 'time') this.nextTime();
           else if (key === 'herMolt') this.shoal.moltNearest();
           else if (key === 'travellers') this.travellers?.now();
@@ -714,6 +714,10 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
       for (const kind of this.threats.felt(PLAYER, this.motion.x, this.motion.y)) {
         this.feelings.stimulus(kind);
       }
+      // The net's engine growing, and its grid overhead, are felt for as long as they last.
+      for (const { kind, amount } of this.threats.ongoing(this.motion.x, this.motion.y, dt)) {
+        this.feelings.stimulus(kind, amount);
+      }
       dart = false;
       remaining -= dt;
     }
@@ -756,6 +760,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
       y: this.motion.y,
       target: this.feelings.mood === 'curious' ? this.pull.target : null,
       sensing: this.activity.name === 'sensing',
+      shaded: this.threats.underGrid(this.motion.x, this.motion.y),
     });
     this.audio.update(frame, {
       mood: this.feelings.mood,
@@ -1190,6 +1195,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
       coverGap: this.area.sand ? 0 : coverGap / this.bodyLengthPx,
       shoal: this.shoal.middleNear(x, y, FISH.sight * this.bodyLengthPx),
       sinceFlip: this.clock - this.lastFlip,
+      inCrevice: this.activity.tucked && this.activity.cover?.def.kind === 'crevice',
     };
   }
 
@@ -1199,11 +1205,13 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
       if (event.type === 'stage') {
         this.bus.emit('threat:stage', { kind: event.kind, stage: event.stage });
         if (event.stage === 'release') this.loseFromShoal(event.kind);
+        // Caught up under the net's grid: no strike, the cornered sequence begins at once (T120).
+        if (event.stage === 'cornered' && event.kind === 'net') this.threats.cornered.start();
         // At the cue, the crabs go down and the schools burst; Nacre notices first.
         if (event.stage === 'cue') {
-          // The bird's shadow passes over the player; the fish is felt before it is seen.
+          // The bird's shadow passes over the player; the fish and the net are felt before they are seen.
           const shadow =
-            event.kind === 'fish'
+            event.kind !== 'bird'
               ? { x: this.motion.x, y: this.motion.y }
               : this.threats.director.shadow;
           this.creatures.cue(shadow.x, shadow.y);
@@ -1224,6 +1232,20 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
         this.keeper.count('sidesteps');
       } else if (event.type === 'faced') {
         this.teller?.fishFaced();
+      } else if (event.type === 'held') {
+        // The net's back edge carries the shrimp along, unless rock is in the way (T120).
+        const after = this.mover(
+          this.motion.x,
+          this.motion.y,
+          event.x - this.motion.x,
+          event.y - this.motion.y,
+        );
+        this.motion.x = after.x;
+        this.motion.y = after.y;
+      } else if (event.type === 'netPassed') {
+        // Out by the side, or in a crevice as it passed (doc 12, `c4.edge`, `c4.crevice`).
+        if (event.edge) this.keeper.count('netEdge');
+        if (event.crevice) this.keeper.count('netCrevice');
       } else if (event.type === 'escaped') {
         this.bus.emit('threat:escaped', {
           kind: event.kind,

@@ -716,6 +716,27 @@ export const FISH = {
   swing: 0.18,
 };
 
+/** The net (doc 10, "The net"; T120). Distances in BL, times in seconds. */
+export const NET = {
+  cue: 4,
+  hull: { long: 30, wide: 8, cross: 6 },
+  grid: { across: 14, deep: 6, speed: 2.2, follow: 3 },
+  /** The hull's bow and the grid's front come in this far from the player: just out of view. */
+  enter: 6,
+  caught: 2.5,
+  room: 3,
+  past: 6,
+  sight: 6,
+  shadowReach: 3,
+  engineGrow: 0.05,
+  /** How much the screen darkens under the grid, as Sense dims it. */
+  dim: 0.22,
+  /** Stirred silt (doc 11, `fx.silt`): a cloud every so many BL the grid goes, in BL across, hanging 20 s. */
+  silt: { every: 1.6, size: [3, 6] as [number, number], hang: 20, thin: 4, alpha: 0.85 },
+  /** Specks in the water, trembling with the throb. Pixels at its loudest. */
+  specks: { count: 34, tremble: 3.5, alpha: 0.3 },
+};
+
 /** Who goes missing from the shoal when a threat leaves (doc 10, "Losses", D42). */
 export const LOSSES = {
   chance: { bird: 1 / 3, fish: 1 / 2, net: 1 },

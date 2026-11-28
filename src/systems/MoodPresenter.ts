@@ -1,7 +1,7 @@
 import type Phaser from 'phaser';
 import type { Mood } from '../core/feelings/mood';
 import { approach } from '../core/movement/angles';
-import { MOOD, MOOD_SCREEN, SENSE } from '../data/tuning';
+import { MOOD, MOOD_SCREEN, NET, SENSE } from '../data/tuning';
 import type { HudScene } from '../scenes/HudScene';
 
 /** What the presenter needs to know on each frame. */
@@ -15,6 +15,8 @@ export interface MoodView {
   target: { x: number; y: number } | null;
   /** Sense is in use: the view dims slightly. */
   sensing: boolean;
+  /** Under the net's grid: the screen darkens (doc 10, "The net"). */
+  shaded?: boolean;
 }
 
 export interface MoodPresenterOptions {
@@ -145,6 +147,7 @@ export class MoodPresenter {
     }
     if (view.mood !== 'afraid') want.dark = Math.max(want.dark, s.waryEdges * wary);
     if (view.sensing) want.dim = SENSE.dim;
+    if (view.shaded) want.dim = Math.max(want.dim, NET.dim);
     return want;
   }
 

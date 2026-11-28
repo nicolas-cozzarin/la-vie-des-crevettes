@@ -52,6 +52,12 @@ export interface ShoalThreat {
   readonly charging?: Charge | null;
   view(x: number, y: number, isPlayer: boolean): ThreatView | null;
   felt(id: string, x: number, y: number): StimulusKind[];
+  /** Where a shrimp at (x, y) flees from, if not from `danger`: across the net's lane (T120). */
+  fleeFrom?(x: number, y: number): Point;
+  /** What a shrimp at (x, y) feels for as long as it lasts, with this step's amount. */
+  ongoing?(x: number, y: number, dt: number): { kind: StimulusKind; amount: number }[];
+  /** Whether (x, y) is under the net's grid. */
+  underGrid?(x: number, y: number): boolean;
 }
 
 /** The player, as the other shrimp need to know it on each step. */
@@ -157,6 +163,8 @@ export class Shoal {
   private forPlayer: Alarm[] = [];
   private time = 0;
   private threat: ShoalThreat | null = null;
+  /** Who is under the net's grid now, so each is sent out of it as it comes over them. */
+  private readonly underGrid = new Set<string>();
   /** The time of day, where the place has one. By day in the lagoon the shoal rests in the sand. */
   dayPhase: DayPhase | null = null;
   /** The shrimp that took fright during the threat under way (doc 02, bonds). */
@@ -656,10 +664,20 @@ export class Shoal {
   ): void {
     const threat = this.threat;
     if (threat) {
+      const from = threat.fleeFrom?.(npc.x, npc.y) ?? threat.danger;
       for (const kind of threat.felt(npc.id, npc.x, npc.y)) {
         npc.feelings.stimulus(kind);
-        npc.mind.startled(time, threat.danger.x, threat.danger.y);
+        npc.mind.startled(time, from.x, from.y);
       }
+      for (const { kind, amount } of threat.ongoing?.(npc.x, npc.y, dt) ?? []) {
+        npc.feelings.stimulus(kind, amount);
+      }
+      // As the grid comes over it, it scatters out across the lane: the way out is to the side.
+      const under = threat.underGrid?.(npc.x, npc.y) === true;
+      if (under && !this.underGrid.has(npc.id)) {
+        this.underGrid.add(npc.id);
+        npc.mind.startled(time, from.x, from.y);
+      } else if (!under) this.underGrid.delete(npc.id);
     }
     const others: SeenShrimp[] = [{ ...playerSeen, stage: this.stage(npc.id) }];
     for (const other of this.members) {

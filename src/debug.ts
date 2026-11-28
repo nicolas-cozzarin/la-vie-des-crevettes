@@ -157,6 +157,20 @@ export interface ThreatSnapshot {
   cornered: boolean;
   /** The hunting fish, from its cue to the end of its release. */
   fish: { x: number; y: number; heading: number; phase: string; charges: number } | null;
+  /** The net, from the hull's coming to the end of its release (T120). */
+  net: {
+    hull: { x: number; y: number };
+    band: { x: number; y: number; w: number; h: number } | null;
+    lane: number;
+    way: 1 | -1;
+    under: number;
+    wasUnder: boolean;
+    wayOut: string | null;
+    gone: boolean;
+  } | null;
+  /** Clouds of silt the net has left hanging, and how loud its engine is, 0 to 1. */
+  silt: number;
+  throb: number;
 }
 
 /** What the browser test can ask about the animals: where each is, and how strong the rim is. */

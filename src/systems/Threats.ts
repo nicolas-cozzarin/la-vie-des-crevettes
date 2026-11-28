@@ -1,6 +1,7 @@
 import type Phaser from 'phaser';
 import type { StimulusKind, ThreatView } from '../core/feelings/types';
 import type { Point } from '../core/movement/collision';
+import { currentAt } from '../core/movement/currents';
 import { seededRandom } from '../core/random';
 import { shelterFor, type Shelter } from '../core/threat/cornered';
 import { ThreatDirector, type ThreatEvent, type ThreatPlayer } from '../core/threat/ThreatDirector';
@@ -91,6 +92,12 @@ export class Threats {
       if (id === 'bird.first') {
         const from = WORLD.mirror ? Math.PI - BIRD.firstFrom : BIRD.firstFrom;
         this.director.request('bird', true, from);
+      }
+      // The fish that follows the shoal down the channel comes from upstream (T115).
+      if (id.startsWith('fish.')) {
+        const water = currentAt(this.options.area.currents ?? [], x, y);
+        const still = water.vx === 0 && water.vy === 0;
+        this.director.request('fish', false, still ? null : Math.atan2(-water.vy, -water.vx));
       }
     }
   }

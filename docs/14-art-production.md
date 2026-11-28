@@ -236,9 +236,9 @@ Simple rigs, each a few images moved by code. No drawn frames.
 | Barnacle | `barnacle`, a feathered line | The line sweeps out and in |
 | Small fish | `fish.small` | Whole image, with a slight side-to-side turn |
 | Hunting fish | `fish.hunter.body`, `fish.hunter.tail` | The tail swings at its joint, slow or fast. The tail's joint `HUNTER_TAIL_OWN_JOINT` is pinned at `HUNTER_TAIL_JOINT` on the body, in `painters/lagoonAnimals.ts` |
-| Turtle | `turtle.shell`, `turtle.head`, `turtle.flipper.front` twice, `turtle.flipper.rear` twice | Flippers swing at the shoulder. The head turns and dips. The parts lie under the shell. `TURTLE_JOINTS` gives where each is pinned on the shell, `TURTLE_PART_JOINTS` each part's own joint. The lower flippers are the upper ones mirrored across the shell's middle |
+| Turtle | `turtle.shell`, `turtle.head`, `turtle.flipper.front` twice, `turtle.flipper.rear` twice | Flippers swing at the shoulder. The head turns and dips. The parts lie under the shell. `TURTLE_JOINTS` gives where each is pinned on the shell, `TURTLE_PART_JOINTS` each part's own joint. The lower flippers are the upper ones mirrored across the shell's middle. In play, `TurtleView` swings the front flippers 0.32 radians either way and the rear 0.14, half a stroke behind. Lowered, the head is drawn 22 % shorter and a little darker, as seen from above (T106) |
 | Goby | `goby` | Tail flick |
-| Pistol shrimp | `pistol.body`, `pistol.claw` | Slides out of the burrow pushing sand, slides back. The big claw's joint `PISTOL_CLAW_OWN_JOINT` is pinned at `PISTOL_CLAW_JOINT` on the body. Antennae are lines drawn by code: one rests on the goby's tail |
+| Pistol shrimp | `pistol.body`, `pistol.claw` | Slides out of the burrow pushing sand, slides back. The big claw's joint `PISTOL_CLAW_OWN_JOINT` is pinned at `PISTOL_CLAW_JOINT` on the body. Antennae are lines drawn by code: one rests on the goby's tail. In play, `BurrowPairView` slides it out of the mouth to its place beside the goby, its load `sand.load` ahead of it, and back in. The goby slides back down the hole in a fright, its tail end under a dark spot over the mouth (T107) |
 | Wading bird | `bird.shadow.body`, `bird.shadow.head`, `bird.foot` twice, `bird.beak`, `bird.splash` | See doc 10. The neck's shadow turns about `BIRD_NECK_START` in `painters/creatures.ts` |
 
 ## The manifest
@@ -261,6 +261,7 @@ This table is the checklist for the art. Update it in the same commit as a paint
 | `pebble` | 48 | Built |
 | `fx.speck` | 16 | Built |
 | `fx.ripple` | 256 | Built |
+| `fx.streak` | 64 by 8 | Built. Added. A short pale line, brightest toward its front, soft at both ends. Stretched with the water's speed and turned the way it runs, only where the water runs at 0.25 BL a second or more |
 | `fx.rim` | made in the game from the target's own image | |
 | `scent.food`, `scent.danger`, `scent.unknown` | 512 by 64 | Built. Each has its own shape as well as its own colour: a smooth wave, a zigzag, a line of loops |
 | `scent.dot` | 48 | Built |
@@ -340,6 +341,8 @@ This table is the checklist for the art. Update it in the same commit as a paint
 | `goby` | 130 by 60 | Built |
 | `pistol.body` | 100 by 60 | Built. The small claw is part of it |
 | `pistol.claw` | 70 by 44 | Built. Joint at the left |
+| `sand.load` | 96 | Built. Added. A load of wet sand the pistol shrimp pushes out, drawn 0.4 BL wide (T107) |
+| `fx.sandPuff` | 128 | Built. Added. A puff of pale silt from a sand volcano, lighter than the bed, swelling to 1.1 BL as it thins (T108) |
 
 ### Litter (D43)
 
@@ -359,21 +362,23 @@ Worn, faded and silted, never shiny. No print, word or mark. Each has a soft con
 
 | Name | Size | Status |
 |------|------|--------|
-| `channel.bed` | 1024, tile | To paint |
-| `channel.wall` | 1024 by 420, repeats sideways | To paint |
-| `channel.boulder.a`, `.b` | 640 | To paint |
-| `channel.crevice` | 340 by 150 | To paint |
-| `food.seaweed` | 320 | To paint |
-| `light.moon` | 1024, tile | To paint |
-| `shadow.hull` | 1024 by 280, shown four times larger | To paint |
-| `shadow.grid` | 512, tile | To paint |
-| `fx.silt` | 256 | To paint |
+| `channel.bed` | 1024, tile | Built. Grey-blue sand and gravel; ripple crests run up and down the picture, across the tide, in short bowed runs, with gravel in the troughs |
+| `channel.wall` | 1024 by 420, repeats sideways | Built. Rock in five ledges stepping down to the water, each lip moonlit; weed combed to the left and fallen stones at the foot. Solid to 0.7 of its height |
+| `channel.boulder.a`, `.b` | 640 | Built. Slate, layered, moonlit on the upper left, turf low on the far side. `b` is flatter |
+| `channel.crevice` | 340 by 150 | Built. A dark slot between two long slabs. Drawn as cover, over the shrimp |
+| `food.seaweed` | 320 | Built. Eight branching olive-brown stems, narrow blades on alternate sides, small round floats lit on the upper left. Drawn just over the bed with a soft shadow, turning slowly as it rides (T112) |
+| `light.moon` | 1024, tile | Built. A few long soft bands of `#C9D6E8`, very faint, clear between |
+| `channel.murk` | 512 by 288 | Built. Added. Blue-black water at night, the eye reaching a little way |
+| `shadow.hull` | 1024 by 280, shown four times larger | Built. One long dark shape, darkest along the keel, blunt at the stern and drawn out to a point at the bow, on the right. Blurred, with a faint halo. No light painted in, so it may be turned any way |
+| `shadow.grid` | 440 by 1024 | Built. Changed (T119): the whole band, not a tile, shown 6 by 14 BL and moving toward its right. A diamond mesh drawn out along the pull, cells about half a BL, its strands blurred and sagging a little; a faint shade over all; ragged soft edges; at half strength |
+| `fx.silt` | 256 | Built. A lumpy soft puff of pale grey-brown silt, thinning to nothing at its rim |
 | `sea.ledge` | 760 by 420 | To paint |
 | `channel.seaFan` | 360 by 300 | Built. Added. Its foot, where it holds the rock, is at the left middle. It sways about that point |
 | `fx.egg` | 16 | To paint |
-| `pond.wall` | 1024 by 360, repeats sideways | To paint. D39. Packed earth, straight, grass tufts on the crest, cracked mud at the foot |
-| `pond.outlet` | 420 by 300 | To paint. D39. A concrete gate stained green-brown, its opening closed by a mesh |
-| `pond.plume` | 1024 by 512 | To paint. D39. A soft green-brown stain, densest at the left edge where it leaves the gate |
+| `pond.wall` | 1024 by 360, repeats sideways | Built. D39. A straight dike of packed earth, pebbles pressed in, a dark band of grass on its crest leaning over, cracked mud at a dead straight foot. Solid to 0.7 of its height |
+| `pond.outlet` | 588 by 560 | Built. D39. Drawn 420 wide, the gate's width. Two concrete cheeks with board grooves, stained green-brown from the water up; between them the pond's green water, darker toward the pond; the mesh across the mouth, 340 of 400 down, silt caught on it; the water pouring out below |
+| `pond.plume` | 256 | Built. Changed (T116). One soft round stain of greener water with silt in it; the plume is a row of them from the gate, growing and thinning |
+| `pond.shape` | 252 by 112 | Built. Added (T116). One of the pond's shrimp seen through its water: a pale shape facing right, tail fan spread, the joins of the abdomen faint, the long antennae swept back. Never pink, never curled |
 
 ### The pond life (D39)
 

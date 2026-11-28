@@ -5,6 +5,7 @@ import type { GameEvents } from '../core/gameEvents';
 import { Story, type StoryEvent } from '../core/progress/Story';
 import type { Life } from '../core/progress/life';
 import type { AreaId, FoodKind } from '../core/world/kinds';
+import { CHAPTERS } from '../data/challenges';
 import { STORY_STEPS } from '../data/story';
 import { BURROW, STORY } from '../data/tuning';
 import type { Narrator } from './Narrator';
@@ -34,21 +35,37 @@ export interface StoryFrame {
   burrowed?: boolean;
   /** Soft after the molt, with a companion within 3 BL. */
   softNotAlone?: boolean;
+  /** The player is close to the pistol shrimp and goby, and they are out (doc 13, `narr.c2.door`). */
+  atTheDoor?: boolean;
   /** The name of a companion soft now, the player near her since her molt began. */
   herSoft?: string | null;
+  /** A clump of seaweed riding the current has come close (doc 13, `narr.c3.food`). */
+  seaweedNear?: boolean;
+  /** The named zones of the place the shrimp is in now. */
+  zones?: ReadonlySet<string>;
 }
 
 const PLAYER = 'player';
 
 /** The chapter each place tells. */
-const CHAPTER_OF: Partial<Record<AreaId, number>> = { mangrove: 1, lagoon: 2 };
+const CHAPTER_OF: Partial<Record<AreaId, number>> = { mangrove: 1, lagoon: 2, channel: 3 };
+
+/**
+ * Each chapter's lines for being in a zone of its place (doc 13). Said on
+ * every frame there, so a line on screen when the shrimp comes in does not
+ * take its moment away (T82). The pool's comes with `s3.tide`, which is
+ * reaching it.
+ */
+const ZONE_LINES: Readonly<Record<number, Readonly<Record<string, string>>>> = {
+  3: { C: 'narr.c3.narrows', D: 'narr.c3.pool', F: 'narr.c3.bar' },
+};
 
 /**
  * The story of a place and its narration (doc 12, "Story steps"; doc 13,
  * "Narration"): it hears the game, marks the steps done, and says each line
- * when its moment comes. Built for the mangrove, chapter 1, in step 8, and
- * the lagoon, chapter 2, in release 0.2. The lines of any chapter are said
- * in both.
+ * when its moment comes. Built for the mangrove, chapter 1, in step 8, the
+ * lagoon, chapter 2, in release 0.2, and the channel, chapter 3, in release
+ * 0.3. The lines of any chapter are said in each.
  */
 export class StoryTeller {
   readonly story: Story;
@@ -76,6 +93,8 @@ export class StoryTeller {
   private everBurrowed: boolean;
   /** The shoal is smaller and has not yet been seen together since. */
   private fewerDue = false;
+  /** The pistol shrimp and goby were found: their line comes while the player watches them. */
+  private doorDue = false;
 
   constructor(
     private readonly bus: EventBus<GameEvents>,
@@ -85,7 +104,7 @@ export class StoryTeller {
     private readonly favourite: FoodKind,
   ) {
     this.chapter = CHAPTER_OF[area] ?? 1;
-    this.story = new Story(STORY_STEPS, life.stepsDone);
+    this.story = new Story(STORY_STEPS, life.stepsDone, life.stats);
     this.everBurrowed = life.narrated.has('narr.c2.burrowed') || this.story.has('s2.burrow');
     // Coming back from the save, the clocks between steps start again where they matter.
     if (this.chapter === 1) {
@@ -93,7 +112,7 @@ export class StoryTeller {
         this.sinceFull = STORY.senseHint;
       }
       if (this.story.has('s1.greet') && !this.story.has('s1.molt')) this.sinceGreet = 0;
-    } else {
+    } else if (this.chapter === 2) {
       if (this.story.has('s2.fish') && !this.story.has('s2.molt')) this.sinceFish = 0;
     }
     const on = <K extends keyof GameEvents>(type: K, handler: (event: GameEvents[K]) => void) =>
@@ -134,6 +153,9 @@ export class StoryTeller {
       if (who !== PLAYER) return;
       this.hear({ kind: 'molt', area: this.area });
     });
+    on('zone:entered', ({ area: where, zone }) => {
+      if (where === this.area) this.hear({ kind: 'zone', area: where, zone });
+    });
   }
 
   /** The first step of the chapter not done, for the narration to prompt. */
@@ -143,7 +165,8 @@ export class StoryTeller {
 
   /** Arriving in the place: its first line. */
   arrive(): void {
-    this.narrator.say(this.chapter === 2 ? 'narr.c2.arrive' : 'narr.c1.arrive');
+    const first = { 1: 'narr.c1.arrive', 2: 'narr.c2.arrive', 3: 'narr.c3.start' }[this.chapter];
+    this.narrator.say(first ?? 'narr.c1.arrive');
     // A bond already made in the place before counts toward this chapter's.
     if (this.chapter === 2) {
       for (const value of Object.values(this.life.bonds)) this.hear({ kind: 'bond', value });
@@ -184,6 +207,11 @@ export class StoryTeller {
     if (!this.life.narrated.has('narr.fewer')) this.fewerDue = true;
   }
 
+  /** Something new came into the journal. Some finds have a line (doc 13). */
+  found(id: string): void {
+    if (this.chapter === 2 && id === 'creature.pistolAndGoby') this.doorDue = true;
+  }
+
   /** The fish turned to face the shrimp and held still: the warning. */
   fishFaced(): void {
     this.narrator.say('narr.c2.faces');
@@ -201,7 +229,7 @@ export class StoryTeller {
    * gone. True once, on the frame it comes due.
    */
   takeMoltDue(): boolean {
-    if (this.moltSignalled) return false;
+    if (this.moltSignalled || this.chapter > 2) return false;
     if (this.chapter === 2) {
       if (this.story.has('s2.molt')) return false;
       if (this.sinceFish === null || this.sinceFish < STORY.moltAfterFish) return false;
@@ -233,6 +261,13 @@ export class StoryTeller {
     // The first time the shoal is together again after a loss, it is fewer.
     if (this.fewerDue && this.shoalNear >= STORY.regrouped && this.narrator.say('narr.fewer')) {
       this.fewerDue = false;
+    }
+    if (this.doorDue && frame.atTheDoor && this.narrator.say('narr.c2.door')) this.doorDue = false;
+    if (this.chapter === 3 && frame.seaweedNear) this.narrator.say('narr.c3.food');
+    const zoneLines = ZONE_LINES[this.chapter];
+    for (const zone of frame.zones ?? []) {
+      const line = zoneLines?.[zone];
+      if (line) this.narrator.say(line);
     }
     if (this.sinceFish !== null) this.sinceFish += dt;
     if (this.sinceMolt !== null) {
@@ -274,9 +309,10 @@ export class StoryTeller {
     // Waiting to molt out in the open, the body asks for cover.
     this.premoltFor = frame.premolt ? this.premoltFor + dt : 0;
     if (this.premoltFor >= STORY.notHere && !frame.tucked) this.narrator.say('narr.c1.notHere');
-    // At a way out that is still closed. Beyond the lagoon, the life is still being made.
+    // At a way out that is still closed. Beyond the channel, the life is still being made.
     if (frame.atWayOut) {
-      const open = this.story.has(this.chapter === 2 ? 's2.molt' : 's1.molt');
+      const end = CHAPTERS.find((one) => one.chapter === this.chapter)?.end;
+      const open = end !== undefined && this.story.has(end);
       this.narrator.say(open ? 'end.continued' : 'narr.c1.closed');
     }
     if (this.wokeNow) {
@@ -293,6 +329,11 @@ export class StoryTeller {
   /** Nacre noticed a threat first, and the player felt her alarm (doc 13, `narr.c2.alarm`). */
   nacreAlarm(): void {
     if (this.chapter === 2) this.narrator.say('narr.c2.alarm');
+  }
+
+  /** The turtle's shadow over the player, the first time (doc 13, `narr.c2.turtle`). */
+  turtleShadow(): void {
+    if (this.chapter === 2) this.narrator.say('narr.c2.turtle');
   }
 
   /** The player's tail flip startled a shrimp that does not know it yet. */

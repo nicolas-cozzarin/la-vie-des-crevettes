@@ -86,6 +86,15 @@ describe('fear', () => {
     expect(wary.values.fear).toBeCloseTo(0.45);
   });
 
+  it('is soft from the moment the shell comes off, before the next step', () => {
+    const feelings = model();
+    feelings.setSoft(30);
+    expect(feelings.has('soft')).toBe(true);
+    expect(feelings.conditionList).toContain('soft');
+    feelings.setSoft(0);
+    expect(feelings.has('soft')).toBe(false);
+  });
+
   it('never rises by more than 0.6 from one stimulus', () => {
     const feelings = model();
     feelings.setSoft(30);

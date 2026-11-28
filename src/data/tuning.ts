@@ -35,6 +35,97 @@ export const MOTION: MotionTuning = {
   liftTime: 0.22,
 };
 
+/** Water that runs (doc 02, "Current"; T110). Each area's currents are in its data file, in pixels per second. */
+export const CURRENT = {
+  /** Share of the current that carries a shrimp walking or resting on the bed: its legs hold on. */
+  onBed: 0.25,
+  /** Specks drawn out by fast water (`fx.streak`, doc 11). */
+  streaks: {
+    /** BL per second: slower water shows none. */
+    from: 0.25,
+    /** How many are in view at once. */
+    count: 36,
+    /** BL: a streak's length at 1 BL per second, and the most it grows to. */
+    length: 0.3,
+    longest: 0.8,
+    /** The most a streak shows, in the fastest water. */
+    alpha: 0.32,
+    /** Seconds each one lives, fading in and out. */
+    life: [1.2, 2.4] as [number, number],
+  },
+};
+
+/** The shoal's journey with the tide (T113). */
+export const JOURNEY = {
+  /** BL along the way that the shoal keeps ahead of the player. */
+  ahead: 3,
+};
+
+/** Strangers passing through, down the journey and out past its end (doc 11, `shrimp.traveller`; T114). */
+export const PASSING = {
+  /** Seconds before the first group, from arriving. */
+  first: [15, 30] as const,
+  /** Seconds from one group to the next, counted once the last has gone. */
+  every: [40, 90] as const,
+  /** How many in a group. */
+  group: [2, 4] as const,
+  /** Seconds to wait when no place out of view lets a group come in. */
+  retry: 3,
+  /** BL along the way that a group makes for, ahead of its own middle. */
+  ahead: 8,
+  /** BL beyond the view's edge, or beyond the journey's start, where a group comes in. */
+  beyond: 4,
+  /** BL the group trails behind its first, and to either side of the way. */
+  spread: 1.5,
+  /** BL from the player beyond which one out of view has gone on. */
+  gone: 20,
+};
+
+/** The farm pond seen from the channel (doc 18, "Level 3"; D39). */
+export const POND = {
+  /** BL per second the shapes behind the mesh move along the wall, slowest and fastest. */
+  crowdSpeed: [0.35, 0.6] as const,
+  /** BL per second for the one that comes to the mesh. */
+  come: 0.8,
+  /** BL from the mesh within which the player brings one to it. */
+  near: 3,
+  /** BL from the gate's middle the shapes pass, to either side: most of it behind the concrete. */
+  loop: 3,
+  /** BL behind the mesh the shapes keep, nearest and farthest. */
+  behind: [0.35, 1.5] as const,
+  /** How strong the plume's colour is over what lies beneath, at the gate. */
+  plumeAlpha: 0.85,
+  /** The plume is drawn as soft stains along it: their gap, in plume widths. */
+  stainStep: 0.4,
+  /** Each stain's size in plume widths, at the gate and at the far end. */
+  stainSize: [1.1, 1.7] as const,
+  /** How strong the far end's stain is, against the gate's. */
+  stainFade: 0.35,
+  /**
+   * The shoal passing the gate (T118). BL: it begins in the pond's water or
+   * within `start` of the gate's mouth; a companion farther than `reach`
+   * keeps to the journey; Brise makes for `out` in front of the mesh and
+   * `aside` upstream of its middle; Nacre stops `short` beyond the plume's
+   * edge. Seconds out of the pond's water, or after the greeting at the
+   * mesh, before the tide pulls them on.
+   */
+  moment: { start: 3, reach: 15, out: 0.8, aside: 1.2, short: 1.5, pull: 6 },
+  /** How much the shapes show through the water and the mesh. */
+  crowdAlpha: 0.55,
+};
+
+/** Food that rides the current (doc 11, `food.seaweed`; T112). */
+export const DRIFTING = {
+  /** BL: a clump fades in and out over this much of each end of its run. */
+  fade: 1.5,
+  /** Radians per second: the most a clump turns as it rides. */
+  spin: 0.25,
+  /** BL: the mouth eats a clump when this close to its centre. */
+  reach: 0.55,
+  /** BL: how far below a clump its shadow lies on the bed. */
+  shadow: 0.35,
+};
+
 export const FRAME = {
   /** The longest frame the game will play in full, in seconds. Anything longer is cut short. */
   longest: 0.25,
@@ -396,6 +487,8 @@ export const NPC = {
   graze: { stop: 0.2, range: 8 },
   greet: { base: 3, perSociability: 5, every: 30, touch: 1.2, giveUp: 8 },
   follow: { called: 0.9, near: 1.5, far: 3, seconds: 20, shoalFactor: 0.5, shoalSpan: 6 },
+  /** Travel with the tide (T113): above grazing, below freezing. BL from the shoal's goal. */
+  travel: { score: 0.85, arrive: 4 },
   groom: { factor: 0.5, min: 3, max: 6 },
   rest: { factor: 0.6, lagoonDay: 0.4, min: 3, span: 9, beside: 0.8 },
   wander: { base: 0.3, perActivity: 0.3, reach: 6, home: 8, giveUp: 10, waryCover: 3 },
@@ -513,6 +606,42 @@ export const CREATURES = {
     drag: 2.4,
     reach: 5,
   },
+  /** Doc 11, "Green turtle" (T106). BL, seconds and radians. */
+  turtle: {
+    speed: 0.6,
+    turn: 0.3,
+    reach: 4,
+    crop: 6,
+    dip: 1,
+    stroke: 3.2,
+    slowStroke: 3,
+    ease: 2.5,
+    shell: { half: 3, side: 2.4 },
+    shadow: { long: 8.4, wide: 6.4, dx: 0.3, dy: 0.4, felt: 0.8 },
+    /** BL from its shell that counts as following it, for "Follow the turtle". */
+    follow: 4,
+    /** The fear the first time its shadow crosses the shrimp (doc 10, "Startles with no danger"). */
+    startle: 0.25,
+  },
+  /** Doc 11, "Pistol shrimp and goby" (T107). BL and seconds. */
+  burrowPair: {
+    alarm: 4,
+    near: 1.2,
+    calm: 6,
+    goIn: 0.15,
+    comeOut: 1.5,
+    round: { dig: { min: 3, max: 6 }, push: 1.6, dump: 0.7, back: 1.2 },
+    pile: 14,
+  },
+  /** Doc 11, `thing.sandVolcano` (T108). Seconds, and BL for the puff's size. */
+  sandVolcano: {
+    every: { min: 5, max: 14 },
+    puff: 2.5,
+    size: { from: 0.5, to: 1.3 },
+    grains: 7,
+  },
+  /** Shed shells in the weed bank (T108): how far they rock, in radians, and drift, in BL. */
+  shedShell: { rock: 0.07, rockEvery: 5, drift: 0.25, driftEvery: 23 },
   /** How bright the pale rim on a curiosity target is, and its width in pixels (doc 11, `fx.rim`). */
   rim: { color: 0xf4f1e4, strength: 0.35, width: 6 },
 };
@@ -566,6 +695,7 @@ export const FISH = {
   arrive: { from: 6, speed: 3 },
   turn: 0.9,
   room: 3,
+  roomMargin: 1,
   face: 0.6,
   pause: 0.5,
   charge: { speed: 9, reach: 10 },
@@ -647,6 +777,10 @@ export const STORY = {
   regrouped: 3,
   /** Seconds the view takes to fade out on the way to the next place. */
   leaveFade: 1.5,
+  /** Chapter 3: seaweed riding the current this close has come to the shrimp (`narr.c3.food`). BL. */
+  seaweedNear: 3,
+  /** All three companions this close keep the shoal together (doc 12, `c3.together`). BL. */
+  allThree: 6,
 };
 
 /** Saving at rest (doc 02, "Saving"). Seconds. */

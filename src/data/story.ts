@@ -1,7 +1,7 @@
 import type { NarrationLine } from '../core/narration/NarrationQueue';
 import type { StoryStep } from '../core/progress/Story';
 
-/** The story steps built so far: chapters 0 to 2 (doc 12, "Story steps"). */
+/** The story steps built so far: chapters 0 to 3 (doc 12, "Story steps"). */
 export const STORY_STEPS: readonly StoryStep[] = [
   { id: 's0.motes', chapter: 0, when: { kind: 'eaten', food: 'microalgae', count: 5 } },
   { id: 's0.brown', chapter: 0, when: { kind: 'zone', area: 'drift', zone: 'D' } },
@@ -23,6 +23,12 @@ export const STORY_STEPS: readonly StoryStep[] = [
     when: { kind: 'threat', threat: 'fish', stage: 'release', area: 'lagoon', count: 1 },
   },
   { id: 's2.molt', chapter: 2, when: { kind: 'molt', area: 'lagoon' } },
+  { id: 's3.tide', chapter: 3, when: { kind: 'zone', area: 'channel', zone: 'D' } },
+  {
+    id: 's3.fish2',
+    chapter: 3,
+    when: { kind: 'threat', threat: 'fish', stage: 'release', area: 'channel', count: 2 },
+  },
 ];
 
 /**
@@ -62,6 +68,8 @@ export const NARRATION_LINES: Readonly<Record<string, NarrationLine>> = {
   'narr.c2.glow': {},
   'narr.c2.brise': {},
   'narr.c2.ecume': {},
+  'narr.c2.turtle': {},
+  'narr.c2.door': {},
   'narr.c2.call': {},
   'narr.c2.faces': {},
   'narr.c2.fishGone': {},
@@ -69,6 +77,11 @@ export const NARRATION_LINES: Readonly<Record<string, NarrationLine>> = {
   'narr.c2.herMolt': {},
   'narr.c2.notAlone': {},
   'narr.c2.lean': { must: true },
+  'narr.c3.start': { must: true },
+  'narr.c3.food': {},
+  'narr.c3.narrows': {},
+  'narr.c3.pool': {},
+  'narr.c3.bar': {},
   'narr.fewer': {},
   'narr.mood.calm': { must: true },
   'narr.mood.hungry': { must: true },

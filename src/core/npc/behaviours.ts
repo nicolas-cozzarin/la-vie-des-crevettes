@@ -12,6 +12,7 @@ export const BEHAVIOURS = [
   'graze',
   'greet',
   'follow',
+  'travel',
   'groom',
   'rest',
   'wander',
@@ -49,6 +50,8 @@ export interface NpcTuning {
     shoalFactor: number;
     shoalSpan: number;
   };
+  /** Travel with the tide (T113): this score while farther than `arrive` BL from where the shoal makes for. */
+  travel: { score: number; arrive: number };
   groom: { factor: number; min: number; max: number };
   /** Rest: `factor * comfort * (1 - activity)`, plus `lagoonDay` by day in the lagoon, plus `beside` to rest touching a still player at Close (T105). Seconds of rest: `min + span * (1 - activity)`. */
   rest: { factor: number; lagoonDay: number; min: number; span: number; beside: number };
@@ -97,6 +100,8 @@ export interface ChoiceView {
   lagoonDay: boolean;
   /** At Close, with the player keeping still close by: it comes to rest touching (T105). */
   restBeside?: boolean;
+  /** In water that runs: BL to where the shoal makes for on its journey, or null (T113). */
+  journeyGap?: number | null;
 }
 
 /** The fear at which a shrimp of this boldness flees: 0.38 for Nacre, 0.64 for Brise. */
@@ -123,6 +128,10 @@ export function scoreBehaviours(
     graze: view.food && hunger >= t.graze.stop ? hunger : 0,
     greet: view.greetable ? (1 - company) * temperament.sociability : 0,
     follow: view.called ? t.follow.called : Math.min(1, shoal),
+    travel:
+      view.journeyGap !== undefined && view.journeyGap !== null && view.journeyGap > t.travel.arrive
+        ? t.travel.score
+        : 0,
     groom: view.calm && !view.wary ? t.groom.factor * comfort : 0,
     rest:
       t.rest.factor * comfort * (1 - temperament.activity) +

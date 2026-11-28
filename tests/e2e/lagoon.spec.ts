@@ -49,6 +49,17 @@ const AT_THE_CREEK = {
   journalSeen: [],
 };
 
+/**
+ * What a life in chapter 2 has said already: the first lines of each place, the
+ * first meeting, and its moods, named in chapter 1. Without them those must
+ * lines come first, and a later line waits through the 20 s between lines.
+ */
+const IN_CHAPTER_2 = {
+  moodsNamed: ['calm', 'hungry', 'content', 'curious', 'social', 'afraid'],
+  narrated: ['narr.c1.arrive', 'narr.c1.meet', 'narr.c2.arrive', 'narr.c2.sand', 'narr.c2.dusk'],
+  placesSeen: ['drift', 'mangrove', 'lagoon'],
+};
+
 test.describe('into the lagoon', () => {
   test('after the molt, the creek mouth leads on into the lagoon, by day', async ({ page }) => {
     const errors = watchErrors(page);
@@ -112,6 +123,45 @@ test.describe('day and night', () => {
     );
     await page.keyboard.up('ArrowLeft');
     expect((await day(page))?.lit).toBeGreaterThan(0);
+  });
+
+  test('a full graze at night in the bright shallows is a graze under the plankton', async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    const errors = watchErrors(page);
+    // A life a little hungry, on the golden film in zone F, where the plankton is thickest (T109).
+    // One film takes off a quarter of the hunger, so this one meal ends full.
+    await page.goto('./?debug');
+    await waitForScene(page, 'Title');
+    await page.evaluate((save) => localStorage.setItem('lvdc.save.v1', JSON.stringify(save)), {
+      ...AT_THE_CREEK,
+      ...IN_CHAPTER_2,
+      area: 'lagoon',
+      at: { x: 5700, y: 4300 },
+      hunger: 0.3,
+    });
+    await page.reload();
+    await waitForScene(page, 'Title');
+    await page.keyboard.press('Enter');
+    await page.waitForFunction(() => window.__lvdc?.player()?.area === 'lagoon');
+    for (const phase of ['dusk', 'night']) {
+      await page.keyboard.press('F7');
+      await page.waitForFunction((want) => window.__lvdc?.day()?.phase === want, phase);
+    }
+    await page.keyboard.down('KeyE');
+    await page.waitForFunction(() => window.__lvdc?.player()?.activity === 'grazing');
+    // Full, the shrimp stops grazing by itself.
+    await page.waitForFunction(() => window.__lvdc?.player()?.activity === 'free', null, {
+      timeout: 40_000,
+    });
+    await page.keyboard.up('KeyE');
+    const progress = await page.evaluate(() => window.__lvdc?.progress() ?? null);
+    expect((await day(page))?.phase).toBe('night');
+    expect(progress?.stats.nightMeals).toBe(1);
+    expect(progress?.stats.glowMeals).toBe(1);
+    expect(progress?.challenges['c2.glow']).toBe(1);
+    expect(errors).toEqual([]);
   });
 });
 
@@ -236,10 +286,164 @@ test.describe('the hunting fish', () => {
       )
       .toBe('chase');
     if (held) await page.keyboard.up(held);
-    await page.waitForFunction(() => (window.__lvdc?.threat()?.fish?.charges ?? 0) >= 1, null, {
-      timeout: 20_000,
-    });
+    try {
+      await page.waitForFunction(() => (window.__lvdc?.threat()?.fish?.charges ?? 0) >= 1, null, {
+        timeout: 20_000,
+      });
+    } catch (error) {
+      // Says what the fish and the shrimp were doing, for a failure seen only on a slow machine.
+      const fish = (await threat(page))?.fish;
+      const me = await player(page);
+      const feel = await page.evaluate(() => window.__lvdc?.feelings()?.conditions);
+      throw new Error(
+        `No charge. Stages ${JSON.stringify(await stages())}, fish ${JSON.stringify(fish)}, ` +
+          `player ${JSON.stringify(me)}, conditions ${JSON.stringify(feel)}.`,
+        { cause: error },
+      );
+    }
     expect(await stages()).toContain('chase');
+    expect(errors).toEqual([]);
+  });
+});
+
+test.describe('the turtle', () => {
+  test('glides through the meadow and crops; its first shadow startles, once', async ({ page }) => {
+    test.setTimeout(120_000);
+    const errors = watchErrors(page);
+    await page.goto('./');
+    await waitForScene(page, 'Title');
+    await page.evaluate((save) => localStorage.setItem('lvdc.save.v1', JSON.stringify(save)), {
+      ...AT_THE_CREEK,
+      ...IN_CHAPTER_2,
+      area: 'lagoon',
+      stage: 'subAdult',
+      // In the meadow, just ahead of the turtle on its way to its first clump.
+      at: { x: 4250, y: 820 },
+    });
+    await page.reload();
+    await waitForScene(page, 'Title');
+    await page.keyboard.press('Enter');
+    await page.waitForFunction(() => window.__lvdc?.player()?.area === 'lagoon');
+    const turtle = () =>
+      page.evaluate(
+        () => window.__lvdc?.creatures()?.animals.find((one) => one.id === 'turtle') ?? null,
+      );
+    const start = await turtle();
+    expect(start?.state).toBe('glide');
+    await page.waitForFunction(
+      () => window.__lvdc?.player()?.narration === 'narr.c2.turtle',
+      null,
+      {
+        timeout: 30_000,
+      },
+    );
+    const stats = () => page.evaluate(() => window.__lvdc?.progress()?.stats ?? {});
+    expect((await stats()).turtleShadow).toBe(1);
+    expect((await page.evaluate(() => window.__lvdc?.feelings()?.conditions)) ?? []).toContain(
+      'wary',
+    );
+    // It stops at the clump ahead and crops, its head in the blades.
+    await page.waitForFunction(
+      () =>
+        window.__lvdc?.creatures()?.animals.find((one) => one.id === 'turtle')?.state === 'crop',
+      null,
+      { timeout: 30_000 },
+    );
+    const cropping = await turtle();
+    expect(cropping && start && cropping.x < start.x).toBe(true);
+    // Staying beside it counts toward following it.
+    expect(
+      await page.evaluate(() => window.__lvdc?.progress()?.challenges['c2.turtle'] ?? 0),
+    ).toBeGreaterThan(0);
+    expect((await stats()).turtleShadow).toBe(1);
+    expect(errors).toEqual([]);
+  });
+});
+
+test.describe('the pistol shrimp and the goby', () => {
+  test('let a still shrimp find them; a tail flip sends them in, and they come back', async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+    const errors = watchErrors(page);
+    await page.goto('./');
+    await waitForScene(page, 'Title');
+    await page.evaluate((save) => localStorage.setItem('lvdc.save.v1', JSON.stringify(save)), {
+      ...AT_THE_CREEK,
+      ...IN_CHAPTER_2,
+      area: 'lagoon',
+      stage: 'subAdult',
+      // A little over 2 BL from the burrow's mouth, in the rock garden.
+      at: { x: 3520, y: 4270 },
+    });
+    await page.reload();
+    await waitForScene(page, 'Title');
+    await page.keyboard.press('Enter');
+    await page.waitForFunction(() => window.__lvdc?.player()?.area === 'lagoon');
+    const pair = () =>
+      page.evaluate(
+        () =>
+          window.__lvdc?.creatures()?.animals.find((one) => one.id === 'pistolAndGoby')?.state ??
+          null,
+      );
+    // Found while watching them, and said while they are watched.
+    await page.waitForFunction(() => window.__lvdc?.player()?.narration === 'narr.c2.door', null, {
+      timeout: 50_000,
+    });
+    expect(
+      await page.evaluate(() =>
+        window.__lvdc?.feelings()?.discovered.includes('creature.pistolAndGoby'),
+      ),
+    ).toBe(true);
+    expect(await pair()).not.toBe('in');
+    // A tail flip close by: the goby flicks its tail and both are gone.
+    await page.keyboard.down('KeyD');
+    await page.keyboard.press('Space');
+    await page.keyboard.up('KeyD');
+    await page.waitForFunction(
+      () =>
+        window.__lvdc?.creatures()?.animals.find((one) => one.id === 'pistolAndGoby')?.state ===
+        'in',
+    );
+    // After 6 s of calm they are back.
+    await page.waitForFunction(
+      () =>
+        window.__lvdc?.creatures()?.animals.find((one) => one.id === 'pistolAndGoby')?.state !==
+        'in',
+      null,
+      { timeout: 20_000 },
+    );
+    expect(errors).toEqual([]);
+  });
+});
+
+test.describe("the lagoon's small things", () => {
+  test('the sand volcanoes puff, the crackle is heard by staying, shed shells lie in the weed', async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    const errors = watchErrors(page);
+    const found = (id: string) =>
+      page.evaluate((want) => window.__lvdc?.feelings()?.discovered.includes(want) ?? false, id);
+    await openLagoon(page, '&at=5150,2330');
+    await page.waitForFunction(() => (window.__lvdc?.creatures()?.puffing ?? []).length > 0, null, {
+      timeout: 30_000,
+    });
+    // The crackle of the rock garden: not at once, but after 3 s there.
+    await openLagoon(page, '&at=3000,4050');
+    expect(await found('thing.crackle')).toBe(false);
+    await page.waitForFunction(
+      () => window.__lvdc?.feelings()?.discovered.includes('thing.crackle'),
+      null,
+      { timeout: 10_000 },
+    );
+    // A shed shell in the weed bank.
+    await openLagoon(page, '&at=800,4380');
+    await page.waitForFunction(
+      () => window.__lvdc?.feelings()?.discovered.includes('thing.shedShell'),
+      null,
+      { timeout: 10_000 },
+    );
     expect(errors).toEqual([]);
   });
 });
@@ -283,19 +487,21 @@ test.describe("a companion's molt", () => {
   test('with ?debug, Shift and F8: she finds cover and molts, and staying close counts', async ({
     page,
   }) => {
-    test.setTimeout(150_000);
+    // Her whole molt, from the first sign to hard again, is about a minute of the
+    // game's time. Without a graphics card, as on the CI machine, frames come so
+    // slowly that the game's time runs at about half speed, so each wait gets room.
+    test.setTimeout(300_000);
     const errors = watchErrors(page);
     await page.goto('./?debug');
     await waitForScene(page, 'Title');
     await page.evaluate((save) => localStorage.setItem('lvdc.save.v1', JSON.stringify(save)), {
       ...AT_THE_CREEK,
+      ...IN_CHAPTER_2,
       area: 'lagoon',
       stage: 'subAdult',
       // At the edge of the meadow, above the shoal's ground, where Brise rests.
       at: { x: 4200, y: 1700 },
       bonds: { brise: 0.3 },
-      narrated: ['narr.c1.arrive', 'narr.c2.arrive', 'narr.c2.sand', 'narr.c2.dusk'],
-      placesSeen: ['drift', 'mangrove', 'lagoon'],
     });
     await page.reload();
     await waitForScene(page, 'Title');
@@ -316,7 +522,7 @@ test.describe("a companion's molt", () => {
     await page.waitForFunction(
       () => window.__lvdc?.shrimp()?.some((one) => one.id === 'brise' && one.molt === 'molt'),
       null,
-      { timeout: 30_000 },
+      { timeout: 60_000 },
     );
     expect((await brise())?.activity).toBe('hiding');
     await page.waitForFunction(
@@ -329,7 +535,7 @@ test.describe("a companion's molt", () => {
     await page.waitForFunction(
       () => window.__lvdc?.shrimp()?.some((one) => one.id === 'brise' && one.molt === 'none'),
       null,
-      { timeout: 60_000 },
+      { timeout: 120_000 },
     );
     const stats = await page.evaluate(() => window.__lvdc?.progress()?.stats ?? {});
     expect(stats.stayedThroughMolt).toBe(1);

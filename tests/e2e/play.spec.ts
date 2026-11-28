@@ -195,6 +195,150 @@ test.describe('explore', () => {
     await page.keyboard.up('ShiftLeft');
     await page.waitForFunction(() => window.__lvdc?.player()?.activity === 'free');
   });
+
+  test('the shadow opens, and Hide by an outcrop tucks the shrimp into its crevice (T119)', async ({
+    page,
+  }) => {
+    const errors = watchErrors(page);
+    // Beside the open end of the crevice at 5850, 2100.
+    await explore(page, 'shadow&at=6040,2040');
+    expect((await player(page)).area).toBe('shadow');
+    await page.keyboard.down('ShiftLeft');
+    await page.waitForFunction(() => window.__lvdc?.player()?.tucked === true);
+    await page.keyboard.up('ShiftLeft');
+    expect(errors).toEqual([]);
+  });
+
+  test('in the gutter the water carries a resting shrimp toward the creek (T110)', async ({
+    page,
+  }) => {
+    // The gutter runs left and a little up, at 18 pixels a second.
+    await explore(page, 'mangrove&at=1000,3150');
+    await page.waitForFunction(
+      () => window.__lvdc?.feelings()?.conditions.includes('inCurrent') ?? false,
+    );
+    await page.waitForFunction(() => (window.__lvdc?.player()?.x ?? 1000) < 990);
+    const end = await player(page);
+    expect(end.y).toBeLessThan(3150);
+  });
+
+  test('in the channel the tide carries a resting shrimp toward the sea (T110)', async ({
+    page,
+  }) => {
+    // The narrows run left at 2 BL a second; on the bed a quarter of that carries.
+    const errors = watchErrors(page);
+    await explore(page, 'channel&at=7400,1300');
+    await page.waitForFunction(
+      () => window.__lvdc?.feelings()?.conditions.includes('inCurrent') ?? false,
+    );
+    expect((await player(page)).zones).toContain('C');
+    await page.waitForFunction(() => (window.__lvdc?.player()?.x ?? 7400) < 7260);
+    expect(errors).toEqual([]);
+  });
+
+  test('in the channel the shoal goes seaward with the player, and waits ahead (T113)', async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    await explore(page, 'channel');
+    await page.keyboard.down('KeyA');
+    await page.waitForFunction(() => (window.__lvdc?.player()?.x ?? 12000) < 9000, null, {
+      timeout: 40_000,
+    });
+    await page.keyboard.up('KeyA');
+    // Once the player keeps still, the shoal gathers a few body lengths ahead, downstream.
+    await page.waitForFunction(
+      () => {
+        const me = window.__lvdc?.player();
+        // Strangers passing through keep their own way (T114).
+        const others = (window.__lvdc?.shrimp() ?? []).filter((one) => !one.traveller);
+        if (!me || others.length === 0) return false;
+        const ahead = others.filter(
+          (one) => one.x < me.x + 140 && Math.hypot(one.x - me.x, one.y - me.y) < 8 * 140,
+        );
+        return ahead.length >= others.length - 1;
+      },
+      null,
+      { timeout: 40_000 },
+    );
+  });
+
+  test('in the channel strangers pass through on their way to the sea, and go on (T114)', async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    await explore(page, 'channel&at=9000,1300&debug');
+    // F4 brings a group now. It comes in upstream, out of sight.
+    await page.keyboard.press('F4');
+    await page.waitForFunction(() => (window.__lvdc?.shrimp() ?? []).some((one) => one.traveller));
+    const me = await player(page);
+    const group = (await page.evaluate(() => window.__lvdc?.shrimp() ?? [])).filter(
+      (one) => one.traveller,
+    );
+    expect(group.length).toBeGreaterThanOrEqual(2);
+    expect(group.length).toBeLessThanOrEqual(4);
+    for (const one of group) {
+      expect(one.x, one.id).toBeGreaterThan(me.x + 600);
+      expect(one.stage, one.id).toBe('stranger');
+    }
+    // They swim past the player, downstream, keeping their distance as strangers do.
+    await page.waitForFunction(
+      (x) =>
+        (window.__lvdc?.shrimp() ?? []).some((one) => one.traveller && one.x < (x as number) - 280),
+      me.x,
+      { timeout: 40_000 },
+    );
+    // Then, out of sight, they have gone on.
+    await page.waitForFunction(
+      () => !(window.__lvdc?.shrimp() ?? []).some((one) => one.traveller),
+      null,
+      { timeout: 40_000 },
+    );
+  });
+
+  test('in the pool a farm pond lets out its water, and one behind the mesh comes to it (D39)', async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    await explore(page, 'channel&at=5600,800');
+    expect((await player(page)).pond).toEqual({ water: false, atMesh: false, moment: 'before' });
+    // Up toward the gate, into the pond's water, until one comes to the mesh.
+    await page.keyboard.down('ArrowUp');
+    await page.waitForFunction(() => window.__lvdc?.player()?.pond?.water === true, null, {
+      timeout: 20_000,
+    });
+    // The shoal passing stops at the gate: Brise to the mesh, Nacre short of the water.
+    expect((await player(page)).pond?.moment).toBe('at');
+    await page.waitForFunction(() => window.__lvdc?.player()?.pond?.atMesh === true, null, {
+      timeout: 30_000,
+    });
+    await page.keyboard.up('ArrowUp');
+    // Antennae touch through the mesh: a greeting.
+    await page.waitForFunction(() => window.__lvdc?.player()?.prompt === 'prompt.greet', null, {
+      timeout: 10_000,
+    });
+    await page.keyboard.press('KeyF');
+    await page.waitForFunction(
+      () => (window.__lvdc?.progress()?.stats['greeted.pond.one'] ?? 0) > 0,
+      null,
+      { timeout: 10_000 },
+    );
+  });
+
+  test('in the channel the seaweed rides the tide toward the sea (T112)', async ({ page }) => {
+    await explore(page, 'channel&at=9700,1300');
+    const first = await page.evaluate(() => window.__lvdc?.creatures()?.drifting ?? []);
+    expect(first.length).toBe(9);
+    const id = first[4]?.id;
+    const from = first[4]?.x ?? 0;
+    await page.waitForFunction(
+      ([which, x]) =>
+        (window.__lvdc?.creatures()?.drifting ?? []).some(
+          (clump) => clump.id === which && clump.x < (x as number) - 70,
+        ),
+      [id, from] as const,
+    );
+  });
 });
 
 test.describe('controls', () => {
@@ -240,11 +384,26 @@ test.describe('controls', () => {
     await openMangrove(page);
     const start = await player(page);
 
-    // Space no longer does anything.
+    // Space no longer does anything. The creek mouth carries a resting shrimp a
+    // little (T110), so the test watches every frame for a tail flip's dart and
+    // glide, not for stillness.
+    const watching = page.evaluate(
+      () =>
+        new Promise<string[]>((resolve) => {
+          const seen = new Set<string>();
+          const end = performance.now() + 400;
+          const look = (): void => {
+            const now = window.__lvdc?.player();
+            if (now) seen.add(now.mode);
+            if (performance.now() < end) requestAnimationFrame(look);
+            else resolve([...seen]);
+          };
+          look();
+        }),
+    );
     await page.keyboard.press('Space');
-    await page.waitForTimeout(400);
-    expect((await player(page)).x).toBe(start.x);
-    expect((await player(page)).y).toBe(start.y);
+    expect(await watching).toEqual(['rest']);
+    expect(await page.evaluate(thrownBack, start)).toBe(false);
 
     await page.keyboard.press('KeyG');
     await page.waitForFunction(thrownBack, start);

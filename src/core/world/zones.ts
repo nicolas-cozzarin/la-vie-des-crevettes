@@ -35,6 +35,7 @@ export interface ZoneChange {
  */
 export class ZoneTracker {
   private inside = new Set<string>();
+  private readonly seconds = new Map<string, number>();
 
   constructor(private readonly zones: readonly ZoneSpot[]) {}
 
@@ -43,11 +44,18 @@ export class ZoneTracker {
     return this.inside;
   }
 
-  update(x: number, y: number): ZoneChange {
+  update(x: number, y: number, dt = 0): ZoneChange {
     const now = new Set(this.zones.filter((spot) => inRect(x, y, spot.zone)).map((s) => s.id));
     const entered = [...now].filter((id) => !this.inside.has(id));
     const left = [...this.inside].filter((id) => !now.has(id));
     this.inside = now;
+    for (const id of left) this.seconds.delete(id);
+    for (const id of now) this.seconds.set(id, entered.includes(id) ? 0 : this.inFor(id) + dt);
     return { entered, left };
+  }
+
+  /** Seconds the point has been in a zone without leaving it, 0 if it is not in it. */
+  inFor(id: string): number {
+    return this.seconds.get(id) ?? 0;
   }
 }

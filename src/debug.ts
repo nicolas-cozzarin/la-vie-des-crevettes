@@ -35,6 +35,8 @@ export interface PlayerSnapshot {
   leaving: string | null;
   /** The activity's prompt on screen, by its key, or null. */
   prompt: string | null;
+  /** Where a pond is seen (D39): whether the player is in its water, and one waits at its mesh. */
+  pond: { water: boolean; atMesh: boolean; moment: 'before' | 'at' | 'after' | null } | null;
 }
 
 /** What the browser test can ask about the time of day, where a place has one. */
@@ -162,4 +164,8 @@ export interface CreaturesSnapshot {
   /** A school also says how far its fish are from their places, in BL. */
   animals: { id: string; x: number; y: number; state: string; scattered?: number }[];
   rim: number;
+  /** The sand volcanoes puffing now. */
+  puffing?: string[];
+  /** Food riding the current: each clump, and whether it is eaten on this pass (T112). */
+  drifting?: { id: string; x: number; y: number; eaten: boolean }[];
 }

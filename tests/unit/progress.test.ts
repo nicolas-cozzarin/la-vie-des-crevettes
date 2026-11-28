@@ -93,6 +93,48 @@ describe('challenges', () => {
     expect(p.isDone('c1.branch')).toBe(true);
     expect(p.isDone('c0.larva')).toBe(true);
   });
+
+  it('count a graze under the glowing plankton only when full, at night, and in it (T109)', () => {
+    const p = progress();
+    const eat = (full: boolean, night: boolean, glowing: boolean) =>
+      p.hear({ kind: 'eaten', food: 'sandFilm', area: 'lagoon', full, night, glowing });
+    eat(true, false, false);
+    eat(false, true, true);
+    eat(true, true, false);
+    expect(p.isDone('c2.glow')).toBe(false);
+    expect(eat(true, true, true)).toContainEqual({ kind: 'done', id: 'c2.glow' });
+  });
+
+  it('count seaweed eaten in one unbroken swim, keeping the best run (T112)', () => {
+    const p = progress();
+    const eat = (onTheMove: number) =>
+      p.hear({
+        kind: 'eaten',
+        food: 'seaweed',
+        area: 'channel',
+        full: false,
+        night: true,
+        onTheMove,
+      });
+    eat(1);
+    eat(2);
+    // The swim broke: a new run starts, and the best stays at two.
+    eat(1);
+    expect(p.stat('best.seaweedSwim')).toBe(2);
+    expect(p.value('c3.seaweed')).toBe(2);
+    eat(2);
+    expect(eat(3)).toContainEqual({ kind: 'done', id: 'c3.seaweed' });
+  });
+
+  it('count a sidestep, and the shed shell and the neighbours as found', () => {
+    const p = progress();
+    p.hear({ kind: 'stat', stat: 'sidesteps' });
+    p.hear({ kind: 'discovery', id: 'thing.shedShell', area: 'lagoon' });
+    p.hear({ kind: 'discovery', id: 'creature.pistolAndGoby', area: 'lagoon' });
+    for (const id of ['c2.sidestep', 'c2.shell', 'c2.neighbours']) {
+      expect(p.isDone(id)).toBe(true);
+    }
+  });
 });
 
 describe('achievements', () => {
@@ -114,6 +156,26 @@ describe('achievements', () => {
     expect(p.hear({ kind: 'greeting', other: 'young.1', area: 'mangrove' })).not.toContainEqual({
       kind: 'achievement',
       id: 'antenna',
+    });
+  });
+
+  it('night grazer: ten full grazes at night, and slow company after the turtle (T109)', () => {
+    const p = progress();
+    const news: ProgressNews[] = [];
+    for (let index = 0; index < 9; index++) {
+      news.push(
+        ...p.hear({ kind: 'eaten', food: 'sandFilm', area: 'lagoon', full: true, night: true }),
+      );
+    }
+    p.hear({ kind: 'eaten', food: 'sandFilm', area: 'lagoon', full: true, night: false });
+    p.hear({ kind: 'eaten', food: 'sandFilm', area: 'lagoon', full: false, night: true });
+    expect(news).not.toContainEqual({ kind: 'achievement', id: 'nightGrazer' });
+    expect(
+      p.hear({ kind: 'eaten', food: 'sandFilm', area: 'lagoon', full: true, night: true }),
+    ).toContainEqual({ kind: 'achievement', id: 'nightGrazer' });
+    expect(hold(p, 20.1, { followTurtle: true })).toContainEqual({
+      kind: 'achievement',
+      id: 'slowCompany',
     });
   });
 
@@ -203,6 +265,39 @@ describe('the record', () => {
       night: false,
     });
     expect(news).toEqual([{ kind: 'progress', id: 'c0.motes', value: 11, target: 15 }]);
+  });
+
+  it('keeps how many visits of each threat reached release in each place (T115)', () => {
+    const p = progress();
+    p.hear({ kind: 'threat', threat: 'fish', stage: 'release', area: 'channel' });
+    p.hear({ kind: 'threat', threat: 'fish', stage: 'chase', area: 'channel' });
+    p.hear({ kind: 'threat', threat: 'fish', stage: 'release', area: 'channel' });
+    expect(p.stat('released.channel.fish')).toBe(2);
+  });
+
+  it('counts a clean run on reaching the bar never cornered in the channel, once a visit (c3.uncornered)', () => {
+    const p = progress();
+    p.hear({ kind: 'area', area: 'channel' });
+    // The bar of another place, or another zone, is not the end of the run.
+    p.hear({ kind: 'zone', area: 'lagoon', zone: 'F' });
+    p.hear({ kind: 'zone', area: 'channel', zone: 'E' });
+    expect(p.stat('cleanRuns')).toBe(0);
+    expect(p.hear({ kind: 'zone', area: 'channel', zone: 'F' })).toContainEqual({
+      kind: 'done',
+      id: 'c3.uncornered',
+    });
+    p.hear({ kind: 'zone', area: 'channel', zone: 'F' });
+    expect(p.stat('cleanRuns')).toBe(1);
+
+    const cornered = progress();
+    cornered.hear({ kind: 'area', area: 'channel' });
+    cornered.hear({ kind: 'cornered', area: 'channel' });
+    cornered.hear({ kind: 'zone', area: 'channel', zone: 'F' });
+    expect(cornered.stat('cleanRuns')).toBe(0);
+    // A new visit starts clean.
+    cornered.hear({ kind: 'area', area: 'channel' });
+    cornered.hear({ kind: 'zone', area: 'channel', zone: 'F' });
+    expect(cornered.stat('cleanRuns')).toBe(1);
   });
 
   it('counts a visit afresh each time a place is entered', () => {

@@ -236,8 +236,24 @@ export const lagoon: AreaDef = {
   ],
 
   creatures: [
-    // Zone C: the turtle grazes on a slow loop through the meadow.
-    { id: 'turtle', kind: 'turtle', x: 4620, y: 900, heading: Math.PI },
+    // Zone C: the turtle grazes on a slow loop through the meadow, about 44 BL round (T106).
+    {
+      id: 'turtle',
+      kind: 'turtle',
+      x: 4620,
+      y: 900,
+      heading: Math.PI,
+      route: [
+        'grass.3',
+        'grass.2',
+        'grass.8',
+        'grass.9',
+        'grass.14',
+        'grass.10',
+        'grass.5',
+        'grass.4',
+      ],
+    },
     { id: 'fish.meadow.1', kind: 'smallFish', x: 3500, y: 850, heading: Math.PI, count: 24 },
     { id: 'fish.meadow.2', kind: 'smallFish', x: 5400, y: 1300, heading: 0.2, count: 20 },
     // Zone D.
@@ -269,12 +285,20 @@ export const lagoon: AreaDef = {
     { id: 'A', zone: { x: 6900, y: 1800, w: 1100, h: 1700 } },
     { id: 'B', zone: { x: 4700, y: 1800, w: 2200, h: 1900 } },
     { id: 'C', zone: { x: 2500, y: 200, w: 4000, h: 1500 }, discovery: 'place.seagrass' },
-    { id: 'D', zone: { x: 2700, y: 3900, w: 2300, h: 1000 } },
+    // The crackle is loudest in the rock garden: heard by staying (T108).
+    { id: 'D', zone: { x: 2700, y: 3900, w: 2300, h: 1000 }, discovery: 'thing.crackle', after: 3 },
     { id: 'E', zone: { x: 3300, y: 1900, w: 1300, h: 1800 } },
     { id: 'F', zone: { x: 5200, y: 3900, w: 2600, h: 1000 } },
     { id: 'G', zone: { x: 0, y: 1900, w: 3200, h: 1900 } },
     { id: 'H', zone: { x: 200, y: 200, w: 2200, h: 1500 } },
     { id: 'I', zone: { x: 200, y: 3900, w: 2400, h: 1000 } },
+  ],
+
+  // Zone I, the weed bank: shed shells gather here (T108).
+  shedShells: [
+    { id: 'shell.1', x: 800, y: 4250, heading: 0.6 },
+    { id: 'shell.2', x: 1550, y: 4520, heading: -2.3 },
+    { id: 'shell.3', x: 2250, y: 4180, heading: 2.7 },
   ],
 
   exits: [{ to: 'channel', zone: { x: 0, y: 1900, w: 90, h: 1900 }, needsStep: 's2.molt' }],

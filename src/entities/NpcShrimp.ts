@@ -67,6 +67,12 @@ export class NpcShrimp {
     this.rig.update(0, this.motion);
   }
 
+  /** In a current: the way the water runs, for the antennae and tail fan to lean (T110). */
+  downstream: number | null = null;
+
+  /** A stranger passing through, not one of the shoal (doc 11, `shrimp.traveller`; T114). */
+  traveller = false;
+
   get x(): number {
     return this.motion.x;
   }
@@ -208,6 +214,7 @@ export class NpcShrimp {
     this.rig.setLift(lift);
     this.rig.setAlpha(molt?.stage === 'soft' ? MOLT.softAlpha : 1);
     this.rig.update(dt, this.motion, {
+      downstream: this.downstream,
       expression: withConditions(MOOD_EXPRESSIONS[mood], has),
       afraid: mood === 'afraid',
       target: this.intent?.look ?? target,

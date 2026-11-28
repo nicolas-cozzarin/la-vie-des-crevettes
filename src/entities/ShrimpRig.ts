@@ -53,6 +53,8 @@ export interface RigFeel {
   arch?: number;
   /** A rear leg reaches up over the carapace and rubs (doc 14, "Premolt scratch"). */
   scratch?: boolean;
+  /** In a current: the way the water runs, which antennae and tail fan lean toward (doc 10, `inCurrent`). */
+  downstream?: number | null;
 }
 
 /** The expression as the rig holds it: `fan` always a number, and how firmly it is held. */
@@ -95,6 +97,8 @@ const ANTENNA_POINTS = 14;
 const ANTENNA_STEP = 1 / 120;
 /** The most one link of an antenna bends from the link before it, in radians. */
 const ANTENNA_BEND = 0.42;
+/** Radians. In a current, antennae and tail fan lean this far downstream at most (doc 10, `inCurrent`). */
+const STREAM_LEAN = 25 * (Math.PI / 180);
 
 /** Where the five pairs of walking legs leave the body, in BL ahead of the abdomen. */
 const LEG_ROOTS = [0.07, 0.115, 0.16, 0.205, 0.25];
@@ -181,6 +185,9 @@ export class ShrimpRig {
   /** 0 to 1: how far the body arches, and how far the rear leg reaches up to scratch. */
   private arch = 0;
   private scratch = 0;
+  /** 0 to 1: how far the antennae and tail fan lean the way the water runs, and that way. */
+  private stream = 0;
+  private streamAngle = 0;
   /** How much larger the body is drawn after a molt, 1 for none. */
   private growth = 1;
   private target: { x: number; y: number } | null = null;
@@ -348,6 +355,16 @@ export class ShrimpRig {
     this.wiggle = feel?.wiggle ?? -1;
     this.arch += ((feel?.arch ?? 0) - this.arch) * approach(dt, 0.4);
     this.scratch += ((feel?.scratch ? 1 : 0) - this.scratch) * approach(dt, 0.08);
+    const downstream = feel?.downstream ?? null;
+    if (downstream !== null) this.streamAngle = downstream;
+    this.stream += ((downstream !== null ? 1 : 0) - this.stream) * approach(dt, 0.5);
+  }
+
+  /** How far a part pointing `angle` is turned toward the way the water runs, at most 25 degrees. */
+  private downstreamTurn(angle: number, share = 1): number {
+    if (this.stream < 0.001) return 0;
+    const turn = Phaser.Math.Clamp(wrapAngle(this.streamAngle - angle), -STREAM_LEAN, STREAM_LEAN);
+    return turn * this.stream * share;
   }
 
   /** Where the body is drawn: leaning toward what it looks at, flinching, trembling, rocking. */
@@ -420,7 +437,9 @@ export class ShrimpRig {
       tail = drawn;
     }
 
-    const fan = tail + this.shown.fanSway * Math.sin(this.swayPhase);
+    // The fan's free end points back from the tail; in a current it trails downstream.
+    const fan =
+      tail + this.shown.fanSway * Math.sin(this.swayPhase) + this.downstreamTurn(tail + Math.PI);
     this.telson
       .setPosition(x, y)
       .setRotation(fan)
@@ -701,7 +720,9 @@ export class ShrimpRig {
         for (let index = 1; index < ANTENNA_POINTS; index++) {
           const before = chain[index - 1] as Point;
           const point = chain[index] as Point;
-          const rest = first + side * index * bendEach;
+          const curve = first + side * index * bendEach;
+          // In a current the antennae trail downstream, the tips most.
+          const rest = curve + this.downstreamTurn(curve, index / (ANTENNA_POINTS - 1));
           if (this.placed) {
             // Stiff near the head, loose toward the tip.
             const pull = approach(stepTime, 1 / lerp(24, tipRate, index / (ANTENNA_POINTS - 1)));

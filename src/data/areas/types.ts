@@ -93,6 +93,18 @@ export interface FoodDef {
   rotation?: number;
 }
 
+/** Food that rides the current along a stretch of water (doc 11, `food.seaweed`; T112). */
+export interface DriftingDef {
+  /** Each clump's id is this, a dot and a number. */
+  id: string;
+  kind: FoodKind;
+  /** Where the clumps ride. They come in at the upstream end and fade out at the other. */
+  run: Zone;
+  count: number;
+  /** Width the image is drawn at. */
+  size: number;
+}
+
 /** A thing with a picture and a place, and perhaps a journal entry. */
 export interface LandmarkDef {
   id: string;
@@ -118,6 +130,16 @@ export interface CreatureDef {
   heading?: number;
   /** For animals that live in groups. */
   count?: number;
+  /** For an animal that goes round: the cover it visits, by id, in order (T106). */
+  route?: readonly string[];
+}
+
+/** A shed shell lying on the bed, drawn by the shrimp's rig, pale (doc 11, `thing.shedShell`; T108). */
+export interface ShedShellDef {
+  id: string;
+  x: number;
+  y: number;
+  heading: number;
 }
 
 /** Another shrimp. `who` is a companion's name or a seed for an unnamed one. */
@@ -142,6 +164,8 @@ export interface NamedZone {
   zone: Zone;
   /** The journal entry found by entering. */
   discovery?: string;
+  /** Seconds the shrimp must stay inside before the entry is found, as for a sound (T108). */
+  after?: number;
 }
 
 export interface TriggerDef {
@@ -157,6 +181,20 @@ export interface ExitDef {
   needsStep?: string;
 }
 
+/**
+ * A farm pond behind a straight bank on one edge of the area, its outlet
+ * gate in the bank, and the plume of its water in the channel (doc 18,
+ * "Level 3"; D39). The bank itself is one of the area's walls, `pond.wall`.
+ */
+export interface PondDef {
+  /** The middle of the gate where it meets the water, and its width across. */
+  gate: { x: number; y: number; width: number };
+  /** The plume: a band from the gate to where the current has bent it, and how wide. */
+  plume: { from: { x: number; y: number }; to: { x: number; y: number }; width: number };
+  /** How many shapes pass behind the mesh. */
+  crowd: number;
+}
+
 /** What lies over the picture: light from above, and how far the eye reaches. */
 export interface LightDef {
   /** A tile of light patches, laid over the bed with a blend that only lightens. */
@@ -168,6 +206,11 @@ export interface LightDef {
    * so that it still covers the screen when the shrimp is near its edge.
    */
   murk?: string;
+  /**
+   * Share of colour the place's water takes away, from 0 to 1, under what the
+   * mood takes (doc 04: the shadow is the channel, drained of colour).
+   */
+  drain?: number;
 }
 
 export interface AreaDef {
@@ -189,7 +232,23 @@ export interface AreaDef {
   creatures?: CreatureDef[];
   shrimp?: ShrimpSpawnDef[];
   currents?: CurrentDef[];
+  /** Food that rides the currents. */
+  drifting?: DriftingDef[];
+  /**
+   * The shoal's way with the tide, from where it gathers to where it leaves
+   * (T113). It keeps a little ahead of the player along this line.
+   */
+  journey?: { x: number; y: number }[];
+  /**
+   * Small groups of strangers pass along the journey, from beyond its start
+   * to beyond its end (doc 11, `shrimp.traveller`; T114). Needs a journey.
+   */
+  travellers?: boolean;
+  /** A farm pond seen through its outlet's mesh (D39). */
+  pond?: PondDef;
   zones?: NamedZone[];
+  /** Shed shells on the bed. Each is found as `thing.shedShell`. */
+  shedShells?: ShedShellDef[];
   triggers?: TriggerDef[];
   /** The threats that may come here, by doc 11's "Threat" line. Only those built so far. */
   threats?: ThreatKind[];

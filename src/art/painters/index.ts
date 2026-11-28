@@ -7,6 +7,8 @@ import { iconPainters } from './icons';
 import { lagoonPainters } from './lagoon';
 import { lagoonAnimalPainters } from './lagoonAnimals';
 import { mangrovePainters } from './mangrove';
+import { pondPainters } from './pond';
+import { shadowPainters } from './shadow';
 import { shrimpPainters } from './shrimp';
 import { wastePainters } from './waste';
 import { worldPainters } from './world';
@@ -21,6 +23,8 @@ export const PAINTERS: Readonly<Record<string, Painter>> = {
   ...creaturePainters,
   ...lagoonAnimalPainters,
   ...channelPainters,
+  ...pondPainters,
+  ...shadowPainters,
   ...wastePainters,
   ...effectPainters,
   ...iconPainters,
@@ -48,6 +52,8 @@ export const PAINTER_GROUPS: PainterGroup[] = [
     names: Object.keys(lagoonAnimalPainters),
   },
   { id: 'channel', title: 'Channel', ground: '#33434A', names: Object.keys(channelPainters) },
+  { id: 'pond', title: 'Pond (D39)', ground: '#33434A', names: Object.keys(pondPainters) },
+  { id: 'shadow', title: 'The net', ground: '#4A5058', names: Object.keys(shadowPainters) },
   { id: 'waste', title: 'Litter (D43)', ground: '#A89C7C', names: Object.keys(wastePainters) },
   { id: 'effects', title: 'Effects', ground: '#3F4E52', names: Object.keys(effectPainters) },
   { id: 'icons', title: 'Journal marks', ground: '#F6F1E4', names: Object.keys(iconPainters) },

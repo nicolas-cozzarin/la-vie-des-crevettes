@@ -16,7 +16,8 @@ export type CaptionKey =
   | 'caption.strike'
   | 'caption.rush'
   | 'caption.relief'
-  | 'caption.alarm';
+  | 'caption.alarm'
+  | 'caption.crackle';
 
 export interface Cue {
   sound: EffectName | null;

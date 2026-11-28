@@ -262,7 +262,7 @@ The player comes in from the mangrove on the right and leaves for the channel on
 | H. North-west rocks | 200, 200, 2200, 1500 | Boulders with crevices between | A quiet corner. A good place for the molt |
 | I. Weed bank | 200, 3900, 2400, 1000 | Drifted seagrass blades and seaweed | Shed shells gather here |
 
-The edges are in T47. Every position is in `src/data/areas/lagoon.ts`. The shed shells of zone I are drawn by the shrimp's rig and are not placed yet.
+The edges are in T47. Every position is in `src/data/areas/lagoon.ts`. The shed shells of zone I are drawn by the shrimp's rig, and placed as `shedShells` in the area file (T108).
 
 Beats: arrive by day, burrow, rest until dusk. At dusk the shoal comes out: graze with it. Night: plankton, turtle, the burrow, bonds. Dawn: the fish. Then the molt, with a companion staying close. Then the pull of the tide.
 
@@ -343,7 +343,7 @@ x:  0      500        2500         4500        6500         8500       10500   1
 | `food.seaweed` | Food | 2 BL | A loose clump of olive-brown fronds with small round floats | Rides the current. Eaten on touch while moving |
 | `light.moon` | Effect | Tile | Pale blue-white bands `#C9D6E8`, long and soft | Slide across the bed |
 | `fx.streak` | Effect | | Specks drawn out into short lines | Shows how fast the water runs |
-| `shrimp.traveller` | Creature | 1 BL | Other shrimp, strangers, in small groups | Pass through, all heading left |
+| `shrimp.traveller` | Creature | 1 BL | Other shrimp, strangers, in small groups | Pass through, all heading left. As built: T114 |
 | `channel.seaFan` | Decor, *added* | 2 BL | A flat branching fan, rust-red, growing from the rock walls | Sways |
 | `pond.wall` | Edge strip, D39 | 2000 px, the top edge of zone D | A straight bank of packed earth, the only straight line in the wild. Grass tufts along its crest, cracked mud at its foot | Solid |
 | `pond.outlet` | Obstacle, D39 | 3 BL | A concrete sluice gate in the wall, stained green-brown, its opening closed by a mesh | Solid. Water pours out of it |

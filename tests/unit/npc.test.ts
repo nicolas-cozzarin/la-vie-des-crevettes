@@ -77,6 +77,14 @@ describe('choosing what to do', () => {
     expect(scores.greet).toBeCloseTo(0.8 * 0.8);
   });
 
+  it('travels while farther than 4 BL from where the shoal makes for (T113)', () => {
+    const t = COMPANIONS.ecume.temperament;
+    expect(scoreBehaviours(view({ journeyGap: 6 }), t, NPC).travel).toBe(0.85);
+    expect(scoreBehaviours(view({ journeyGap: 3 }), t, NPC).travel).toBe(0);
+    expect(scoreBehaviours(view({ journeyGap: null }), t, NPC).travel).toBe(0);
+    expect(scoreBehaviours(view(), t, NPC).travel).toBe(0);
+  });
+
   it('the behaviour in progress keeps its +0.15', () => {
     const scores = { ...scoreBehaviours(view(), COMPANIONS.nacre.temperament, NPC) };
     scores.rest = scores.wander - 0.1;
@@ -368,6 +376,31 @@ describe('the mind of another shrimp', () => {
     const intent = nacre.step(1 / 30, world({ time: 0.1 }));
     expect(intent).toMatchObject({ dart: true, axis: { x: 0, y: 1 } });
     expect(nacre.step(1 / 30, world({ time: 0.2 })).dart).toBe(false);
+  });
+
+  it('travels with the tide toward where the shoal makes for, and stays there once arrived (T113)', () => {
+    const nacre = mind();
+    const travelling = world({ journey: { x: 200, y: 0 } });
+    const intent = nacre.step(1 / 30, travelling);
+    expect(nacre.behaviour).toBe('travel');
+    // Unpaced, at full strength: it swims.
+    expect(intent.axis.x).toBeLessThan(-0.9);
+    // Within 4 BL, travel no longer scores; within 2 it has arrived and chooses again.
+    nacre.step(1 / 30, { ...travelling, x: 350, time: 0.6 });
+    expect(nacre.behaviour).not.toBe('travel');
+  });
+
+  it('a fright comes before the journey', () => {
+    const nacre = mind();
+    nacre.step(
+      1 / 30,
+      world({
+        journey: { x: 200, y: 0 },
+        feelings: { ...world().feelings, fear: 0.45 },
+        covers: [{ x: 1600, y: 0, r: 200 }],
+      }),
+    );
+    expect(nacre.behaviour).toBe('flee');
   });
 
   it('comes when called, and stops within 3 BL', () => {

@@ -3,7 +3,7 @@ import { ensureTexture } from '../art/TextureFactory';
 import { DEPTH } from '../config';
 import { seededRandom } from '../core/random';
 import type { DayLight } from '../core/world/dayCycle';
-import { inRect } from '../core/world/zones';
+import { inRect, type Rect } from '../core/world/zones';
 import type { AreaDef } from '../data/areas/types';
 import { DAY } from '../data/tuning';
 import type { WaterLight } from './WaterLight';
@@ -47,6 +47,8 @@ export class DayNight {
   private readonly cells = new Map<number, Glow[]>();
   private readonly cellPx: number;
   private readonly columns: number;
+  /** Where the plankton is thickest. */
+  private readonly shallows: Rect | undefined;
   private readonly pool: Phaser.GameObjects.Image[] = [];
   private readonly wake: WakePoint[] = [];
   private readonly last = new Map<string, { x: number; y: number; at: number }>();
@@ -75,6 +77,7 @@ export class DayNight {
     // The points are scattered once, the same for every visit.
     const tuning = DAY.plankton;
     const shallows = (area.zones ?? []).find((zone) => zone.id === SHALLOWS)?.zone;
+    this.shallows = shallows;
     const random = seededRandom(area.size.w + area.size.h);
     const count = Math.round((area.size.w * area.size.h * tuning.perBl2) / (bl * bl));
     this.cellPx = 4 * bl;
@@ -140,6 +143,11 @@ export class DayNight {
       lit: this.litNow,
       litNearPlayer: this.litNearPlayer,
     };
+  }
+
+  /** Whether a point is where the plankton is thickest, in the shallows (T109). */
+  thickAt(x: number, y: number): boolean {
+    return this.shallows !== undefined && inRect(x, y, this.shallows);
   }
 
   /** The plankton lit up near the player on this frame: the first time is a discovery. */

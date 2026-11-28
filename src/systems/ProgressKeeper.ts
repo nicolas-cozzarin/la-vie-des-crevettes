@@ -53,8 +53,9 @@ export class ProgressKeeper {
       this.stops.push(bus.on(type, handler));
     const hear = (event: ProgressEvent) => this.hear(event);
 
-    on('food:eaten', ({ who, kind, full }) => {
-      if (who === PLAYER) hear({ kind: 'eaten', food: kind, area, full, night: false });
+    on('food:eaten', ({ who, kind, full, night, glowing, onTheMove }) => {
+      if (who !== PLAYER) return;
+      hear({ kind: 'eaten', food: kind, area, full, night: night ?? false, glowing, onTheMove });
     });
     on('tailflip', ({ who }) => {
       if (who === PLAYER) hear({ kind: 'tailflip' });
@@ -87,6 +88,7 @@ export class ProgressKeeper {
       hear({ kind: 'escaped', threat: kind, clean, still });
     });
     on('cornered', () => hear({ kind: 'cornered', area }));
+    on('zone:entered', ({ area: where, zone }) => hear({ kind: 'zone', area: where, zone }));
     on('molt:done', ({ who, molts }) => {
       if (who === PLAYER) hear({ kind: 'molt', molts });
     });

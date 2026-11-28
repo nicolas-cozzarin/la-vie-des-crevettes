@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { imageFit } from '../../src/art/fit';
 import { PAINTERS } from '../../src/art/painters';
+import { currentAt, inCurrent } from '../../src/core/movement/currents';
+import { inPlume } from '../../src/core/pond/plume';
+import { isClear } from '../../src/core/npc/steer';
 import { AREA_IDS, FOOD_KINDS } from '../../src/core/world/kinds';
+import { channel } from '../../src/data/areas/channel';
 import { lagoon } from '../../src/data/areas/lagoon';
 import { mangrove } from '../../src/data/areas/mangrove';
 import { AREAS, areaFor, isPlayableArea } from '../../src/data/areas/index';
@@ -57,6 +61,7 @@ function imagesOf(area: AreaDef): [string, string][] {
   for (const scatter of area.scatter) images.push(['scatter', scatter.image]);
   for (const cover of area.cover ?? []) if (cover.image) images.push([cover.id, cover.image]);
   for (const food of area.food ?? []) images.push([food.id, `food.${food.kind}`]);
+  for (const run of area.drifting ?? []) images.push([run.id, `food.${run.kind}`]);
   for (const landmark of area.landmarks ?? []) images.push([landmark.id, landmark.image]);
   if (area.light?.dapple) images.push(['dapple', area.light.dapple]);
   if (area.light?.murk) images.push(['murk', area.light.murk]);
@@ -138,6 +143,7 @@ describe.each(asPlayed)('area %s', (_name, area) => {
       ...(area.creatures ?? []),
       ...(area.shrimp ?? []),
       ...(area.triggers ?? []),
+      ...(area.shedShells ?? []),
     ].map((thing) => thing.id);
     expect(new Set(ids).size).toBe(ids.length);
     const zones = (area.zones ?? []).map((zone) => zone.id);
@@ -146,6 +152,38 @@ describe.each(asPlayed)('area %s', (_name, area) => {
 
   it('offers only foods from the closed list', () => {
     for (const food of area.food ?? []) expect(FOOD_KINDS, food.id).toContain(food.kind);
+    for (const run of area.drifting ?? []) expect(FOOD_KINDS, run.id).toContain(run.kind);
+  });
+
+  it('lets drifting food ride water that runs, inside the area (T112)', () => {
+    for (const run of area.drifting ?? []) {
+      expect(zoneInside(area, run.run), run.id).toBe(true);
+      const middle = { x: run.run.x + run.run.w / 2, y: run.run.y + run.run.h / 2 };
+      expect(inCurrent(area.currents ?? [], middle.x, middle.y), run.id).toBe(true);
+      expect(run.count, run.id).toBeGreaterThan(0);
+    }
+  });
+
+  it('lays the journey inside the area, clear of rock, and sends travellers only along one (T113, T114)', () => {
+    const route = area.journey ?? [];
+    if (area.travellers) expect(route.length, 'travellers need a journey').toBeGreaterThan(1);
+    const solid = [...area.obstacles, ...(area.blocks ?? [])];
+    // A shrimp's half width, about a third of a body length.
+    const radius = (area.bodyLengthPx ?? 110) * 0.3;
+    for (let index = 1; index < route.length; index++) {
+      const a = route[index - 1] as { x: number; y: number };
+      const b = route[index] as { x: number; y: number };
+      expect(inside(area, a.x, a.y) && inside(area, b.x, b.y), `journey ${index}`).toBe(true);
+      const steps = Math.ceil(Math.hypot(b.x - a.x, b.y - a.y) / 40);
+      for (let step = 0; step <= steps; step++) {
+        const x = a.x + ((b.x - a.x) * step) / steps;
+        const y = a.y + ((b.y - a.y) * step) / steps;
+        expect(
+          isClear(x, y, radius, solid, null),
+          `journey at ${Math.round(x)},${Math.round(y)}`,
+        ).toBe(true);
+      }
+    }
   });
 
   it('keeps every thing inside the area', () => {
@@ -156,6 +194,7 @@ describe.each(asPlayed)('area %s', (_name, area) => {
       ...(area.landmarks ?? []),
       ...(area.creatures ?? []),
       ...(area.shrimp ?? []),
+      ...(area.shedShells ?? []),
     ];
     for (const thing of things) expect(inside(area, thing.x, thing.y), thing.id).toBe(true);
     for (const zone of area.zones ?? []) expect(zoneInside(area, zone.zone), zone.id).toBe(true);
@@ -174,6 +213,9 @@ describe.each(asPlayed)('area %s', (_name, area) => {
       expect(blocked(area, shrimp.x, shrimp.y, bl * 0.25), shrimp.id).toBe(false);
     }
     for (const food of area.food ?? []) expect(blocked(area, food.x, food.y), food.id).toBe(false);
+    for (const shell of area.shedShells ?? []) {
+      expect(blocked(area, shell.x, shell.y, bl * 0.5), shell.id).toBe(false);
+    }
   });
 
   it('sizes round obstacles and edge strips from the fit table', () => {
@@ -257,6 +299,7 @@ describe('the mirror', () => {
       ...(each.landmarks ?? []),
       ...(each.creatures ?? []),
       ...(each.shrimp ?? []),
+      ...(each.shedShells ?? []),
     ];
     const before = points(area);
     const after = points(twice);
@@ -362,11 +405,15 @@ describe('the lagoon', () => {
       nacre: 'A',
       seaStar: 'H',
       'burrow.pistol': 'D',
+      'shell.1': 'I',
+      'shell.2': 'I',
+      'shell.3': 'I',
     };
     const things = [
       ...(lagoon.creatures ?? []),
       ...(lagoon.shrimp ?? []),
       ...(lagoon.landmarks ?? []),
+      ...(lagoon.shedShells ?? []),
     ];
     for (const [id, zoneId] of Object.entries(where)) {
       const thing = things.find((each) => each.id === id);
@@ -374,6 +421,25 @@ describe('the lagoon', () => {
       if (!thing) continue;
       expect(inZone(zoneOf(lagoon, zoneId), thing.x, thing.y), `${id} in ${zoneId}`).toBe(true);
     }
+  });
+
+  it('sends the turtle round the meadow from clump to clump, about 40 BL round (T106)', () => {
+    const turtle = (lagoon.creatures ?? []).find((each) => each.kind === 'turtle');
+    const route = (turtle?.route ?? []).map((id) =>
+      (lagoon.cover ?? []).find((cover) => cover.id === id),
+    );
+    expect(route.length).toBeGreaterThan(3);
+    const meadow = zoneOf(lagoon, 'C');
+    let round = 0;
+    route.forEach((cover, index) => {
+      expect(cover?.kind).toBe('seagrass');
+      if (!cover) return;
+      expect(inZone(meadow, cover.x, cover.y), cover.id).toBe(true);
+      const next = route[(index + 1) % route.length];
+      if (next) round += Math.hypot(next.x - cover.x, next.y - cover.y) / bl;
+    });
+    expect(round).toBeGreaterThan(35);
+    expect(round).toBeLessThan(50);
   });
 
   it('leaves the way in from the mangrove open', () => {
@@ -409,9 +475,119 @@ describe('litter (D43)', () => {
   const count = (area: AreaDef): number =>
     (area.landmarks ?? []).filter((thing) => thing.image.startsWith('waste.')).length;
 
-  it('grows toward the farm: rare in the mangrove, more in the lagoon', () => {
+  it('grows toward the farm: rare in the mangrove, more in the lagoon, most in the channel', () => {
     expect(count(mangrove)).toBeGreaterThan(0);
     expect(count(mangrove)).toBeLessThanOrEqual(3);
     expect(count(lagoon)).toBeGreaterThan(count(mangrove));
+    expect(count(channel)).toBeGreaterThan(count(lagoon));
+  });
+
+  it('lies about half within 10 BL of the pond gate in the channel (doc 11)', () => {
+    const gate = channel.pond?.gate;
+    const bl = channel.bodyLengthPx ?? 110;
+    const pieces = (channel.landmarks ?? []).filter((thing) => thing.image.startsWith('waste.'));
+    const near = pieces.filter(
+      (piece) => gate && Math.hypot(piece.x - gate.x, piece.y - gate.y) <= 10 * bl,
+    );
+    expect(pieces.length).toBeGreaterThanOrEqual(18);
+    expect(near.length).toBeGreaterThanOrEqual(pieces.length * 0.4);
+  });
+
+  it('has sacks and pipes only near a farm', () => {
+    for (const area of Object.values(areas)) {
+      const bl = area.bodyLengthPx ?? 110;
+      for (const piece of area.landmarks ?? []) {
+        if (piece.image !== 'waste.sack' && piece.image !== 'waste.pipe') continue;
+        const gate = area.pond?.gate;
+        expect(gate, `${area.id}: ${piece.id}`).toBeDefined();
+        if (!gate) continue;
+        const away = Math.hypot(piece.x - gate.x, piece.y - gate.y) / bl;
+        expect(away, `${area.id}: ${piece.id}`).toBeLessThanOrEqual(15);
+      }
+    }
+  });
+
+  it('is never in the first view of an area', () => {
+    for (const area of Object.values(areas)) {
+      const bl = area.bodyLengthPx ?? 110;
+      for (const piece of area.landmarks ?? []) {
+        if (!piece.image.startsWith('waste.')) continue;
+        // The view is about 12 by 7 body lengths; a piece reaches half its width beyond its middle.
+        const reach = piece.width / 2;
+        const seen =
+          Math.abs(piece.x - area.spawn.x) < 6 * bl + reach &&
+          Math.abs(piece.y - area.spawn.y) < 3.5 * bl + reach;
+        expect(seen, `${area.id}: ${piece.id}`).toBe(false);
+      }
+    }
+  });
+});
+
+describe('the pond seen from the channel (D39)', () => {
+  describe.each([
+    ['as written', channel],
+    ['mirrored', mirrorArea(channel)],
+  ])('%s', (_name, area) => {
+    const pond = area.pond;
+    const bl = area.bodyLengthPx ?? 110;
+    if (!pond) throw new Error('The channel has no pond');
+    const { gate, plume } = pond;
+
+    it('has its gate in the pond bank along the top edge of the pool', () => {
+      const bank = (area.walls ?? []).find((wall) => wall.image === 'pond.wall');
+      expect(bank?.side).toBe('top');
+      const from = bank?.from ?? 0;
+      const to = bank?.to ?? 0;
+      expect(to - from).toBe(2000);
+      expect(gate.x - gate.width / 2).toBeGreaterThan(from);
+      expect(gate.x + gate.width / 2).toBeLessThan(to);
+      expect(gate.y).toBeGreaterThanOrEqual(bank?.depth ?? 0);
+      const pool = area.zones?.find((zone) => zone.id === 'D')?.zone;
+      expect(pool && gate.x > pool.x && gate.x < pool.x + pool.w).toBe(true);
+    });
+
+    it('is 3 BL across, and stands out as a block the shrimp cannot pass', () => {
+      expect(gate.width / bl).toBeCloseTo(3, 1);
+      const apron = (area.blocks ?? []).find(
+        (block) =>
+          block.shape === 'rect' &&
+          block.x <= gate.x - gate.width / 2 + 1 &&
+          block.x + block.w >= gate.x + gate.width / 2 - 1 &&
+          block.y + block.h >= gate.y,
+      );
+      expect(apron).toBeDefined();
+    });
+
+    it('lets out a plume about 10 BL long, from the gate, bent downstream by the tide', () => {
+      expect(Math.hypot(plume.from.x - gate.x, plume.from.y - gate.y)).toBeLessThan(
+        plume.width / 2,
+      );
+      const length = Math.hypot(plume.to.x - plume.from.x, plume.to.y - plume.from.y) / bl;
+      expect(length).toBeGreaterThan(8);
+      expect(length).toBeLessThan(12);
+      const tide = currentAt(area.currents ?? [], gate.x, gate.y + 400);
+      expect(tide.vx).not.toBe(0);
+      expect(Math.sign(plume.to.x - plume.from.x)).toBe(Math.sign(tide.vx));
+      expect(plume.to.y).toBeGreaterThan(plume.from.y);
+    });
+
+    it('has no food in its water', () => {
+      for (const food of area.food ?? []) {
+        expect(inPlume(plume, food.x, food.y), food.id).toBe(false);
+        const edge = Math.min(
+          ...[0, 0.25, 0.5, 0.75, 1].map((t) =>
+            Math.hypot(
+              plume.from.x + (plume.to.x - plume.from.x) * t - food.x,
+              plume.from.y + (plume.to.y - plume.from.y) * t - food.y,
+            ),
+          ),
+        );
+        expect(edge - plume.width / 2 - food.size / 2, food.id).toBeGreaterThan(0);
+      }
+    });
+
+    it('has a crowd behind the mesh', () => {
+      expect(pond.crowd).toBeGreaterThanOrEqual(6);
+    });
   });
 });

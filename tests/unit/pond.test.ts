@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Crowd, type CrowdTuning } from '../../src/core/pond/crowd';
+import { GateMoment, type GateMomentTuning } from '../../src/core/pond/moment';
 import { inPlume, type Plume } from '../../src/core/pond/plume';
 import { seededRandom } from '../../src/core/random';
 
@@ -91,5 +92,87 @@ describe('the crowd behind the mesh', () => {
     expect(crowd.atMesh).toBeNull();
     crowd.step(0.1, { x: 0, y: mesh.y + 299 });
     expect(crowd.atMesh).not.toBeNull();
+  });
+});
+
+describe('the shoal passing the gate', () => {
+  // A gate at the top, its water leaning down and to the left: the tide runs right to left.
+  const plume: Plume = { from: { x: 5000, y: 400 }, to: { x: 4000, y: 900 }, width: 400 };
+  const gate = { x: 5000, y: 340 };
+  const tuning: GateMomentTuning = {
+    start: 300,
+    reach: 2000,
+    atMesh: { out: 100, aside: 150 },
+    short: 200,
+    pull: 6,
+  };
+  const outside = { x: 7000, y: 1500 };
+  const inWater = { x: 5000, y: 500 };
+  const run = (moment: GateMoment, seconds: number, player: { x: number; y: number }) => {
+    for (let time = 0; time < seconds; time += 0.1) moment.step(0.1, player);
+  };
+
+  it('waits for the player to taste the pond water', () => {
+    const moment = new GateMoment(plume, gate, tuning);
+    run(moment, 10, outside);
+    expect(moment.stage).toBe('before');
+    expect(moment.goalFor('brise', outside)).toBeNull();
+    moment.step(0.1, inWater);
+    expect(moment.stage).toBe('at');
+  });
+
+  it('begins too for a player who comes up to the gate beside its water', () => {
+    const moment = new GateMoment(plume, gate, tuning);
+    const beside = { x: 5280, y: 380 };
+    expect(inPlume(plume, beside.x, beside.y)).toBe(false);
+    moment.step(0.1, beside);
+    expect(moment.stage).toBe('at');
+  });
+
+  it('sends Brise to the mesh, upstream of its middle, and stops Nacre short of the water', () => {
+    const moment = new GateMoment(plume, gate, tuning);
+    moment.step(0.1, inWater);
+    const brise = moment.goalFor('brise', { x: 6000, y: 1200 });
+    expect(brise).toEqual({ x: 5150, y: 440 });
+    const nacre = moment.goalFor('nacre', { x: 6000, y: 1200 });
+    expect(nacre).not.toBeNull();
+    if (!nacre) return;
+    expect(inPlume(plume, nacre.x, nacre.y)).toBe(false);
+    expect(nacre.y).toBeGreaterThan(plume.from.y);
+    expect(moment.goalFor('ecume', { x: 6000, y: 1200 })).toBeNull();
+    // Too far from the gate, a companion keeps to the shoal's way.
+    expect(moment.goalFor('brise', { x: 9000, y: 1200 })).toBeNull();
+  });
+
+  it('lasts while the player stays in the water, then the tide pulls, once', () => {
+    const moment = new GateMoment(plume, gate, tuning);
+    run(moment, 30, inWater);
+    expect(moment.stage).toBe('at');
+    run(moment, 5, outside);
+    expect(moment.stage).toBe('at');
+    run(moment, 1.2, outside);
+    expect(moment.stage).toBe('after');
+    expect(moment.goalFor('brise', { x: 6000, y: 1200 })).toBeNull();
+    run(moment, 5, inWater);
+    expect(moment.stage).toBe('after');
+  });
+
+  it('after the greeting through the mesh, the tide pulls even if the player stays', () => {
+    const moment = new GateMoment(plume, gate, tuning);
+    moment.step(0.1, inWater);
+    moment.greetedAtMesh();
+    run(moment, 5, inWater);
+    expect(moment.stage).toBe('at');
+    run(moment, 1.2, inWater);
+    expect(moment.stage).toBe('after');
+  });
+
+  it('turns round with the coast: Brise still waits upstream of the mesh', () => {
+    const turned: Plume = { from: { x: 7000, y: 400 }, to: { x: 8000, y: 900 }, width: 400 };
+    const moment = new GateMoment(turned, { x: 7000, y: 340 }, tuning);
+    moment.step(0.1, { x: 7000, y: 500 });
+    expect(moment.goalFor('brise', { x: 6000, y: 1200 })?.x).toBe(6850);
+    const nacre = moment.goalFor('nacre', { x: 6000, y: 1200 });
+    expect(nacre && inPlume(turned, nacre.x, nacre.y)).toBe(false);
   });
 });

@@ -508,7 +508,13 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
       narration: this.narrator?.showing ?? null,
       leaving: this.leavingTo,
       prompt: this.promptNow,
-      pond: this.pond ? { water: this.inPondWater, atMesh: this.pond.greetable.length > 0 } : null,
+      pond: this.pond
+        ? {
+            water: this.inPondWater,
+            atMesh: this.pond.greetable.length > 0,
+            moment: this.shoal.gateStage,
+          }
+        : null,
     });
     debugState.day = () =>
       this.day && this.dayNight
@@ -658,8 +664,10 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
         this.motion.heading = rotateToward(this.motion.heading, result.face, MOTION.turnRate * dt);
       }
       // Antennae touched through the pond's mesh: a greeting, with nobody to bond with.
-      if (result.greeted === POND_ONE) this.bus.emit('greeting', { a: PLAYER, b: POND_ONE });
-      else if (result.greeted) this.shoal.playerGreeted(this.clock, result.greeted);
+      if (result.greeted === POND_ONE) {
+        this.bus.emit('greeting', { a: PLAYER, b: POND_ONE });
+        this.shoal.pondGreeted();
+      } else if (result.greeted) this.shoal.playerGreeted(this.clock, result.greeted);
       if (result.called) this.shoal.playerCalled(this.clock);
       eating = this.stepMeal(dt, before, result.eating);
       for (const patch of this.patches) patch.step(dt);

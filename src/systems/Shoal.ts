@@ -17,6 +17,7 @@ import { along, pointBeyond, shoalGoal } from '../core/npc/journey';
 import { NpcMind, type SeenShrimp } from '../core/npc/NpcMind';
 import type { LossCandidate } from '../core/npc/losses';
 import type { ShoalMember } from '../core/npc/shoal';
+import { GateMoment, type GateMomentStage } from '../core/pond/moment';
 import { seededRandom, seedOf } from '../core/random';
 import type { ShrimpSource } from '../core/scent/ribbons';
 import type { FoodKind, LifeStage } from '../core/world/kinds';
@@ -34,6 +35,7 @@ import {
   MOTION,
   NPC,
   PASSING,
+  POND,
   SHOAL,
   STEER,
 } from '../data/tuning';
@@ -183,6 +185,8 @@ export class Shoal {
   private goal: Point | null = null;
   /** Where the strangers passing through make for, beyond the shoal's (T114). */
   private travellersGoal: Point | null = null;
+  /** Passing a pond's gate: Brise goes to the mesh, Nacre stops short (doc 18, "Level 3"; T118). */
+  private readonly gate: GateMoment | null;
 
   constructor(
     scene: Phaser.Scene,
@@ -203,6 +207,26 @@ export class Shoal {
     defs.forEach((def, index) => {
       this.members.push(this.make(scene, def, area.id, index / Math.max(1, defs.length), null));
     });
+    const moment = POND.moment;
+    this.gate = area.pond
+      ? new GateMoment(area.pond.plume, area.pond.gate, {
+          start: moment.start * bl,
+          reach: moment.reach * bl,
+          atMesh: { out: moment.out * bl, aside: moment.aside * bl },
+          short: moment.short * bl,
+          pull: moment.pull,
+        })
+      : null;
+  }
+
+  /** Where the shoal is in passing a pond's gate, or null where there is none. */
+  get gateStage(): GateMomentStage | null {
+    return this.gate?.stage ?? null;
+  }
+
+  /** The player's antennae touched the one behind the mesh. */
+  pondGreeted(): void {
+    this.gate?.greetedAtMesh();
   }
 
   /**
@@ -342,6 +366,7 @@ export class Shoal {
             along(route, middle.x, middle.y) + PASSING.ahead * this.options.bodyLengthPx,
           )
         : null;
+    this.gate?.step(dt, player);
     this.watchClose(dt, player);
     for (const alarm of this.alarm.due(time)) this.deliver(alarm);
     const playerSeen = this.seenPlayer(player);
@@ -683,7 +708,9 @@ export class Shoal {
         molting: npc.moltStage,
         leading: this.leading?.id === npc.id ? this.leading.food : null,
         restBeside,
-        journey: npc.traveller ? this.travellersGoal : this.goal,
+        journey: npc.traveller
+          ? this.travellersGoal
+          : (this.gate?.goalFor(npc.id, npc) ?? this.goal),
       },
       this.options.covers,
       this.options.foods,

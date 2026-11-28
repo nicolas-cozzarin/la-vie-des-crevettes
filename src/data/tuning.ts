@@ -101,6 +101,15 @@ export const POND = {
   stainSize: [1.1, 1.7] as const,
   /** How strong the far end's stain is, against the gate's. */
   stainFade: 0.35,
+  /**
+   * The shoal passing the gate (T118). BL: it begins in the pond's water or
+   * within `start` of the gate's mouth; a companion farther than `reach`
+   * keeps to the journey; Brise makes for `out` in front of the mesh and
+   * `aside` upstream of its middle; Nacre stops `short` beyond the plume's
+   * edge. Seconds out of the pond's water, or after the greeting at the
+   * mesh, before the tide pulls them on.
+   */
+  moment: { start: 3, reach: 15, out: 0.8, aside: 1.2, short: 1.5, pull: 6 },
   /** How much the shapes show through the water and the mesh. */
   crowdAlpha: 0.55,
 };

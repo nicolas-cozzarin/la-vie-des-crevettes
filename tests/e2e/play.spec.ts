@@ -288,12 +288,14 @@ test.describe('explore', () => {
   }) => {
     test.setTimeout(90_000);
     await explore(page, 'channel&at=5600,800');
-    expect((await player(page)).pond).toEqual({ water: false, atMesh: false });
+    expect((await player(page)).pond).toEqual({ water: false, atMesh: false, moment: 'before' });
     // Up toward the gate, into the pond's water, until one comes to the mesh.
     await page.keyboard.down('ArrowUp');
     await page.waitForFunction(() => window.__lvdc?.player()?.pond?.water === true, null, {
       timeout: 20_000,
     });
+    // The shoal passing stops at the gate: Brise to the mesh, Nacre short of the water.
+    expect((await player(page)).pond?.moment).toBe('at');
     await page.waitForFunction(() => window.__lvdc?.player()?.pond?.atMesh === true, null, {
       timeout: 30_000,
     });

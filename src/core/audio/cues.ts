@@ -17,15 +17,25 @@ export type CaptionKey =
   | 'caption.rush'
   | 'caption.relief'
   | 'caption.alarm'
-  | 'caption.crackle';
+  | 'caption.crackle'
+  | 'caption.engineFar'
+  | 'caption.engineNear';
 
 export interface Cue {
   sound: EffectName | null;
   caption: CaptionKey | null;
 }
 
-/** A threat moving to a new stage. The bird's cue is its shadow; then it steps in. */
+/**
+ * A threat moving to a new stage. The bird's cue is its shadow; then it steps
+ * in. The net's is its engine, far off; then the hull is overhead.
+ */
 export function stageCue(kind: ThreatKind, stage: ThreatStage): Cue | null {
+  if (kind === 'net') {
+    if (stage === 'cue') return { sound: 'threatCue', caption: 'caption.engineFar' };
+    if (stage === 'presence') return { sound: null, caption: 'caption.engineNear' };
+    return null;
+  }
   if (stage === 'cue') {
     return { sound: 'threatCue', caption: kind === 'fish' ? null : 'caption.shadow' };
   }

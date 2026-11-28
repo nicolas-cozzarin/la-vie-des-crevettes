@@ -186,6 +186,16 @@ describe.each(asPlayed)('area %s', (_name, area) => {
     }
   });
 
+  it('gathers a scattered shoal in one of its own zones, clear of rock (T121)', () => {
+    if (area.regroup === undefined) return;
+    const zone = (area.zones ?? []).find((one) => one.id === area.regroup)?.zone;
+    expect(zone, `zone ${area.regroup}`).toBeDefined();
+    if (!zone) return;
+    const solid = [...area.obstacles, ...(area.blocks ?? [])];
+    const middle = { x: zone.x + zone.w / 2, y: zone.y + zone.h / 2 };
+    expect(isClear(middle.x, middle.y, area.bodyLengthPx ?? 110, solid, null)).toBe(true);
+  });
+
   it('keeps every thing inside the area', () => {
     const things = [
       ...area.obstacles.map((thing, index) => ({ ...thing, id: `obstacle ${index}` })),
@@ -245,7 +255,13 @@ describe.each(asPlayed)('area %s', (_name, area) => {
     for (const piece of (area.landmarks ?? []).filter((thing) =>
       thing.image.startsWith('waste.'),
     )) {
-      expect(piece.layer, piece.id).toBe('ground');
+      // Over open water, with no bed beneath, it floats and drifts overhead instead (doc 11; T122).
+      if (area.bed) {
+        expect(piece.layer, piece.id).toBe('surface');
+        expect(piece.drift, piece.id).toBeDefined();
+      } else {
+        expect(piece.layer, piece.id).toBe('ground');
+      }
       expect(Math.abs(piece.rotation ?? 0), piece.id).toBeLessThanOrEqual(0.6);
       for (const food of area.food ?? []) {
         const gap =

@@ -61,6 +61,28 @@ export const JOURNEY = {
   ahead: 3,
 };
 
+/** The open sea (doc 11, "Chapter 5"; T122). */
+export const SEA = {
+  /** Litter floating overhead: how much of it shows, and how dark its shadow is on the bed. */
+  floating: { alpha: 0.8, shadow: 0.28 },
+  /**
+   * Marine snow in three layers, far to near: how many specks, their size in
+   * pixels, how strongly they show, how far they move with the view (1 is
+   * with the bed), and the seconds a speck takes to sink out of sight.
+   */
+  snow: {
+    count: [60, 36, 14] as const,
+    size: [
+      [3, 5],
+      [5, 8],
+      [10, 15],
+    ] as const,
+    alpha: [0.3, 0.42, 0.3] as const,
+    parallax: [0.55, 0.85, 1.25] as const,
+    sink: [26, 18, 12] as const,
+  },
+};
+
 /** Strangers passing through, down the journey and out past its end (doc 11, `shrimp.traveller`; T114). */
 export const PASSING = {
   /** Seconds before the first group, from arriving. */
@@ -716,6 +738,27 @@ export const FISH = {
   swing: 0.18,
 };
 
+/** The net (doc 10, "The net"; T120). Distances in BL, times in seconds. */
+export const NET = {
+  cue: 4,
+  hull: { long: 30, wide: 8, cross: 6 },
+  grid: { across: 14, deep: 6, speed: 2.2, follow: 3 },
+  /** The hull's bow and the grid's front come in this far from the player: just out of view. */
+  enter: 6,
+  caught: 2.5,
+  room: 3,
+  past: 6,
+  sight: 6,
+  shadowReach: 3,
+  engineGrow: 0.05,
+  /** How much the screen darkens under the grid, as Sense dims it. */
+  dim: 0.22,
+  /** Stirred silt (doc 11, `fx.silt`): a cloud every so many BL the grid goes, in BL across, hanging 20 s. */
+  silt: { every: 1.6, size: [3, 6] as [number, number], hang: 20, thin: 4, alpha: 0.85 },
+  /** Specks in the water, trembling with the throb. Pixels at its loudest. */
+  specks: { count: 34, tremble: 3.5, alpha: 0.3 },
+};
+
 /** Who goes missing from the shoal when a threat leaves (doc 10, "Losses", D42). */
 export const LOSSES = {
   chance: { bird: 1 / 3, fish: 1 / 2, net: 1 },
@@ -781,6 +824,8 @@ export const STORY = {
   seaweedNear: 3,
   /** All three companions this close keep the shoal together (doc 12, `c3.together`). BL. */
   allThree: 6,
+  /** Chapter 4: seconds after the net has passed, the others can no longer be tasted (`narr.c4.alone`). */
+  aloneAfter: 6,
 };
 
 /** Saving at rest (doc 02, "Saving"). Seconds. */

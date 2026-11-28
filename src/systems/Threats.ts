@@ -7,9 +7,10 @@ import { shelterFor, type Shelter } from '../core/threat/cornered';
 import { ThreatDirector, type ThreatEvent, type ThreatPlayer } from '../core/threat/ThreatDirector';
 import { ZoneTracker } from '../core/world/zones';
 import type { AreaDef } from '../data/areas/types';
-import { BIRD, CORNERED, FISH, HIDE, THREAT, WORLD } from '../data/tuning';
+import { BIRD, CORNERED, FISH, HIDE, NET, THREAT, WORLD } from '../data/tuning';
 import { Bird } from '../entities/Bird';
 import { Hunter } from '../entities/Hunter';
+import { NetShadow } from '../entities/NetShadow';
 import type { CoverHandle, LoadedArea } from './AreaLoader';
 import { CorneredSequence } from './CorneredSequence';
 import type { Charge } from '../core/npc/close';
@@ -30,7 +31,7 @@ export interface ThreatsOptions {
 
 /**
  * The threats of one place in the scene: the director with its rules, the
- * bird it shows, the cornered sequence, and the triggers that start a
+ * bird, the fish or the net it shows, the cornered sequence, and the triggers that start a
  * scripted threat. The play scene feeds it the player and reads back what
  * the feelings need.
  */
@@ -39,6 +40,7 @@ export class Threats {
   readonly cornered: CorneredSequence;
   private readonly bird: Bird | null;
   private readonly hunter: Hunter | null;
+  private readonly netShadow: NetShadow | null;
   private readonly triggers: ZoneTracker;
   private readonly fired = new Set<string>();
   private frameEvents: ThreatEvent[] = [];
@@ -60,10 +62,12 @@ export class Threats {
       seededRandom(options.seed),
       { gentle: options.gentle, kinds: area.threats ?? [], ambient: options.ambient },
       FISH,
+      NET,
     );
     const kinds = area.threats ?? [];
     this.bird = kinds.includes('bird') ? new Bird(scene, bodyLengthPx) : null;
     this.hunter = kinds.includes('fish') ? new Hunter(scene, bodyLengthPx) : null;
+    this.netShadow = kinds.includes('net') ? new NetShadow(scene, bodyLengthPx) : null;
     this.cornered = new CorneredSequence(scene, options.camera, CORNERED, options.reducedMotion);
     this.triggers = new ZoneTracker(area.triggers ?? []);
   }
@@ -99,13 +103,22 @@ export class Threats {
         const still = water.vx === 0 && water.vy === 0;
         this.director.request('fish', false, still ? null : Math.atan2(-water.vy, -water.vx));
       }
+      // The net comes from the sea, the way the shoal's journey leads (doc 11, "Chapter 4").
+      if (id === 'net') this.director.request('net', false, this.seaward(x, y));
     }
   }
 
   /** The debug key: this place's threat now, whatever the gap. */
-  callThreat(): void {
+  callThreat(x: number, y: number): void {
     const kind = this.options.area.threats?.[0];
-    if (kind) this.director.request(kind, false, null, true);
+    if (kind) this.director.request(kind, false, kind === 'net' ? this.seaward(x, y) : null, true);
+  }
+
+  /** The way from (x, y) toward the end of the shoal's journey, the sea, if the place has one. */
+  private seaward(x: number, y: number): number | null {
+    const journey = this.options.area.journey ?? [];
+    const end = journey[journey.length - 1];
+    return end ? Math.atan2(end.y - y, end.x - x) : null;
   }
 
   /** The story's dawn fish, coming from the way given: it starts as soon as it may. */
@@ -127,6 +140,21 @@ export class Threats {
   get charging(): Charge | null {
     const fish = this.director.fish;
     return fish?.phase === 'charge' ? { head: fish.head, heading: fish.heading } : null;
+  }
+
+  /** Where a shrimp at (x, y) flees from: across the net's lane, or from the predator. */
+  fleeFrom(x: number, y: number): Point {
+    return this.director.fleeFrom(x, y);
+  }
+
+  /** What a shrimp at (x, y) feels for as long as it lasts: the engine growing, the grid. */
+  ongoing(x: number, y: number, dt: number) {
+    return this.director.ongoing(x, y, dt);
+  }
+
+  /** Whether (x, y) is under the net's grid. */
+  underGrid(x: number, y: number): boolean {
+    return this.director.net?.isUnder(x, y) === true;
   }
 
   view(x: number, y: number, isPlayer: boolean): ThreatView | null {
@@ -153,16 +181,24 @@ export class Threats {
   draw(dt: number): void {
     this.bird?.update(dt, this.director, this.director.fish ? [] : this.frameEvents);
     this.hunter?.update(dt, this.director);
+    this.netShadow?.update(dt, this.director, this.options.camera.worldView);
     this.frameEvents = [];
   }
 
   get snapshot() {
-    return { ...this.director.snapshot, cornered: this.cornered.running };
+    const net = this.netShadow;
+    return {
+      ...this.director.snapshot,
+      cornered: this.cornered.running,
+      silt: net?.silt ?? 0,
+      throb: net?.throb ?? 0,
+    };
   }
 
   destroy(): void {
     this.bird?.destroy();
     this.hunter?.destroy();
+    this.netShadow?.destroy();
     this.cornered.destroy();
   }
 }

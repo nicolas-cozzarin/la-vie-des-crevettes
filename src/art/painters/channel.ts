@@ -183,7 +183,7 @@ const seaFan: Painter = {
  * A slate rock seen from above: rounded, darker at the rim, the moon catching
  * its upper left, silt on its top and dark turf low on its far side.
  */
-function slate(
+export function slate(
   ctx: CanvasRenderingContext2D,
   random: () => number,
   x: number,

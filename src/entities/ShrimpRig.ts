@@ -31,6 +31,8 @@ export interface RigPose {
   vy: number;
   /** 0 on the bed, 1 when swimming. */
   height: number;
+  /** How much bed lies beneath, 0 in open water: the shadow fades with it (T122). Left out, 1. */
+  bed?: number;
 }
 
 /** How the shrimp holds itself on this frame: its mood's expression, and what it looks at. */
@@ -490,10 +492,11 @@ export class ShrimpRig {
     const ox = (SHADOW.directionX / norm) * offset;
     const oy = (SHADOW.directionY / norm) * offset;
     const grow = 1 + 0.28 * pose.height;
-    const alpha = (0.34 / (1 + 0.9 * pose.height)) * (1 + 0.25 * flat);
+    const bed = pose.bed ?? 1;
+    const alpha = (0.34 / (1 + 0.9 * pose.height)) * (1 + 0.25 * flat) * bed;
     this.shadowX = ox;
     this.shadowY = oy;
-    this.shadowAlpha = 0.2 / (1 + 0.9 * pose.height);
+    this.shadowAlpha = (0.2 / (1 + 0.9 * pose.height)) * bed;
     const heading = pose.heading;
     const fan = this.angles[SEGMENTS] as number;
     const fanJoint = this.joints[SEGMENTS] as Point;

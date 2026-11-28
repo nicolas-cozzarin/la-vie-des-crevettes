@@ -77,7 +77,7 @@ describe('challenges', () => {
       if (!target) continue;
       const found = Object.values(AREAS).some((area) =>
         'discovery' in target
-          ? [...(area.landmarks ?? []), ...(area.cover ?? [])].some(
+          ? [...(area.landmarks ?? []), ...(area.cover ?? []), ...(area.zones ?? [])].some(
               (thing) => thing.discovery === target.discovery,
             )
           : (area.creatures ?? []).some((creature) => creature.kind === target.creature),
@@ -185,5 +185,13 @@ describe('chapters', () => {
     );
     for (const chapter of CHAPTERS) expect(steps, chapter.area).toContain(chapter.end);
     for (const step of STORY_STEPS) expect(steps).toContain(step.id);
+  });
+
+  it('wait only for an earlier step of the same chapter (T121)', () => {
+    STORY_STEPS.forEach((step, index) => {
+      if (step.after === undefined) return;
+      const before = STORY_STEPS.slice(0, index).find((one) => one.id === step.after);
+      expect(before?.chapter, step.id).toBe(step.chapter);
+    });
   });
 });

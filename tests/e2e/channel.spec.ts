@@ -127,7 +127,7 @@ test.describe('chapter 3, the channel', () => {
     expect(errors).toEqual([]);
   });
 
-  test('the bar stays closed until the fish has gone twice; then the life is still being made', async ({
+  test('the bar stays closed until the fish has gone twice; then it leads out over the bar to the shadow', async ({
     page,
   }) => {
     test.setTimeout(90_000);
@@ -153,10 +153,11 @@ test.describe('chapter 3, the channel', () => {
     });
     await continueLife(page, done, 'channel');
     await page.keyboard.down('ArrowLeft');
-    await page.waitForFunction(() => window.__lvdc?.player()?.narration === 'end.continued', null, {
+    await page.waitForFunction(() => window.__lvdc?.player()?.area === 'shadow', null, {
       timeout: 30_000,
     });
     await page.keyboard.up('ArrowLeft');
-    expect(await narration(page)).toBe('end.continued');
+    // The shadow begins with no line of its own: only its name.
+    expect(await narration(page)).not.toBe('narr.c1.arrive');
   });
 });

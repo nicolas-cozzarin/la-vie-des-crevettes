@@ -13,6 +13,7 @@ import type { MoltEvent } from '../core/molt/Molt';
 import { AlarmNet, type Alarm } from '../core/npc/alarm';
 import { leadTo, sidestepNow, type Charge } from '../core/npc/close';
 import { pickMolter, StayingClose } from '../core/npc/companionMolt';
+import { overBed } from '../core/movement/openWater';
 import { along, pointBeyond, shoalGoal } from '../core/npc/journey';
 import { NpcMind, type SeenShrimp } from '../core/npc/NpcMind';
 import type { LossCandidate } from '../core/npc/losses';
@@ -52,6 +53,12 @@ export interface ShoalThreat {
   readonly charging?: Charge | null;
   view(x: number, y: number, isPlayer: boolean): ThreatView | null;
   felt(id: string, x: number, y: number): StimulusKind[];
+  /** Where a shrimp at (x, y) flees from, if not from `danger`: across the net's lane (T120). */
+  fleeFrom?(x: number, y: number): Point;
+  /** What a shrimp at (x, y) feels for as long as it lasts, with this step's amount. */
+  ongoing?(x: number, y: number, dt: number): { kind: StimulusKind; amount: number }[];
+  /** Whether (x, y) is under the net's grid. */
+  underGrid?(x: number, y: number): boolean;
 }
 
 /** The player, as the other shrimp need to know it on each step. */
@@ -157,6 +164,8 @@ export class Shoal {
   private forPlayer: Alarm[] = [];
   private time = 0;
   private threat: ShoalThreat | null = null;
+  /** Who is under the net's grid now, so each is sent out of it as it comes over them. */
+  private readonly underGrid = new Set<string>();
   /** The time of day, where the place has one. By day in the lagoon the shoal rests in the sand. */
   dayPhase: DayPhase | null = null;
   /** The shrimp that took fright during the threat under way (doc 02, bonds). */
@@ -183,6 +192,8 @@ export class Shoal {
   private readonly dodged = new Set<string>();
   /** Where the shoal makes for on its journey with the tide, or null where there is none (T113). */
   private goal: Point | null = null;
+  /** Where the shoal, scattered, gathers again without the player, or null (T121). */
+  private gathering: Point | null = null;
   /** Where the strangers passing through make for, beyond the shoal's (T114). */
   private travellersGoal: Point | null = null;
   /** Passing a pond's gate: Brise goes to the mesh, Nacre stops short (doc 18, "Level 3"; T118). */
@@ -348,15 +359,24 @@ export class Shoal {
     return this.options.bonds.stage(id);
   }
 
+  /**
+   * Scattered: the shoal makes for this point and waits there, whatever the
+   * player does, until it is found again. Null to go on with the player (T121).
+   */
+  regroupAt(point: Point | null): void {
+    this.gathering = point;
+  }
+
   /** One step of every other shrimp, in the game's one loop (doc 15, "One clock"). */
   step(dt: number, time: number, player: PlayerView): void {
     this.time = time;
     this.player = player;
     const route = this.options.area.journey;
     this.goal =
-      route && route.length > 1
+      this.gathering ??
+      (route && route.length > 1
         ? shoalGoal(route, player, JOURNEY.ahead * this.options.bodyLengthPx)
-        : null;
+        : null);
     // Strangers keep their own way, a little ahead of their own middle and on past the end.
     const middle = this.middleOf(this.members.filter((npc) => npc.traveller));
     this.travellersGoal =
@@ -656,10 +676,20 @@ export class Shoal {
   ): void {
     const threat = this.threat;
     if (threat) {
+      const from = threat.fleeFrom?.(npc.x, npc.y) ?? threat.danger;
       for (const kind of threat.felt(npc.id, npc.x, npc.y)) {
         npc.feelings.stimulus(kind);
-        npc.mind.startled(time, threat.danger.x, threat.danger.y);
+        npc.mind.startled(time, from.x, from.y);
       }
+      for (const { kind, amount } of threat.ongoing?.(npc.x, npc.y, dt) ?? []) {
+        npc.feelings.stimulus(kind, amount);
+      }
+      // As the grid comes over it, it scatters out across the lane: the way out is to the side.
+      const under = threat.underGrid?.(npc.x, npc.y) === true;
+      if (under && !this.underGrid.has(npc.id)) {
+        this.underGrid.add(npc.id);
+        npc.mind.startled(time, from.x, from.y);
+      } else if (!under) this.underGrid.delete(npc.id);
     }
     const others: SeenShrimp[] = [{ ...playerSeen, stage: this.stage(npc.id) }];
     for (const other of this.members) {
@@ -678,6 +708,7 @@ export class Shoal {
     }
     const values = npc.feelings.values;
     const restBeside = this.restBesideFor(npc, player);
+    npc.motion.bed = overBed(this.options.area.bed, npc.x, npc.y);
     const result = npc.step(
       dt,
       {

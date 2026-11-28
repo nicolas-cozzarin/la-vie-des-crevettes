@@ -72,6 +72,8 @@ const FIT: Readonly<Record<string, ImageFit>> = {
   'channel.boulder.b': { fill: 0.8 },
   'channel.crevice': { cover: true },
   'pond.wall': { tile: 'x', solid: 0.7 },
+  'sea.blue': { tile: 'both' },
+  'sea.ledge': { cover: true },
   'light.moon': { tile: 'both', light: true },
   'lagoon.shore': { tile: 'x', solid: 0.56 },
   'light.dapple': { tile: 'both', light: true },

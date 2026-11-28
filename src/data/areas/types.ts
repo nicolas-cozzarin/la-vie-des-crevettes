@@ -1,5 +1,6 @@
 import type { ThreatKind } from '../../core/gameEvents';
 import type { Obstacle } from '../../core/movement/collision';
+import type { BedDef } from '../../core/movement/openWater';
 import type { AreaId, FoodKind } from '../../core/world/kinds';
 
 /**
@@ -34,6 +35,24 @@ export interface ScatterDef {
   seed: number;
   /** Size range in design pixels. */
   size: [number, number];
+}
+
+/**
+ * The bed under open water: `image` tiles the zone, and on each side that
+ * lies inside the place it fades into the `water` colour over `fade` pixels.
+ */
+export interface SeaBedDef extends BedDef {
+  image: string;
+  /** The water's colour, `#RRGGBB`, which the bed fades into. */
+  water: string;
+}
+
+/** A soft picture laid over the ground, centred on a point and `width` wide. */
+export interface WashDef {
+  image: string;
+  x: number;
+  y: number;
+  width: number;
 }
 
 /** A second ground laid over the first, with soft edges. */
@@ -114,8 +133,13 @@ export interface LandmarkDef {
   /** Width the image is drawn at. */
   width: number;
   rotation?: number;
-  /** Drawn on the bed, or above the shrimp. */
-  layer: 'ground' | 'cover';
+  /**
+   * Drawn on the bed, above the shrimp, or floating at the surface overhead,
+   * its shadow falling below where there is a bed to fall on.
+   */
+  layer: 'ground' | 'cover' | 'surface';
+  /** Floating at the surface, it drifts this many pixels a second and wraps inside `within`. */
+  drift?: { x: number; y: number; within: Zone };
   discovery?: string;
 }
 
@@ -239,6 +263,21 @@ export interface AreaDef {
    * (T113). It keeps a little ahead of the player along this line.
    */
   journey?: { x: number; y: number }[];
+  /** Marine snow sinks through the water (doc 11, `fx.snow`). */
+  snow?: boolean;
+  /**
+   * Where a bed lies under the water. Beyond it is open water: the shrimp only
+   * swims there, and its shadow fades (doc 11, "Chapter 5"; T122). Left out,
+   * the bed is everywhere.
+   */
+  bed?: SeaBedDef;
+  /** Soft pictures laid very large over the ground: the deep's darker water. */
+  washes?: WashDef[];
+  /**
+   * The named zone where the shoal gathers again once the story's threat
+   * here has scattered it, and waits to be found (doc 12, `s4.shoal`; T121).
+   */
+  regroup?: string;
   /**
    * Small groups of strangers pass along the journey, from beyond its start
    * to beyond its end (doc 11, `shrimp.traveller`; T114). Needs a journey.

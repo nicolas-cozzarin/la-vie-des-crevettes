@@ -170,6 +170,22 @@ describe('story', () => {
     ).toEqual(['s3.fish2']);
   });
 
+  it('gets out from under the net, then finds the shoal again, not before (chapter 4, T121)', () => {
+    const story = new Story(STORY_STEPS);
+    const three = { kind: 'shoal', area: 'shadow', near: 3 } as const;
+    // The shoal close before the net counts for nothing.
+    expect(story.hear(three)).toEqual([]);
+    const passed = { kind: 'threat', threat: 'net', stage: 'release', area: 'shadow' } as const;
+    expect(story.hear({ ...passed, stage: 'cornered' })).toEqual([]);
+    expect(story.hear(passed)).toEqual(['s4.net']);
+    expect(story.current(4)).toBe('s4.shoal');
+    expect(story.hear({ ...three, near: 2 })).toEqual([]);
+    // Three of them close somewhere else are not the shadow's.
+    expect(story.hear({ ...three, area: 'channel' })).toEqual([]);
+    expect(story.hear(three)).toEqual(['s4.shoal']);
+    expect(story.current(4)).toBeNull();
+  });
+
   it('starts from the steps an earlier part of the life finished', () => {
     const story = new Story(STORY_STEPS, new Set(['s0.motes', 's0.brown']));
     expect(story.current(0)).toBeNull();

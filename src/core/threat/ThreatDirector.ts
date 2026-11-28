@@ -2,7 +2,7 @@
  * The one system that starts and runs every frightening event (doc 10,
  * "Threats"). It is told where the player is and what the player does on
  * each step, and it says what the scene should show. It never touches a
- * picture. The threats so far: the wading bird and the hunting fish.
+ * picture. The threats: the wading bird, the hunting fish and the net.
  * Nothing here knows about the engine.
  */
 
@@ -21,6 +21,7 @@ import {
   type LegEvent,
 } from './bird';
 import { HuntingFish, type FishTuning } from './fish';
+import { Net, type NetTuning } from './net';
 
 export type DirectorStage = 'idle' | 'cue' | 'presence' | 'chase' | 'cornered' | 'release';
 
@@ -77,6 +78,8 @@ export interface ThreatPlayer {
   shoal?: Point | null;
   /** Seconds since the last tail flip began. */
   sinceFlip?: number;
+  /** Tucked into a crevice, where the net cannot reach. */
+  inCrevice?: boolean;
 }
 
 export interface ThreatOptions {
@@ -95,7 +98,11 @@ export type ThreatEvent =
   | { type: 'escaped'; kind: ThreatKind; clean: boolean; still: boolean }
   | { type: 'faced'; x: number; y: number }
   | { type: 'charge'; x: number; y: number; heading: number }
-  | { type: 'sidestep' };
+  | { type: 'sidestep' }
+  /** The net's back edge carries the player: it is put here (T120). */
+  | { type: 'held'; x: number; y: number }
+  /** The net has passed and the player was not caught up: how it got out (doc 12, `c4.edge`, `c4.crevice`). */
+  | { type: 'netPassed'; edge: boolean; crevice: boolean };
 
 export interface Ring {
   x: number;
@@ -129,6 +136,8 @@ export class ThreatDirector {
   ring: Ring | null = null;
   /** The hunting fish, from its cue to the end of its release. */
   fish: HuntingFish | null = null;
+  /** The net, from the hull's coming to the end of its release. */
+  net: Net | null = null;
   strikes = 0;
 
   private time = 0;
@@ -158,6 +167,8 @@ export class ThreatDirector {
   private missSeen = new Map<string, number>();
   /** Where the player was on the last step, for the fish to leave away from. */
   private lastPlayer: Point = { x: 0, y: 0 };
+  /** The way the net will go along x, chosen at its cue. */
+  private netWay: 1 | -1 = 1;
 
   constructor(
     private readonly tuning: ThreatTuning,
@@ -166,6 +177,7 @@ export class ThreatDirector {
     private readonly random: () => number,
     private readonly options: ThreatOptions,
     private readonly fishTuning?: FishTuning,
+    private readonly netTuning?: NetTuning,
   ) {
     this.nextRoll = tuning.gap;
     this.ambientLeft = options.ambient ?? Infinity;
@@ -174,6 +186,12 @@ export class ThreatDirector {
 
   /** Where the predator is: its feet once it stands, else its shadow. */
   get predator(): Point {
+    if (this.net) return this.net.middle;
+    // Before the hull, the throb comes from the way the net will come.
+    if (this.kind === 'net') {
+      const away = (this.netTuning?.enter ?? 0) * this.world.bl;
+      return { x: this.lastPlayer.x - this.netWay * away, y: this.lastPlayer.y };
+    }
     if (this.fish) return { x: this.fish.x, y: this.fish.y };
     return this.legs?.anyDown ? this.legs.middle : { x: this.shadow.x, y: this.shadow.y };
   }
@@ -191,6 +209,7 @@ export class ThreatDirector {
   request(kind: ThreatKind, first = false, from: number | null = null, force = false): void {
     if (force ? this.stage !== 'idle' : !this.options.kinds.includes(kind)) return;
     if (kind === 'fish' && !this.fishTuning) return;
+    if (kind === 'net' && !this.netTuning) return;
     this.queued = { kind, first, from, force };
   }
 
@@ -214,9 +233,11 @@ export class ThreatDirector {
         break;
       case 'cornered':
         this.fish?.leave(dt);
+        this.net?.step(dt, netPrey(player), false);
         if (this.stageTime >= this.stageLength) this.release(events);
         break;
       case 'release':
+        this.net?.step(dt, netPrey(player), false);
         this.leave(dt, events);
         break;
     }
@@ -230,9 +251,12 @@ export class ThreatDirector {
       this.stage === 'presence' || this.stage === 'chase' || this.stage === 'cornered';
     const middle = this.predator;
     const distance = Math.hypot(x - middle.x, y - middle.y);
-    const near = this.fish
-      ? present && distance <= (this.fishTuning?.sight ?? 0) * this.world.bl
-      : present && this.legs?.anyDown === true && distance <= this.bird.sight * this.world.bl;
+    const net = this.net;
+    const near = net
+      ? present && net.gapToBand(x, y) <= (this.netTuning?.sight ?? 0) * this.world.bl
+      : this.fish
+        ? present && distance <= (this.fishTuning?.sight ?? 0) * this.world.bl
+        : present && this.legs?.anyDown === true && distance <= this.bird.sight * this.world.bl;
     return {
       stage: this.stage,
       inSight: near,
@@ -247,6 +271,7 @@ export class ThreatDirector {
    * shrimp feels each of them once.
    */
   felt(id: string, x: number, y: number): StimulusKind[] {
+    if (this.kind === 'net') return this.feltNet(id, x, y);
     const out: StimulusKind[] = [];
     const bl = this.world.bl;
     const fish = this.fish ? this.fishTuning : undefined;
@@ -281,6 +306,45 @@ export class ThreatDirector {
     return out;
   }
 
+  /**
+   * The net is felt before it is seen: the engine's throb at the cue, by
+   * everyone, then the hull's shadow crossing close by.
+   */
+  private feltNet(id: string, x: number, y: number): StimulusKind[] {
+    const out: StimulusKind[] = [];
+    if (this.stage === 'cue' && !this.shadowFelt.has(`engine:${id}`)) {
+      this.shadowFelt.add(`engine:${id}`);
+      out.push('engine');
+    }
+    const net = this.net;
+    const reach = (this.netTuning?.shadowReach ?? 0) * this.world.bl;
+    if (net && !this.shadowFelt.has(id) && net.gapToHull(x, y) <= reach) {
+      this.shadowFelt.add(id);
+      out.push('shadow');
+    }
+    return out;
+  }
+
+  /**
+   * What a shrimp at (x, y) feels for as long as it lasts, with the amount
+   * for this step: the engine growing through the net's cue, and being under
+   * its grid (doc 10, "Fear").
+   */
+  ongoing(x: number, y: number, dt: number): { kind: StimulusKind; amount: number }[] {
+    if (this.kind !== 'net' || !this.netTuning) return [];
+    if (this.stage === 'cue') return [{ kind: 'engine', amount: this.netTuning.engineGrow * dt }];
+    if (this.net?.isUnder(x, y)) return [{ kind: 'netGrid', amount: dt }];
+    return [];
+  }
+
+  /**
+   * The point a shrimp at (x, y) flees from. From the net, straight across
+   * its lane, so it goes out by the nearer side edge.
+   */
+  fleeFrom(x: number, y: number): Point {
+    return this.net ? this.net.fleeFrom(x, y) : this.predator;
+  }
+
   /** What the browser test and the debug view can see. */
   get snapshot() {
     return {
@@ -299,6 +363,18 @@ export class ThreatDirector {
             charges: this.fish.charges,
           }
         : null,
+      net: this.net
+        ? {
+            hull: { x: this.net.hull.x, y: this.net.hull.y },
+            band: this.net.band,
+            lane: this.net.lane,
+            way: this.net.way,
+            under: this.net.under,
+            wasUnder: this.net.wasUnder,
+            wayOut: this.net.wayOut,
+            gone: this.net.gone,
+          }
+        : null,
     };
   }
 
@@ -313,8 +389,10 @@ export class ThreatDirector {
     if (this.time < this.nextRoll) return;
     this.nextRoll = this.time + this.tuning.roll;
     const kind = this.options.kinds[0];
+    // The net comes only when a place calls it (doc 10, "When a threat starts").
     if (
       kind === undefined ||
+      kind === 'net' ||
       !allowed ||
       this.ambientLeft <= 0 ||
       this.time - this.lastRelease < this.tuning.gap ||
@@ -344,7 +422,16 @@ export class ThreatDirector {
     this.miss = null;
     this.missSeen.clear();
     this.fish = null;
+    this.net = null;
     const from = request.from ?? this.random() * Math.PI * 2;
+    if (request.kind === 'net' && this.netTuning) {
+      // The hull and the grid will come from the way given, toward the player.
+      this.netWay = Math.cos(from) > 0 ? -1 : 1;
+      this.shadow.x = player.x;
+      this.shadow.y = player.y;
+      this.enter('cue', this.netTuning.cue, events);
+      return;
+    }
     if (request.kind === 'fish' && this.fishTuning) {
       // The fish comes in from the edge of the view toward the shoal it will circle.
       const way = this.random() < 0.5 ? 1 : -1;
@@ -373,6 +460,16 @@ export class ThreatDirector {
   }
 
   private cue(dt: number, player: ThreatPlayer, events: ThreatEvent[]): void {
+    if (this.kind === 'net' && this.netTuning) {
+      if (this.stageTime < this.stageLength) return;
+      const bl = this.world.bl;
+      const lane = Net.laneFor(this.netTuning, bl, player.y, this.world.bounds.h);
+      this.net = new Net(this.netTuning, bl, this.netWay, lane, player, this.world.bounds);
+      this.followNet();
+      // It lasts until the grid has gone; this is only a bound.
+      this.enter('presence', NET_LONGEST, events);
+      return;
+    }
     if (this.fish) {
       this.fish.arrive(dt, centreOf(player));
       this.followFish();
@@ -397,6 +494,25 @@ export class ThreatDirector {
   }
 
   private presence(dt: number, player: ThreatPlayer, events: ThreatEvent[]): void {
+    const net = this.net;
+    if (net) {
+      if (player.mode !== 'rest' || player.darted) this.moved = true;
+      for (const event of net.step(dt, netPrey(player), !this.gentle)) {
+        if (event.type === 'held') {
+          events.push(event);
+        } else if (event.type === 'caught') {
+          this.cornered = true;
+          this.enter('cornered', this.tuning.cornered, events);
+          return;
+        } else {
+          this.release(events);
+          return;
+        }
+      }
+      this.followNet();
+      if (this.stageTime >= this.stageLength) this.release(events);
+      return;
+    }
     if (this.fish && this.fishTuning) {
       // It circles. Shrimp that are burrowed, hidden or still are not seen.
       this.fish.circle(dt, centreOf(player));
@@ -594,6 +710,16 @@ export class ThreatDirector {
     this.headAim = fish.heading;
   }
 
+  /** The shadow, for whatever draws the threat, follows the hull. */
+  private followNet(): void {
+    const net = this.net;
+    if (!net) return;
+    this.shadow.x = net.hull.x;
+    this.shadow.y = net.hull.y;
+    this.shadow.heading = net.hull.heading;
+    this.headAim = net.hull.heading;
+  }
+
   /** The shadow keeps over the feet, a little behind them, turning as they turn. */
   private follow(dt: number): void {
     const legs = this.legs;
@@ -620,6 +746,7 @@ export class ThreatDirector {
     const kind = this.kind ?? 'bird';
     if (!this.cornered) {
       events.push({ type: 'escaped', kind, clean: this.strikes === 0, still: !this.moved });
+      if (this.net) events.push({ type: 'netPassed', ...this.net.outcome });
     }
     this.ring = null;
     this.enter('release', this.between(this.tuning.release), events);
@@ -646,12 +773,16 @@ export class ThreatDirector {
       this.shadow.y += Math.sin(this.leaving) * speed;
       this.headAim = rotateToward(this.headAim, this.leaving, this.bird.headTurn * dt);
     }
+    this.followNet();
     if (this.stageTime < this.stageLength) return;
+    // After a cornering the grid may still be in view: it goes on until it has gone.
+    if (this.net && !this.net.gone && this.stageTime < NET_LONGEST) return;
     const kind = this.kind ?? 'bird';
     this.stage = 'idle';
     this.stageTime = 0;
     this.legs = null;
     this.fish = null;
+    this.net = null;
     this.lastRelease = this.time;
     this.nextRoll = Math.max(this.nextRoll, this.time + this.tuning.gap);
     this.kind = null;
@@ -668,6 +799,14 @@ export class ThreatDirector {
   private between(span: Span): number {
     return span.min + this.random() * (span.max - span.min);
   }
+}
+
+/** Seconds the net's passing may last at most, whatever the player does. */
+const NET_LONGEST = 90;
+
+/** The player, as the net needs it. */
+function netPrey(player: ThreatPlayer): { x: number; y: number; inCrevice: boolean } {
+  return { x: player.x, y: player.y, inCrevice: player.inCrevice === true };
 }
 
 /** What the fish circles: the shoal close by, or the player. */

@@ -78,6 +78,7 @@ export const CHALLENGE_TARGETS: Readonly<
 > = {
   'c1.branch': { discovery: 'thing.sunkenBranch' },
   'c1.crab': { creature: 'fiddlerCrab' },
+  'c5.deep': { discovery: 'place.deep' },
 };
 
 /** The chapters, their place and the step that ends each (doc 12, "Story steps"). */

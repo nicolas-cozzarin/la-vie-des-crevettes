@@ -209,6 +209,63 @@ test.describe('explore', () => {
     expect(errors).toEqual([]);
   });
 
+  test('in the shadow the net comes; hidden in a crevice, the shrimp lets it pass over (T120)', async ({
+    page,
+  }) => {
+    test.setTimeout(180_000);
+    const errors = watchErrors(page);
+    // Beside the open end of the crevice at 4775, 1100, inside the net's trigger.
+    await explore(page, 'shadow&at=4951,1196');
+    await page.keyboard.down('ShiftLeft');
+    await page.waitForFunction(() => window.__lvdc?.player()?.tucked === true);
+    await page.waitForFunction(() => window.__lvdc?.threat()?.kind === 'net', null, {
+      timeout: 20_000,
+    });
+    await page.waitForFunction(() => window.__lvdc?.threat()?.net?.band != null, null, {
+      timeout: 60_000,
+    });
+    await page.waitForFunction(() => (window.__lvdc?.progress()?.stats.netCrevice ?? 0) > 0, null, {
+      timeout: 100_000,
+    });
+    const threat = await page.evaluate(() => window.__lvdc?.threat());
+    expect(threat?.net?.wasUnder).toBe(true);
+    expect(threat?.silt).toBeGreaterThan(0);
+    expect((await player(page)).tucked).toBe(true);
+    await page.keyboard.up('ShiftLeft');
+    expect(errors).toEqual([]);
+  });
+
+  test('in the open sea the shrimp swims at once, and hangs in the water when it stops (T122)', async ({
+    page,
+  }) => {
+    const errors = watchErrors(page);
+    // Far out in the blue, with no bed below.
+    await explore(page, 'openSea&at=3500,2300');
+    expect((await player(page)).area).toBe('openSea');
+    await page.keyboard.down('ArrowLeft');
+    await page.waitForFunction(() => window.__lvdc?.player()?.mode === 'swim', null, {
+      timeout: 1500,
+    });
+    await page.waitForTimeout(800);
+    await page.keyboard.up('ArrowLeft');
+    await page.waitForTimeout(1500);
+    const still = await player(page);
+    expect(still.mode).toBe('rest');
+    expect(still.height).toBeGreaterThan(0.9);
+    expect(errors).toEqual([]);
+  });
+
+  test('in the open sea Hide under the ledge tucks the shrimp, and the deepest point is found (T122)', async ({
+    page,
+  }) => {
+    await explore(page, 'openSea&at=5420,3250');
+    await page.keyboard.down('ShiftLeft');
+    await page.waitForFunction(() => window.__lvdc?.player()?.tucked === true);
+    await page.keyboard.up('ShiftLeft');
+    await explore(page, 'openSea&at=1200,3000');
+    await page.waitForFunction(() => window.__lvdc?.progress()?.discoveries.includes('place.deep'));
+  });
+
   test('in the gutter the water carries a resting shrimp toward the creek (T110)', async ({
     page,
   }) => {

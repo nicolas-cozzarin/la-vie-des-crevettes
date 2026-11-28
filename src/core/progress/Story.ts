@@ -15,12 +15,16 @@ export type StoryCondition =
   | { kind: 'duskHidden' }
   /** A whole graze in this phase with this many of the shoal close. */
   | { kind: 'shoalGraze'; phase: DayPhase; with: number }
-  | { kind: 'bond'; atLeast: number };
+  | { kind: 'bond'; atLeast: number }
+  /** This many of the shoal within reach of the player at once, in this place. */
+  | { kind: 'shoalNear'; area: AreaId; with: number };
 
 export interface StoryStep {
   id: string;
   chapter: number;
   when: StoryCondition;
+  /** A step that cannot be done before this one is: the shoal is found again only once it was lost. */
+  after?: string;
 }
 
 /** What the story hears from the game. */
@@ -43,7 +47,9 @@ export type StoryEvent =
   | { kind: 'molt'; area: AreaId }
   | { kind: 'dusk'; hidden: boolean }
   | { kind: 'rest' }
-  | { kind: 'bond'; value: number };
+  | { kind: 'bond'; value: number }
+  /** How many of the shoal are within reach of the player now. */
+  | { kind: 'shoal'; area: AreaId; near: number };
 
 /**
  * The steps of the story. A step is done the moment its condition is true,
@@ -75,7 +81,8 @@ export class Story {
     }
     const finished: string[] = [];
     for (const step of this.steps) {
-      if (this.done.has(step.id) || !this.meets(step.when, event)) continue;
+      if (this.done.has(step.id) || (step.after && !this.done.has(step.after))) continue;
+      if (!this.meets(step.when, event)) continue;
       this.done.add(step.id);
       finished.push(step.id);
     }
@@ -126,6 +133,8 @@ export class Story {
         );
       case 'bond':
         return event.kind === 'bond' && event.value >= when.atLeast;
+      case 'shoalNear':
+        return event.kind === 'shoal' && event.area === when.area && event.near >= when.with;
     }
   }
 }

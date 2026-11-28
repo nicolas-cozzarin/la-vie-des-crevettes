@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { angleDiff, rotateToward, wrapAngle } from '../../src/core/movement/angles';
 import { moveCircle, type Obstacle } from '../../src/core/movement/collision';
+import { overBed } from '../../src/core/movement/openWater';
 import { ShrimpMotion, type MotionInput } from '../../src/core/movement/ShrimpMotion';
 import { MOTION } from '../../src/data/tuning';
 
@@ -101,6 +102,39 @@ describe('walking and swimming', () => {
     const motion = fresh(Math.PI / 4);
     run(motion, 0.5, { x: Math.SQRT1_2, y: Math.SQRT1_2, dart: false });
     expect(Math.hypot(motion.vx, motion.vy) / BL).toBeCloseTo(MOTION.walkSpeed, 2);
+  });
+});
+
+describe('in open water (T122)', () => {
+  it('swims from the first moment it moves, and coasts swimming', () => {
+    const motion = fresh();
+    motion.bed = 0;
+    run(motion, 0.1, RIGHT);
+    expect(motion.mode).toBe('swim');
+    run(motion, 1.5, RIGHT);
+    expect(motion.speed / BL).toBeCloseTo(MOTION.swimSpeed, 1);
+    run(motion, 0.1);
+    expect(motion.mode).toBe('swim');
+  });
+
+  it('hangs in the water when still, and settles once over the bed again', () => {
+    const motion = fresh();
+    motion.bed = 0;
+    run(motion, 3);
+    expect(motion.mode).toBe('rest');
+    expect(motion.height).toBeGreaterThan(0.95);
+    motion.bed = 1;
+    run(motion, 3);
+    expect(motion.height).toBeLessThan(0.05);
+  });
+
+  it('finds the bed under a point, fading into open water beyond its edge', () => {
+    const bed = { zone: { x: 1000, y: 0, w: 500, h: 800 }, fade: 400 };
+    expect(overBed(undefined, 0, 0)).toBe(1);
+    expect(overBed(bed, 1200, 400)).toBe(1);
+    expect(overBed(bed, 800, 400)).toBeCloseTo(0.5);
+    expect(overBed(bed, 500, 400)).toBe(0);
+    expect(overBed({ ...bed, fade: 0 }, 999, 400)).toBe(0);
   });
 });
 

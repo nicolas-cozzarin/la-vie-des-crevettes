@@ -14,6 +14,7 @@ import type { MoltEvent } from '../core/molt/Molt';
 import { approach, rotateToward } from '../core/movement/angles';
 import { moveCircle, type Bounds } from '../core/movement/collision';
 import { carried, currentAt, inCurrent } from '../core/movement/currents';
+import { overBed } from '../core/movement/openWater';
 import { pickMissing } from '../core/npc/losses';
 import { seededRandom, seedOf } from '../core/random';
 import { RibbonMemory, ribbons, type Ribbon } from '../core/scent/ribbons';
@@ -87,6 +88,7 @@ import { SandVolcanoes } from '../systems/SandVolcanoes';
 import { ShedShells } from '../systems/ShedShells';
 import { DriftingFoods } from '../systems/DriftingFoods';
 import { Streaks } from '../systems/Streaks';
+import { SeaSnow } from '../entities/SeaSnow';
 import { Shoal } from '../systems/Shoal';
 import { Travellers } from '../systems/Travellers';
 import { Pond, POND_ONE } from '../systems/Pond';
@@ -217,6 +219,8 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
   private shells!: ShedShells;
   private drifting!: DriftingFoods;
   private streaks!: Streaks;
+  /** Marine snow, where the place has it (doc 11, `fx.snow`). */
+  private snow: SeaSnow | null = null;
   /** Drifting food eaten in this unbroken swim (doc 12, `c3.seaweed`). */
   private onTheMove = 0;
   private rim!: Rim;
@@ -281,6 +285,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
     this.shells = new ShedShells(this, area, this.bodyLengthPx);
     this.drifting = new DriftingFoods(this, area, this.bodyLengthPx);
     this.streaks = new Streaks(this, area, this.bodyLengthPx);
+    this.snow = area.snow ? new SeaSnow(this) : null;
     this.onTheMove = 0;
     this.rim = new Rim();
     const obstacles = this.loaded.obstacles;
@@ -409,11 +414,15 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
       // In the story the first bird waits for Sense, and one ambient bird may follow it.
       // Once it has gone, it does not come again on coming back from the save.
       // The channel's fish follow the shoal until they have come and gone twice.
+      // The net comes once in the story.
       armed: story
-        ? (id) =>
-            id === 'bird.first'
-              ? life.stepsDone.has('s1.sense') && !life.stepsDone.has('s1.bird')
-              : !id.startsWith('fish.') || !life.stepsDone.has('s3.fish2')
+        ? (id) => {
+            if (id === 'bird.first') {
+              return life.stepsDone.has('s1.sense') && !life.stepsDone.has('s1.bird');
+            }
+            if (id === 'net') return !life.stepsDone.has('s4.net');
+            return !id.startsWith('fish.') || !life.stepsDone.has('s3.fish2');
+          }
         : undefined,
       ambient: story ? ambientInStory(area.id, life.stepsDone) : undefined,
     });
@@ -485,7 +494,13 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
         if (id === 's1.bird') this.threats.director.ambientLeft = 1;
         // After the dawn fish, the lagoon's fish may come at any time.
         if (id === 's2.fish') this.threats.director.ambientLeft = Infinity;
+        // The net scatters the shoal; found again, it goes on with the player (T121).
+        if (id === 's4.net') this.shoal.regroupAt(this.regroupPoint());
+        if (id === 's4.shoal') this.shoal.regroupAt(null);
       });
+      if (life.stepsDone.has('s4.net') && !life.stepsDone.has('s4.shoal')) {
+        this.shoal.regroupAt(this.regroupPoint());
+      }
       narrator.enter(this.areaId);
       this.teller.arrive();
       if (this.day) this.teller.dayPhase(this.day.phase, false);
@@ -553,7 +568,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
     const stopDebug = debugRequested()
       ? app.keyboard.onDebugKey((key) => {
           if (key === 'mood') this.cycleMood();
-          else if (key === 'threat') this.threats.callThreat();
+          else if (key === 'threat') this.threats.callThreat(this.motion.x, this.motion.y);
           else if (key === 'time') this.nextTime();
           else if (key === 'herMolt') this.shoal.moltNearest();
           else if (key === 'travellers') this.travellers?.now();
@@ -697,6 +712,8 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
         this.keeper.count('stayedThroughMolt');
         this.keeper.count(`stayedWith.${id}`);
       }
+      // Beyond the bed, in open water, the shrimp only swims (T122).
+      this.motion.bed = overBed(this.area.bed, this.motion.x, this.motion.y);
       const moved = this.motion.step(dt, { x: axis.x, y: axis.y, dart }, this.mover);
       this.drift(dt);
       this.stepMolt(dt);
@@ -713,6 +730,10 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
       this.answerThreat(this.threats.step(dt, this.threatPlayer(moved.darted)));
       for (const kind of this.threats.felt(PLAYER, this.motion.x, this.motion.y)) {
         this.feelings.stimulus(kind);
+      }
+      // The net's engine growing, and its grid overhead, are felt for as long as they last.
+      for (const { kind, amount } of this.threats.ongoing(this.motion.x, this.motion.y, dt)) {
+        this.feelings.stimulus(kind, amount);
       }
       dart = false;
       remaining -= dt;
@@ -733,6 +754,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
     this.eatOnTheMove();
     this.drifting.update(frame);
     this.streaks.update(frame, this.cameras.main.worldView);
+    this.snow?.update(frame, this.cameras.main.worldView);
     this.rim.set(this.rimmed());
     this.rim.update(frame);
     for (const [patch, image] of this.foodImages) image.setAlpha(0.15 + 0.85 * patch.amount);
@@ -756,6 +778,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
       y: this.motion.y,
       target: this.feelings.mood === 'curious' ? this.pull.target : null,
       sensing: this.activity.name === 'sensing',
+      shaded: this.threats.underGrid(this.motion.x, this.motion.y),
     });
     this.audio.update(frame, {
       mood: this.feelings.mood,
@@ -1004,6 +1027,8 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
         ),
         seaweedNear: this.drifting.near(x, y, STORY.seaweedNear * this.bodyLengthPx),
         zones: this.zones.current,
+        netCue: this.threats.director.kind === 'net' && this.threats.director.stage === 'cue',
+        underHull: (this.threats.director.net?.gapToHull(x, y) ?? Infinity) === 0,
       });
       if (teller.takeMoltDue()) this.answerMolt(this.molting.signal());
     }
@@ -1190,6 +1215,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
       coverGap: this.area.sand ? 0 : coverGap / this.bodyLengthPx,
       shoal: this.shoal.middleNear(x, y, FISH.sight * this.bodyLengthPx),
       sinceFlip: this.clock - this.lastFlip,
+      inCrevice: this.activity.tucked && this.activity.cover?.def.kind === 'crevice',
     };
   }
 
@@ -1199,11 +1225,13 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
       if (event.type === 'stage') {
         this.bus.emit('threat:stage', { kind: event.kind, stage: event.stage });
         if (event.stage === 'release') this.loseFromShoal(event.kind);
+        // Caught up under the net's grid: no strike, the cornered sequence begins at once (T120).
+        if (event.stage === 'cornered' && event.kind === 'net') this.threats.cornered.start();
         // At the cue, the crabs go down and the schools burst; Nacre notices first.
         if (event.stage === 'cue') {
-          // The bird's shadow passes over the player; the fish is felt before it is seen.
+          // The bird's shadow passes over the player; the fish and the net are felt before they are seen.
           const shadow =
-            event.kind === 'fish'
+            event.kind !== 'bird'
               ? { x: this.motion.x, y: this.motion.y }
               : this.threats.director.shadow;
           this.creatures.cue(shadow.x, shadow.y);
@@ -1224,6 +1252,20 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
         this.keeper.count('sidesteps');
       } else if (event.type === 'faced') {
         this.teller?.fishFaced();
+      } else if (event.type === 'held') {
+        // The net's back edge carries the shrimp along, unless rock is in the way (T120).
+        const after = this.mover(
+          this.motion.x,
+          this.motion.y,
+          event.x - this.motion.x,
+          event.y - this.motion.y,
+        );
+        this.motion.x = after.x;
+        this.motion.y = after.y;
+      } else if (event.type === 'netPassed') {
+        // Out by the side, or in a crevice as it passed (doc 12, `c4.edge`, `c4.crevice`).
+        if (event.edge) this.keeper.count('netEdge');
+        if (event.crevice) this.keeper.count('netCrevice');
       } else if (event.type === 'escaped') {
         this.bus.emit('threat:escaped', {
           kind: event.kind,
@@ -1259,6 +1301,12 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
       this.found('thing.glowingPlankton');
       this.teller?.glowed();
     }
+  }
+
+  /** The middle of the zone where the scattered shoal gathers again, or null where there is none. */
+  private regroupPoint(): { x: number; y: number } | null {
+    const zone = (this.area.zones ?? []).find((one) => one.id === this.area.regroup)?.zone;
+    return zone ? { x: zone.x + zone.w / 2, y: zone.y + zone.h / 2 } : null;
   }
 
   /**
@@ -1567,7 +1615,12 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
       return near ? { id: `pinned.${id}`, kind: 'creature', x: near.x, y: near.y } : null;
     }
     const thing = this.things.find((one) => one.id === target.discovery);
-    return thing ? { id: `pinned.${id}`, kind: thing.kind, x: thing.x, y: thing.y } : null;
+    if (thing) return { id: `pinned.${id}`, kind: thing.kind, x: thing.x, y: thing.y };
+    // A place found by going there, as the deepest point: the middle of its zone.
+    const zone = (this.area.zones ?? []).find((one) => one.discovery === target.discovery)?.zone;
+    return zone
+      ? { id: `pinned.${id}`, kind: 'thing', x: zone.x + zone.w / 2, y: zone.y + zone.h / 2 }
+      : null;
   }
 
   /** The journal, over the paused game (doc 12, "The journal"). */

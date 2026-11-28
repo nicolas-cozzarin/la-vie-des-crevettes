@@ -196,6 +196,8 @@ export class Shoal {
   private gathering: Point | null = null;
   /** Where the strangers passing through make for, beyond the shoal's (T114). */
   private travellersGoal: Point | null = null;
+  /** Where strangers who stay keep together, where there is no journey: the gathering (T123). */
+  private strangersAt: Point | null = null;
   /** Passing a pond's gate: Brise goes to the mesh, Nacre stops short (doc 18, "Level 3"; T118). */
   private readonly gate: GateMoment | null;
 
@@ -347,6 +349,17 @@ export class Shoal {
     return ids;
   }
 
+  /**
+   * Strangers who have come to stay, at these places, keeping loosely
+   * together about `point` (doc 11, `shrimp.adult`; T123). They are made as
+   * travellers are, and never go missing or count as the shoal.
+   */
+  addGathered(scene: Phaser.Scene, places: readonly Point[], point: Point): string[] {
+    this.strangersAt = point;
+    const heading = Math.PI;
+    return this.addTravellers(scene, 0, places, heading);
+  }
+
   /** The strangers passing through now (T114). */
   get travellers(): { id: string; x: number; y: number; bodyLengthPx: number }[] {
     return this.members
@@ -385,7 +398,7 @@ export class Shoal {
             route,
             along(route, middle.x, middle.y) + PASSING.ahead * this.options.bodyLengthPx,
           )
-        : null;
+        : this.strangersAt;
     this.gate?.step(dt, player);
     this.watchClose(dt, player);
     for (const alarm of this.alarm.due(time)) this.deliver(alarm);
@@ -468,7 +481,7 @@ export class Shoal {
     return { x: player.x, y: player.y };
   }
 
-  /** The player keeps still touching a Close companion who rests too (doc 10, "Fear"). */
+  /** The player keeps still touching a Close companion who rests too (doc 10, "Fear"; doc 12, `c5.rest`). */
   restingAgainstClose(x: number, y: number): boolean {
     if (this.stillFor < CLOSE.rest.after) return false;
     const reach = CLOSE.rest.touch * 1.5 * this.options.bodyLengthPx;

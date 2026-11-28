@@ -29,6 +29,8 @@ export interface PlayerSnapshot {
   molts: number;
   /** The story steps done in this life. */
   steps: string[];
+  /** Where the spawning is: not begun, under way by its phase, or over (T123). */
+  spawning: string;
   /** The line of narration on screen, by its key, or null. */
   narration: string | null;
   /** The place the shrimp is on its way to, or null. */

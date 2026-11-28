@@ -129,6 +129,15 @@ export class AudioDirector {
     this.caption({ key: 'caption.crackle', params: {} }, null);
   }
 
+  /**
+   * The long call in the deep, found by staying there, once and never
+   * explained (doc 11, `thing.longSound`; T123). Until its sound file is
+   * found, the caption is all there is of it.
+   */
+  longSound(): void {
+    this.caption({ key: 'caption.longSound', params: {} }, null);
+  }
+
   /** A companion takes fright and the player feels it: only a caption (doc 10, "Alarm"). */
   alarmed(name: string): void {
     this.caption({ key: 'caption.alarm', params: { name } }, null);

@@ -125,7 +125,7 @@ test.describe('chapter 4, the shadow', () => {
     expect(errors).toEqual([]);
   });
 
-  test('after the net, the shoal waits by the sea; found again, every one, the way on is open', async ({
+  test('after the net, the shoal waits by the sea; found again, every one, the way on leads into the open sea', async ({
     page,
   }) => {
     test.setTimeout(180_000);
@@ -143,11 +143,15 @@ test.describe('chapter 4, the shadow', () => {
     await hasStep(page, 's4.shoal', 90_000);
     await page.keyboard.up('ArrowLeft');
     await narrationIs(page, 'narr.c4.all', 30_000);
-    // On to the open sea: its way out is open, and the rest of the life is being made.
+    // On to the open sea: its way out is open (T123).
     await page.keyboard.down('ArrowLeft');
-    await narrationIs(page, 'end.continued', 60_000);
+    await page.waitForFunction(() => window.__lvdc?.player()?.area === 'openSea', null, {
+      timeout: 60_000,
+    });
     await page.keyboard.up('ArrowLeft');
-    expect((await page.evaluate(() => window.__lvdc?.player()))?.area).toBe('shadow');
+    const progress = await page.evaluate(() => window.__lvdc?.progress());
+    expect(progress?.achievements).toContain('openWater');
+    expect(progress?.cards).toContain('journey');
     expect(errors).toEqual([]);
   });
 

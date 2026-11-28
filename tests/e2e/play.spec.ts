@@ -255,7 +255,7 @@ test.describe('explore', () => {
     expect(errors).toEqual([]);
   });
 
-  test('in the open sea Hide under the ledge tucks the shrimp, and the deepest point is found (T122)', async ({
+  test('in the open sea Hide under the ledge tucks the shrimp; the deepest point is found, then the long call (T122, T123)', async ({
     page,
   }) => {
     await explore(page, 'openSea&at=5420,3250');
@@ -264,6 +264,12 @@ test.describe('explore', () => {
     await page.keyboard.up('ShiftLeft');
     await explore(page, 'openSea&at=1200,3000');
     await page.waitForFunction(() => window.__lvdc?.progress()?.discoveries.includes('place.deep'));
+    // Staying a while in the deep, a long call from very far away (T123).
+    await page.waitForFunction(
+      () => window.__lvdc?.progress()?.discoveries.includes('thing.longSound'),
+      null,
+      { timeout: 30_000 },
+    );
   });
 
   test('in the gutter the water carries a resting shrimp toward the creek (T110)', async ({

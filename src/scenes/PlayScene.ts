@@ -12,7 +12,8 @@ import type { FeelingsContext } from '../core/feelings/types';
 import type { GameEvents, ThreatKind } from '../core/gameEvents';
 import type { MoltEvent } from '../core/molt/Molt';
 import { approach, rotateToward } from '../core/movement/angles';
-import { moveCircle, type Bounds } from '../core/movement/collision';
+import { moveCircle, type Bounds, type Obstacle } from '../core/movement/collision';
+import { isClear } from '../core/npc/steer';
 import { carried, currentAt, inCurrent } from '../core/movement/currents';
 import { overBed } from '../core/movement/openWater';
 import { pickMissing } from '../core/npc/losses';
@@ -27,7 +28,9 @@ import { DiscoveryTracker, type Discoverable, type Pull } from '../core/world/di
 import { CHALLENGE_TARGETS } from '../data/challenges';
 import { FOOD_KINDS, type FoodKind } from '../core/world/kinds';
 import { inRect, ZoneTracker } from '../core/world/zones';
-import { newLife, type Life } from '../core/progress/life';
+import { lifeAfter, newLife, type Life } from '../core/progress/life';
+import { Spawning, type SpawnPhase } from '../core/spawn/Spawning';
+import { ACTIONS } from '../core/input/actions';
 import { RestSaver } from '../core/save/RestSaver';
 import {
   areaFor,
@@ -62,7 +65,9 @@ import {
   NPC,
   REST,
   SAVE,
+  SEA,
   SENSE,
+  SPAWN,
   STORY,
   CURRENT,
 } from '../data/tuning';
@@ -88,6 +93,7 @@ import { SandVolcanoes } from '../systems/SandVolcanoes';
 import { ShedShells } from '../systems/ShedShells';
 import { DriftingFoods } from '../systems/DriftingFoods';
 import { Streaks } from '../systems/Streaks';
+import { EggCloud } from '../entities/EggCloud';
 import { SeaSnow } from '../entities/SeaSnow';
 import { Shoal } from '../systems/Shoal';
 import { Travellers } from '../systems/Travellers';
@@ -221,6 +227,13 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
   private streaks!: Streaks;
   /** Marine snow, where the place has it (doc 11, `fx.snow`). */
   private snow: SeaSnow | null = null;
+  /** The spawning, and its eggs once begun (doc 12, `s5.spawn`; T123). */
+  private spawning = new Spawning(SPAWN);
+  private eggs: EggCloud | null = null;
+  /** How much the view has closed in on the egg it follows. */
+  private spawnZoom = 1;
+  /** Seconds with no key held. */
+  private stillFor = 0;
   /** Drifting food eaten in this unbroken swim (doc 12, `c3.seaweed`). */
   private onTheMove = 0;
   private rim!: Rim;
@@ -286,6 +299,10 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
     this.drifting = new DriftingFoods(this, area, this.bodyLengthPx);
     this.streaks = new Streaks(this, area, this.bodyLengthPx);
     this.snow = area.snow ? new SeaSnow(this) : null;
+    this.spawning = new Spawning(SPAWN);
+    this.eggs = null;
+    this.spawnZoom = 1;
+    this.stillFor = 0;
     this.onTheMove = 0;
     this.rim = new Rim();
     const obstacles = this.loaded.obstacles;
@@ -396,6 +413,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
     this.travellers = area.travellers
       ? new Travellers(this, this.shoal, area, this.bodyLengthPx, obstacles, bounds)
       : null;
+    this.gather(area, obstacles);
     this.pond = area.pond ? new Pond(this, area.pond, this.bodyLengthPx, area.id) : null;
     this.lossRandom = seededRandom(seedOf(`${area.id}:losses`));
     this.lift = 0;
@@ -497,6 +515,8 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
         // The net scatters the shoal; found again, it goes on with the player (T121).
         if (id === 's4.net') this.shoal.regroupAt(this.regroupPoint());
         if (id === 's4.shoal') this.shoal.regroupAt(null);
+        // Still among the others, full grown: it happens (T31, T123).
+        if (id === 's5.spawn') this.beginSpawning();
       });
       if (life.stepsDone.has('s4.net') && !life.stepsDone.has('s4.shoal')) {
         this.shoal.regroupAt(this.regroupPoint());
@@ -521,6 +541,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
       molt: this.molting.molt.stage,
       molts: this.life.molts,
       steps: [...this.life.stepsDone],
+      spawning: this.spawning.phase,
       narration: this.narrator?.showing ?? null,
       leaving: this.leavingTo,
       prompt: this.promptNow,
@@ -627,12 +648,19 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
     const frame = Math.min(deltaMs / 1000, FRAME.longest);
     // Gentle mode can be changed from the pause menu's settings.
     this.threats.director.gentle = app.settings.gentleMode;
-    // Cornered, and in the molt itself, the keys do nothing.
-    const locked = this.threats.cornered.running || this.molting.molt.locked || this.leaving;
+    // Cornered, in the molt itself, and through the spawning, the keys do nothing.
+    const locked =
+      this.threats.cornered.running ||
+      this.molting.molt.locked ||
+      this.spawning.running ||
+      this.leaving;
     const sequence = this.threats.cornered.update(frame);
     // Soft after a molt, the shrimp moves at half speed.
     const slow = this.molting.molt.speed;
     const axisNow = actions.axis();
+    // No key held: in the gathering, the spawning comes of it (doc 12, `s5.spawn`).
+    const anyKey = axisNow.x !== 0 || axisNow.y !== 0 || ACTIONS.some((one) => actions.isDown(one));
+    this.stillFor = locked || anyKey ? 0 : this.stillFor + frame;
     const own = locked ? { x: 0, y: 0 } : { x: axisNow.x * slow, y: axisNow.y * slow };
     const tailFlip = !locked && actions.justPressed('tailFlip');
     let dart = tailFlip;
@@ -755,6 +783,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
     this.drifting.update(frame);
     this.streaks.update(frame, this.cameras.main.worldView);
     this.snow?.update(frame, this.cameras.main.worldView);
+    this.stepSpawning(frame);
     this.rim.set(this.rimmed());
     this.rim.update(frame);
     for (const [patch, image] of this.foodImages) image.setAlpha(0.15 + 0.85 * patch.amount);
@@ -823,6 +852,8 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
       hiddenTogether: tucked && this.shoal.hiddenNear(x, y, 1.5 * bl),
       followTurtle: this.creatures.turtleNear(x, y, CREATURES.turtle.follow),
       allThreeClose: this.shoal.allCompanionsNear(x, y, STORY.allThree * bl),
+      // Still, touching a Close companion who rests too (doc 12, `c5.rest`; T123).
+      restClose: this.shoal.restingAgainstClose(x, y),
     });
     if (this.explore) return;
     const resting =
@@ -1029,6 +1060,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
         zones: this.zones.current,
         netCue: this.threats.director.kind === 'net' && this.threats.director.stage === 'cue',
         underHull: (this.threats.director.net?.gapToHull(x, y) ?? Infinity) === 0,
+        stillFor: this.stillFor,
       });
       if (teller.takeMoltDue()) this.answerMolt(this.molting.signal());
     }
@@ -1439,6 +1471,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
     this.bus.emit('discovery', { id });
     this.teller?.found(id);
     if (id === 'thing.crackle') this.audio.crackle();
+    if (id === 'thing.longSound') this.audio.longSound();
   }
 
   /**
@@ -1635,6 +1668,98 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
   }
 
   /** The view trails the shrimp a little and looks slightly ahead of it. */
+  /**
+   * The others of the gathering, strangers come to stay (doc 11, zone D;
+   * T123): placed inside the zone, clear of each other, about its middle.
+   */
+  private gather(area: AreaDef, obstacles: readonly Obstacle[]): void {
+    const zone = area.zones?.find((one) => one.id === area.gathering)?.zone;
+    if (!zone) return;
+    const random = seededRandom(seedOf(`${area.id}:gathering`));
+    const bl = this.bodyLengthPx;
+    const inset = SEA.gathering.inset * bl;
+    const places: { x: number; y: number }[] = [];
+    for (let tries = 0; places.length < SEA.gathering.count && tries < 200; tries++) {
+      const x = zone.x + inset + random() * (zone.w - 2 * inset);
+      const y = zone.y + inset + random() * (zone.h - 2 * inset);
+      const crowded = places.some((one) => Math.hypot(one.x - x, one.y - y) < 1.5 * bl);
+      if (!crowded && isClear(x, y, MOTION.radius * bl, obstacles, null)) places.push({ x, y });
+    }
+    this.shoal.addGathered(this, places, { x: zone.x + zone.w / 2, y: zone.y + zone.h / 2 });
+  }
+
+  /**
+   * The eggs rise (doc 11, "Chapter 5"; T123). In the story the step brings
+   * it; in explore mode, keeping still in the gathering does, with no story.
+   */
+  private beginSpawning(): void {
+    if (this.spawning.running || this.leaving) return;
+    const phases = this.spawning.begin();
+    if (phases.length === 0) return;
+    const bed = this.area.bed;
+    const coast = bed ? bed.zone.x + bed.zone.w / 2 - this.motion.x : 1;
+    this.eggs = new EggCloud(this, this.bodyLengthPx, this.motion, coast);
+    this.hud?.endHints();
+    this.answerSpawn(phases);
+  }
+
+  /** One step of the spawning: the eggs, the view closing in, and its end. */
+  private stepSpawning(dt: number): void {
+    const gathering = this.area.gathering;
+    if (
+      this.explore &&
+      gathering &&
+      this.zones.current.has(gathering) &&
+      this.stillFor >= SPAWN.still
+    ) {
+      this.beginSpawning();
+    }
+    if (!this.spawning.running) return;
+    this.answerSpawn(this.spawning.step(dt));
+    const { phase, through } = this.spawning;
+    this.eggs?.update(dt, phase, through);
+    const closing = phase === 'follow' ? through : phase === 'rise' ? 0 : 1;
+    const ease = closing * closing * (3 - 2 * closing);
+    this.spawnZoom = 1 + (SPAWN.zoom - 1) * ease;
+  }
+
+  /** What each part of the spawning begins: the count, the lines, the fade, the next life. */
+  private answerSpawn(phases: readonly SpawnPhase[]): void {
+    for (const phase of phases) {
+      this.teller?.spawnPhase(phase);
+      if (phase === 'rise') {
+        this.keeper.count('spawned');
+        this.bus.emit('spawned', { generation: this.life.generation });
+        if (this.discovery.add('thing.eggs')) this.found('thing.eggs');
+      }
+      if (phase === 'fade') this.cameras.main.fadeOut(SPAWN.fade * 1000, 0, 0, 0);
+      if (phase === 'done') this.nextGeneration();
+    }
+  }
+
+  /**
+   * The one that opened is the next life: the Drift again, one generation on,
+   * with the carnet kept (doc 13: "The next generation begins with
+   * `narr.c0.start` again"). From explore mode, the Drift to explore.
+   */
+  private nextGeneration(): void {
+    if (this.leaving) return;
+    this.leaving = true;
+    app.actions.clearQueued();
+    if (this.explore) {
+      this.scene.start('Drift', { explore: true });
+      return;
+    }
+    this.scene.start('Drift', { life: lifeAfter(this.life, this.life.generation + 1) });
+  }
+
+  /** Where the view looks through the spawning, once it has left her. */
+  private get spawnFocus(): { x: number; y: number } | null {
+    const phase = this.spawning.phase;
+    if (!this.eggs || phase === 'none' || phase === 'rise') return null;
+    return this.eggs.focus;
+  }
+
   private follow(dt: number): void {
     const motion = this.motion;
     const max = CAMERA.lookAheadMax * this.bodyLengthPx;
@@ -1651,6 +1776,17 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
     this.lead.y += (leadY - this.lead.y) * ease;
 
     const lean = this.presenter.lean;
+    // Through the spawning, the view leaves her and follows one egg, slowly.
+    const focus = this.spawnFocus;
+    if (focus) {
+      // Slowly at first, as the view leaves her, then close behind the egg.
+      const { phase, through } = this.spawning;
+      const ease = approach(dt, phase === 'follow' ? 1.6 - 1.35 * through : 0.25);
+      this.view.x += (focus.x - this.view.x) * ease;
+      this.view.y += (focus.y - this.view.y) * ease;
+      this.aim();
+      return;
+    }
     const follow = approach(dt, CAMERA.followTime);
     this.view.x += (motion.x + this.lead.x + lean.x - this.view.x) * follow;
     this.view.y += (motion.y + this.lead.y + lean.y - this.view.y) * follow;
@@ -1661,7 +1797,7 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
   /** Point the camera at the view, kept inside the area, and lay the bed under it. */
   private aim(): void {
     // Fear zooms in a little (MoodPresenter).
-    const zoom = CAMERA.zoom * this.presenter.zoom * this.viewScale;
+    const zoom = CAMERA.zoom * this.presenter.zoom * this.viewScale * this.spawnZoom;
     this.cameras.main.setZoom(zoom);
     const halfW = GAME_WIDTH / zoom / 2;
     const halfH = GAME_HEIGHT / zoom / 2;
@@ -1675,7 +1811,9 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
     const left = this.view.x - halfW - 2;
     const top = this.view.y - halfH - 2;
     this.loaded.placeGround(left, top);
-    this.light.update(this.game.loop.delta / 1000, left, top, this.motion.x, this.motion.y);
+    // The light the eye has is about what it watches: her, or the egg it follows.
+    const eye = this.spawnFocus ?? this.motion;
+    this.light.update(this.game.loop.delta / 1000, left, top, eye.x, eye.y);
   }
 }
 

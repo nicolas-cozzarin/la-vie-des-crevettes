@@ -81,6 +81,53 @@ export const SEA = {
     parallax: [0.55, 0.85, 1.25] as const,
     sink: [26, 18, 12] as const,
   },
+  /** The others gathered in the blue, strangers all (doc 11, zone D; T123). */
+  gathering: {
+    count: 10,
+    /** Kept this far inside the zone's edge, as they first come. BL. */
+    inset: 2,
+  },
+};
+
+/** The spawning (doc 11, `thing.eggs`; doc 12, `s5.spawn`; T123). Seconds, BL and world pixels. */
+export const SPAWN = {
+  /** No key held this long, in the gathering, once full grown. */
+  still: 3,
+  /** The eggs rise from her, the view on her. Long enough for the line to be read. */
+  rise: 9,
+  /** The view leaves her and follows one egg. */
+  follow: 8,
+  /** That one opens into a larva. */
+  hatch: 7,
+  /** The view fades into the Drift. */
+  fade: 2.5,
+  /** How much the view closes in on the one followed, by the end of the following. */
+  zoom: 3,
+  eggs: {
+    /** Loose eggs drawn one by one. The painted clouds behind them make the thousands. */
+    count: 260,
+    /** Seconds over which they leave her body, in four pulses as her legs beat. */
+    release: 4,
+    /** BL a second each is thrown out at most, and how fast that eases away. */
+    speed: 0.9,
+    drag: 0.9,
+    /** Across, in world pixels: the loose ones, from and to, and the one followed. */
+    size: [2.5, 4.5] as const,
+    chosen: 5.5,
+    /** How much larger an egg looks once it has risen toward the light. */
+    lift: 0.6,
+    alpha: [0.45, 0.9] as const,
+    /** BL a second: the water carries them all slowly toward the coast. */
+    drift: 0.06,
+    /** BL a second the one followed drifts on by itself. */
+    awaySpeed: 0.22,
+    /** Painted clouds of points, and how wide they spread. BL. */
+    clouds: 4,
+    cloudSize: [3.5, 6] as const,
+    cloudAlpha: 0.65,
+    /** The larva, across in world pixels. */
+    larva: 32,
+  },
 };
 
 /** Strangers passing through, down the journey and out past its end (doc 11, `shrimp.traveller`; T114). */
@@ -826,6 +873,8 @@ export const STORY = {
   allThree: 6,
   /** Chapter 4: seconds after the net has passed, the others can no longer be tasted (`narr.c4.alone`). */
   aloneAfter: 6,
+  /** Chapter 5: seconds after arriving at the shelf's edge, the last molt's signal (T123). */
+  moltAfterArrive: 20,
 };
 
 /** Saving at rest (doc 02, "Saving"). Seconds. */

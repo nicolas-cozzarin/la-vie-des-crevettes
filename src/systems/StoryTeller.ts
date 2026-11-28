@@ -47,6 +47,8 @@ export interface StoryFrame {
   netCue?: boolean;
   /** The hull's shadow is over the player (doc 13, `narr.c4.hull`). */
   underHull?: boolean;
+  /** Seconds with no key held (doc 12, `s5.spawn`). */
+  stillFor?: number;
 }
 
 const PLAYER = 'player';
@@ -57,6 +59,7 @@ const CHAPTER_OF: Partial<Record<AreaId, number>> = {
   lagoon: 2,
   channel: 3,
   shadow: 4,
+  openSea: 5,
 };
 
 /**
@@ -67,14 +70,16 @@ const CHAPTER_OF: Partial<Record<AreaId, number>> = {
  */
 const ZONE_LINES: Readonly<Record<number, Readonly<Record<string, string>>>> = {
   3: { C: 'narr.c3.narrows', D: 'narr.c3.pool', F: 'narr.c3.bar' },
+  5: { D: 'narr.c5.others', deepest: 'narr.c5.deep' },
 };
 
 /**
  * The story of a place and its narration (doc 12, "Story steps"; doc 13,
  * "Narration"): it hears the game, marks the steps done, and says each line
  * when its moment comes. Built for the mangrove, chapter 1, in step 8, the
- * lagoon, chapter 2, in release 0.2, and the channel and the shadow,
- * chapters 3 and 4, in release 0.3. The lines of any chapter are said in each.
+ * lagoon, chapter 2, in release 0.2, and the channel, the shadow and the
+ * open sea, chapters 3 to 5, in release 0.3. The lines of any chapter are
+ * said in each.
  */
 export class StoryTeller {
   readonly story: Story;
@@ -182,6 +187,7 @@ export class StoryTeller {
   /** Arriving in the place: its first line. */
   arrive(): void {
     // The shadow has no first line: it begins with the open bed, and then the sound.
+    // The open sea's first comes with the blue, past the shelf.
     const first = { 1: 'narr.c1.arrive', 2: 'narr.c2.arrive', 3: 'narr.c3.start' }[this.chapter];
     if (first) this.narrator.say(first);
     // A bond already made in the place before counts toward this chapter's.
@@ -244,16 +250,21 @@ export class StoryTeller {
 
   /**
    * The molt signal is due: 60 s after the first greeting, once the bird has
-   * gone. True once, on the frame it comes due.
+   * gone; in the lagoon after the dawn fish; in the open sea a while after
+   * arriving, at the shelf's edge (T123). True once, on the frame it comes due.
    */
   takeMoltDue(): boolean {
-    if (this.moltSignalled || this.chapter > 2) return false;
-    if (this.chapter === 2) {
+    if (this.moltSignalled) return false;
+    if (this.chapter === 5) {
+      if (this.story.has('s5.molt') || this.time < STORY.moltAfterArrive) return false;
+    } else if (this.chapter === 2) {
       if (this.story.has('s2.molt')) return false;
       if (this.sinceFish === null || this.sinceFish < STORY.moltAfterFish) return false;
-    } else {
+    } else if (this.chapter === 1) {
       if (this.story.has('s1.molt')) return false;
       if (this.sinceGreet === null || this.sinceGreet < STORY.moltAfterGreet) return false;
+    } else {
+      return false;
     }
     this.moltSignalled = true;
     return true;
@@ -290,6 +301,11 @@ export class StoryTeller {
       this.fewerDue = false;
     }
     if (this.doorDue && frame.atTheDoor && this.narrator.say('narr.c2.door')) this.doorDue = false;
+    // Still among the others, full grown: the spawning (doc 12, `s5.spawn`).
+    if (frame.stillFor && frame.stillFor > 0) {
+      const zones = [...(frame.zones ?? [])];
+      this.hear({ kind: 'still', area: this.area, zones, seconds: frame.stillFor });
+    }
     if (this.chapter === 3 && frame.seaweedNear) this.narrator.say('narr.c3.food');
     const zoneLines = ZONE_LINES[this.chapter];
     for (const zone of frame.zones ?? []) {
@@ -368,16 +384,27 @@ export class StoryTeller {
     this.narrator.say('narr.tooFast');
   }
 
-  /** A phase of the player's molt began. */
+  /** A phase of the player's molt began. The last one has its own lines (doc 13). */
   moltPhase(phase: string): void {
-    if (phase === 'signal') this.narrator.say('narr.c1.tight');
+    const last = this.chapter === 5;
+    if (phase === 'signal') this.narrator.say(last ? 'narr.c5.last' : 'narr.c1.tight');
     if (phase === 'molt') this.narrator.say('narr.c1.molt');
     if (phase === 'soft') this.narrator.say('narr.c1.soft');
     if (phase === 'hardened') {
+      if (last) {
+        this.narrator.say('narr.c5.grown');
+        return;
+      }
       this.narrator.say('narr.c1.hard');
       // The taste of salt comes 10 s later.
       this.sinceHard = 0;
     }
+  }
+
+  /** A part of the spawning began: the eggs rising, and the one that opens (doc 13). */
+  spawnPhase(phase: string): void {
+    if (phase === 'rise') this.narrator.say('narr.c5.spawn');
+    if (phase === 'hatch') this.narrator.say('narr.c5.one');
   }
 
   destroy(): void {
@@ -419,6 +446,8 @@ export class StoryTeller {
       // "Every one" only if it is: after a loss, "Fewer than before" comes in its place (T121).
       if (!this.lostHere) this.narrator.say('narr.c4.all');
       this.sinceNet = null;
+    } else if (id === 's5.blue') {
+      this.narrator.say('narr.c5.edge');
     }
   }
 }

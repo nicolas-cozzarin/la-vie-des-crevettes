@@ -363,6 +363,12 @@ export class HudScene extends Phaser.Scene {
     this.tweens.add({ targets: [this.hintText, this.hintPlate], alpha: 1, duration: 600 });
   }
 
+  /** The first hints end now, as the spawning begins: nothing is asked of the player there. */
+  endHints(): void {
+    if (!this.ready || this.hint === 'done') return;
+    this.nextHint('done');
+  }
+
   private nextHint(next: Hint): void {
     this.hint = next;
     this.hintClock = 0;

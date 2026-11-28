@@ -18,6 +18,7 @@ export type CaptionKey =
   | 'caption.relief'
   | 'caption.alarm'
   | 'caption.crackle'
+  | 'caption.longSound'
   | 'caption.engineFar'
   | 'caption.engineNear';
 

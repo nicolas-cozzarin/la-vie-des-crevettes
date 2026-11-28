@@ -121,9 +121,59 @@ const snow: Painter = {
   },
 };
 
+/** The eggs: pale, a little warmer than the snow, so the eye tells them apart. */
+const EGG = hex('#EEF2E0');
+
+/**
+ * One egg seen from above: a pale clear sphere, its rim catching the light
+ * and its middle a little dimmer, where the embryo lies (doc 11, `thing.eggs`).
+ */
+const egg: Painter = {
+  width: 16,
+  height: 16,
+  paint(ctx, size) {
+    const mid = size / 2;
+    glow(ctx, mid, mid, mid, EGG, 0.35, 0.2);
+    ctx.beginPath();
+    ctx.arc(mid, mid, mid * 0.55, 0, Math.PI * 2);
+    ctx.lineWidth = 1.4;
+    ctx.strokeStyle = rgba(EGG, 0.95);
+    ctx.stroke();
+    glow(ctx, mid, mid, mid * 0.45, EGG, 0.5);
+    glow(ctx, mid - 1.5, mid - 1.5, 1.6, [255, 255, 255], 0.9);
+  },
+};
+
+/**
+ * A cloud of eggs: many pale points, denser toward the middle, with a faint
+ * haze among them. Shown several times over, turned and spread, behind the
+ * loose eggs, so the cloud holds thousands.
+ */
+const eggs: Painter = {
+  width: 512,
+  height: 512,
+  paint(ctx, size) {
+    const random = seededRandom(2113);
+    const mid = size / 2;
+    glow(ctx, mid, mid, mid * 0.9, EGG, 0.08);
+    for (let index = 0; index < 1600; index++) {
+      // Nearer the middle more often: the square root spreads them less.
+      const reach = mid * 0.92 * Math.sqrt(random()) * (0.55 + 0.45 * random());
+      const turn = random() * Math.PI * 2;
+      const x = mid + Math.cos(turn) * reach;
+      const y = mid + Math.sin(turn) * reach;
+      const r = 0.45 + random() * 0.7;
+      const fade = 1 - (reach / mid) * 0.6;
+      glow(ctx, x, y, r * 1.8, EGG, (0.35 + random() * 0.5) * fade, 0.45);
+    }
+  },
+};
+
 export const seaPainters: Record<string, Painter> = {
   'sea.blue': water(BLUE, 2103),
   'sea.deep': deep,
   'sea.ledge': ledge,
   'fx.snow': snow,
+  'fx.egg': egg,
+  'thing.eggs': eggs,
 };

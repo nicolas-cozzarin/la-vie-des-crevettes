@@ -1,7 +1,7 @@
 import type { NarrationLine } from '../core/narration/NarrationQueue';
 import type { StoryStep } from '../core/progress/Story';
 
-/** The story steps built so far: chapters 0 to 4 (doc 12, "Story steps"). */
+/** The story steps: chapters 0 to 5 (doc 12, "Story steps"). */
 export const STORY_STEPS: readonly StoryStep[] = [
   { id: 's0.motes', chapter: 0, when: { kind: 'eaten', food: 'microalgae', count: 5 } },
   { id: 's0.brown', chapter: 0, when: { kind: 'zone', area: 'drift', zone: 'D' } },
@@ -40,6 +40,16 @@ export const STORY_STEPS: readonly StoryStep[] = [
     chapter: 4,
     when: { kind: 'shoalNear', area: 'shadow', with: 3 },
     after: 's4.net',
+  },
+  // The last molt has only the ledge for shelter.
+  { id: 's5.molt', chapter: 5, when: { kind: 'molt', area: 'openSea' } },
+  { id: 's5.blue', chapter: 5, when: { kind: 'zone', area: 'openSea', zone: 'B' } },
+  // Full grown, among the others, and still: it happens (T31, T123).
+  {
+    id: 's5.spawn',
+    chapter: 5,
+    when: { kind: 'still', area: 'openSea', zone: 'D', seconds: 3 },
+    after: 's5.molt',
   },
 ];
 
@@ -95,10 +105,19 @@ export const NARRATION_LINES: Readonly<Record<string, NarrationLine>> = {
   'narr.c3.pool': {},
   'narr.c3.bar': {},
   'narr.c4.sound': { must: true },
-  'narr.c4.hull': {},
+  // Shown every time: the sound's line comes less than 20 s before it (the author, 2026-11-28).
+  'narr.c4.hull': { must: true },
   'narr.c4.after': { must: true },
   'narr.c4.alone': {},
   'narr.c4.all': { must: true },
+  'narr.c5.edge': { must: true },
+  'narr.c5.last': { must: true },
+  'narr.c5.grown': {},
+  'narr.c5.deep': {},
+  'narr.c5.others': {},
+  'narr.c5.spawn': { must: true },
+  // A must line, or it would never show: the spawn's line began less than 20 s before (T123).
+  'narr.c5.one': { must: true },
   'narr.fewer': {},
   'narr.mood.calm': { must: true },
   'narr.mood.hungry': { must: true },

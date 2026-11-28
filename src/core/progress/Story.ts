@@ -17,7 +17,9 @@ export type StoryCondition =
   | { kind: 'shoalGraze'; phase: DayPhase; with: number }
   | { kind: 'bond'; atLeast: number }
   /** This many of the shoal within reach of the player at once, in this place. */
-  | { kind: 'shoalNear'; area: AreaId; with: number };
+  | { kind: 'shoalNear'; area: AreaId; with: number }
+  /** No key held for this long, inside a zone of this place: the spawning (doc 12, `s5.spawn`). */
+  | { kind: 'still'; area: AreaId; zone: string; seconds: number };
 
 export interface StoryStep {
   id: string;
@@ -49,7 +51,9 @@ export type StoryEvent =
   | { kind: 'rest' }
   | { kind: 'bond'; value: number }
   /** How many of the shoal are within reach of the player now. */
-  | { kind: 'shoal'; area: AreaId; near: number };
+  | { kind: 'shoal'; area: AreaId; near: number }
+  /** Seconds with no key held, and the zones the player is in now. */
+  | { kind: 'still'; area: AreaId; zones: readonly string[]; seconds: number };
 
 /**
  * The steps of the story. A step is done the moment its condition is true,
@@ -135,6 +139,13 @@ export class Story {
         return event.kind === 'bond' && event.value >= when.atLeast;
       case 'shoalNear':
         return event.kind === 'shoal' && event.area === when.area && event.near >= when.with;
+      case 'still':
+        return (
+          event.kind === 'still' &&
+          event.area === when.area &&
+          event.zones.includes(when.zone) &&
+          event.seconds >= when.seconds
+        );
     }
   }
 }

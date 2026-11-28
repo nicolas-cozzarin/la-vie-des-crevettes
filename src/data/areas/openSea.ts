@@ -38,7 +38,7 @@ export const openSea: AreaDef = {
   snow: true,
 
   obstacles: [],
-  // The last rock of the shelf, its underside the shelter for the third molt.
+  // The last rock of the shelf, its underside the shelter for the third molt, the only one here.
   cover: [
     { id: 'ledge', kind: 'overhang', x: 5420, y: 3150, r: 150, image: 'sea.ledge', width: 640 },
   ],
@@ -62,10 +62,23 @@ export const openSea: AreaDef = {
     },
   ],
 
+  shrimp: [
+    // The shoal comes out of the shadow with the player, onto the last of the shelf.
+    { id: 'nacre', who: 'nacre', x: 5850, y: 2150, heading: Math.PI },
+    { id: 'brise', who: 'brise', x: 5880, y: 2420, heading: Math.PI },
+    { id: 'ecume', who: 'ecume', x: 5780, y: 2600, heading: 3.0 },
+    { id: 'young.1', who: 'young', x: 5900, y: 1980, heading: 3.3 },
+    { id: 'young.2', who: 'young', x: 5650, y: 2050, heading: 2.9 },
+    { id: 'young.3', who: 'young', x: 5600, y: 2650, heading: 3.1 },
+  ],
+  // Others have come, and keep loosely together in the blue (doc 11, zone D; T123).
+  gathering: 'D',
+
   zones: [
     { id: 'A', zone: { x: 4700, y: 0, w: 1300, h: 6000 } },
     { id: 'B', zone: { x: 2200, y: 0, w: 2500, h: 6000 } },
-    { id: 'C', zone: { x: 0, y: 0, w: 2200, h: 6000 } },
+    // In the deep, once, a long call from very far away. Heard by staying (doc 11, `thing.longSound`).
+    { id: 'C', zone: { x: 0, y: 0, w: 2200, h: 6000 }, discovery: 'thing.longSound', after: 8 },
     { id: 'D', zone: { x: 2400, y: 2350, w: 1600, h: 1400 } },
     // The deepest point, at (1200, 3000): found by going there (doc 12, `c5.deep`).
     {

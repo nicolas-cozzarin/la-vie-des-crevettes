@@ -186,6 +186,22 @@ describe('story', () => {
     expect(story.current(4)).toBeNull();
   });
 
+  it('molts the last time, goes down into the blue, and spawns only once full grown (chapter 5, T123)', () => {
+    const story = new Story(STORY_STEPS);
+    const still = { kind: 'still', area: 'openSea', zones: ['B', 'D'], seconds: 3 } as const;
+    // Still in the gathering before the last molt: not yet.
+    expect(story.hear(still)).toEqual([]);
+    expect(story.hear({ kind: 'molt', area: 'openSea' })).toEqual(['s5.molt']);
+    expect(story.current(5)).toBe('s5.blue');
+    expect(story.hear({ kind: 'zone', area: 'openSea', zone: 'B' })).toEqual(['s5.blue']);
+    // Still, but not for long enough, or not among the others.
+    expect(story.hear({ ...still, seconds: 2.9 })).toEqual([]);
+    expect(story.hear({ ...still, zones: ['B'] })).toEqual([]);
+    expect(story.hear({ ...still, area: 'shadow' })).toEqual([]);
+    expect(story.hear(still)).toEqual(['s5.spawn']);
+    expect(story.current(5)).toBeNull();
+  });
+
   it('starts from the steps an earlier part of the life finished', () => {
     const story = new Story(STORY_STEPS, new Set(['s0.motes', 's0.brown']));
     expect(story.current(0)).toBeNull();

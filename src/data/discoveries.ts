@@ -57,7 +57,7 @@ export const DISCOVERIES: readonly DiscoveryEntry[] = [
   { id: 'thing.glowingPlankton', group: 'things', image: null },
   { id: 'thing.crackle', group: 'things', image: null },
   { id: 'thing.longSound', group: 'things', image: null },
-  { id: 'thing.eggs', group: 'things', image: null },
+  { id: 'thing.eggs', group: 'things', image: 'thing.eggs' },
 ];
 
 export const DISCOVERY_IDS: readonly string[] = DISCOVERIES.map((entry) => entry.id);

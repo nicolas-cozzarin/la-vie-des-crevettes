@@ -31,6 +31,7 @@ export const STORY_AREAS: ReadonlySet<PlayableArea> = new Set<PlayableArea>([
   'lagoon',
   'channel',
   'shadow',
+  'openSea',
 ]);
 
 /** The area the story starts in, until the Drift is built (step 8). */

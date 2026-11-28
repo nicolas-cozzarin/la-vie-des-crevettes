@@ -377,7 +377,8 @@ Worn, faded and silted, never shiny. No print, word or mark. Each has a soft con
 | `sea.ledge` | 760 by 420 | Built. The last rock: a long slab lit on its upper left, faint layers across it, its lower edge overhanging a dark hollow, its shadow on the sand below. Drawn as cover |
 | `fx.snow` | 32 | Built. One speck of marine snow, `#DCE9FF`, soft, brighter in the middle. Shown in three layers that sink, the far ones small and dim |
 | `channel.seaFan` | 360 by 300 | Built. Added. Its foot, where it holds the rock, is at the left middle. It sways about that point |
-| `fx.egg` | 16 | To paint |
+| `fx.egg` | 16 | Built. One egg from above: a pale clear sphere `#EEF2E0`, a little warmer than the snow, its rim catching the light, its middle dimmer, a fleck of light at the upper left |
+| `thing.eggs` | 512 | Built. Added (T123). A cloud of 1600 fine pale points, denser toward the middle, a faint haze among them. Shown several times over, turned and spread, behind the loose eggs, so the cloud holds thousands. Also the journal's picture of the eggs |
 | `pond.wall` | 1024 by 360, repeats sideways | Built. D39. A straight dike of packed earth, pebbles pressed in, a dark band of grass on its crest leaning over, cracked mud at a dead straight foot. Solid to 0.7 of its height |
 | `pond.outlet` | 588 by 560 | Built. D39. Drawn 420 wide, the gate's width. Two concrete cheeks with board grooves, stained green-brown from the water up; between them the pond's green water, darker toward the pond; the mesh across the mouth, 340 of 400 down, silt caught on it; the water pouring out below |
 | `pond.plume` | 256 | Built. Changed (T116). One soft round stain of greener water with silt in it; the plume is a row of them from the gate, growing and thinning |

@@ -279,6 +279,11 @@ export interface AreaDef {
    */
   regroup?: string;
   /**
+   * The named zone where other adults, strangers, are gathered when the
+   * place opens, and stay, loosely together (doc 11, `shrimp.adult`; T123).
+   */
+  gathering?: string;
+  /**
    * Small groups of strangers pass along the journey, from beyond its start
    * to beyond its end (doc 11, `shrimp.traveller`; T114). Needs a journey.
    */

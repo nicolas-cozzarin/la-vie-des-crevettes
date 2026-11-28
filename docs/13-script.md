@@ -29,7 +29,7 @@ There are more lines here than a life has room for, on purpose. Lines are of two
 - **Must** lines carry the story or name a mood for the first time. They wait their turn and always show.
 - Every other line is dropped if another line showed in the last 20 s. A dropped line gets another chance the next time its event happens.
 
-The must lines: `narr.c0.start`, `narr.c0.land`, `narr.c1.arrive`, `narr.c1.senseHint`, `narr.c1.birdGone`, `narr.c1.meet`, `narr.c1.tight`, `narr.c1.notHere`, `narr.c1.salt`, `narr.c1.closed`, `narr.c2.arrive`, `narr.c2.sand`, `narr.c2.dusk`, `narr.c2.lean`, `narr.c3.start`, `narr.c4.sound`, `narr.c4.after`, `narr.c4.all`, `narr.c5.edge`, `narr.c5.last`, `narr.c5.spawn`, the six `narr.mood.*` lines and `narr.cornered`.
+The must lines: `narr.c0.start`, `narr.c0.land`, `narr.c1.arrive`, `narr.c1.senseHint`, `narr.c1.birdGone`, `narr.c1.meet`, `narr.c1.tight`, `narr.c1.notHere`, `narr.c1.salt`, `narr.c1.closed`, `narr.c2.arrive`, `narr.c2.sand`, `narr.c2.dusk`, `narr.c2.lean`, `narr.c3.start`, `narr.c4.sound`, `narr.c4.hull` (the author, 2026-11-28), `narr.c4.after`, `narr.c4.all`, `narr.c5.edge`, `narr.c5.last`, `narr.c5.spawn`, `narr.c5.one` (T123), the six `narr.mood.*` lines and `narr.cornered`.
 
 ### Chapter 0. Drift
 
@@ -496,7 +496,7 @@ Keys that exist already (`title.*`, `pause.*`, `controls.*`, `action.*`, `key.*`
 | `notice.saved` | Kept. | Gardé. |
 | `end.continued` | The rest of the life is being made. Stay here as long as you like. | La suite de la vie est en préparation. Reste ici autant que tu veux. |
 
-`end.continued` stands at the last way out that leads nowhere yet: the creek mouth in release 0.1, the lagoon's pass from release 0.2 until the channel exists (T100), the channel's bar until the shadow's story exists, and the shadow's edge toward the open sea until the open sea exists (T121).
+`end.continued` stands at the last way out that leads nowhere yet: the creek mouth in release 0.1, the lagoon's pass from release 0.2 until the channel exists (T100), the channel's bar until the shadow's story exists, and the shadow's edge toward the open sea until the open sea exists (T121). With the open sea's story (T123) every way out leads on, and the life goes on as the next generation, so the line waits for a place that leads nowhere yet.
 
 ## Counts
 

@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { app } from '../app';
 import { COLORS, FONTS, GAME_HEIGHT, GAME_WIDTH, TINTS } from '../config';
-import { newLife, type Life } from '../core/progress/life';
+import { lifeAfter, newLife, type Life } from '../core/progress/life';
 import { lifeOf, loadSave, type SaveV1 } from '../core/save/save';
 import { isPlayableArea } from '../data/areas/index';
 import { t } from '../i18n';
@@ -79,24 +79,8 @@ export class TitleScene extends Phaser.Scene {
   private begin(save: SaveV1 | null): void {
     if (this.leaving) return;
     this.leaving = true;
-    let life: Life = newLife();
-    if (save) {
-      const kept = lifeOf(save);
-      life = {
-        ...newLife(),
-        discoveries: kept.discoveries,
-        challenges: kept.challenges,
-        achievements: kept.achievements,
-        cards: kept.cards,
-        stats: kept.stats,
-        generation: kept.generation,
-        promptsShown: kept.promptsShown,
-        playSeconds: kept.playSeconds,
-        journalSeen: kept.journalSeen,
-      };
-      // Counted for one life only.
-      life.stats.cornered = 0;
-    }
+    // What one life counted toward its own story starts again (T123).
+    const life: Life = save ? lifeAfter(lifeOf(save)) : newLife();
     // The key that chose must not also act inside the game.
     app.actions.clearQueued();
     this.scene.start('Drift', { life });

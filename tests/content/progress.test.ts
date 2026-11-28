@@ -186,4 +186,12 @@ describe('chapters', () => {
     for (const chapter of CHAPTERS) expect(steps, chapter.area).toContain(chapter.end);
     for (const step of STORY_STEPS) expect(steps).toContain(step.id);
   });
+
+  it('wait only for an earlier step of the same chapter (T121)', () => {
+    STORY_STEPS.forEach((step, index) => {
+      if (step.after === undefined) return;
+      const before = STORY_STEPS.slice(0, index).find((one) => one.id === step.after);
+      expect(before?.chapter, step.id).toBe(step.chapter);
+    });
+  });
 });

@@ -32,7 +32,7 @@ export const DISCOVERIES: readonly DiscoveryEntry[] = [
   { id: 'place.lagoon', group: 'places', image: 'lagoon.seagrass.a' },
   { id: 'place.seagrass', group: 'places', image: 'lagoon.seagrass.b' },
   { id: 'place.channel', group: 'places', image: 'channel.boulder.a' },
-  { id: 'place.shadow', group: 'places', image: null },
+  { id: 'place.shadow', group: 'places', image: 'shadow.hull' },
   { id: 'place.openSea', group: 'places', image: null },
   { id: 'place.deep', group: 'places', image: null },
   { id: 'creature.shrimp', group: 'creatures', image: 'larva.late' },

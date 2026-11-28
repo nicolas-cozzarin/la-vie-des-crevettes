@@ -409,11 +409,15 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
       // In the story the first bird waits for Sense, and one ambient bird may follow it.
       // Once it has gone, it does not come again on coming back from the save.
       // The channel's fish follow the shoal until they have come and gone twice.
+      // The net comes once in the story.
       armed: story
-        ? (id) =>
-            id === 'bird.first'
-              ? life.stepsDone.has('s1.sense') && !life.stepsDone.has('s1.bird')
-              : !id.startsWith('fish.') || !life.stepsDone.has('s3.fish2')
+        ? (id) => {
+            if (id === 'bird.first') {
+              return life.stepsDone.has('s1.sense') && !life.stepsDone.has('s1.bird');
+            }
+            if (id === 'net') return !life.stepsDone.has('s4.net');
+            return !id.startsWith('fish.') || !life.stepsDone.has('s3.fish2');
+          }
         : undefined,
       ambient: story ? ambientInStory(area.id, life.stepsDone) : undefined,
     });
@@ -485,7 +489,13 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
         if (id === 's1.bird') this.threats.director.ambientLeft = 1;
         // After the dawn fish, the lagoon's fish may come at any time.
         if (id === 's2.fish') this.threats.director.ambientLeft = Infinity;
+        // The net scatters the shoal; found again, it goes on with the player (T121).
+        if (id === 's4.net') this.shoal.regroupAt(this.regroupPoint());
+        if (id === 's4.shoal') this.shoal.regroupAt(null);
       });
+      if (life.stepsDone.has('s4.net') && !life.stepsDone.has('s4.shoal')) {
+        this.shoal.regroupAt(this.regroupPoint());
+      }
       narrator.enter(this.areaId);
       this.teller.arrive();
       if (this.day) this.teller.dayPhase(this.day.phase, false);
@@ -1009,6 +1019,8 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
         ),
         seaweedNear: this.drifting.near(x, y, STORY.seaweedNear * this.bodyLengthPx),
         zones: this.zones.current,
+        netCue: this.threats.director.kind === 'net' && this.threats.director.stage === 'cue',
+        underHull: (this.threats.director.net?.gapToHull(x, y) ?? Infinity) === 0,
       });
       if (teller.takeMoltDue()) this.answerMolt(this.molting.signal());
     }
@@ -1281,6 +1293,12 @@ export class PlayScene extends Phaser.Scene implements JournalHost {
       this.found('thing.glowingPlankton');
       this.teller?.glowed();
     }
+  }
+
+  /** The middle of the zone where the scattered shoal gathers again, or null where there is none. */
+  private regroupPoint(): { x: number; y: number } | null {
+    const zone = (this.area.zones ?? []).find((one) => one.id === this.area.regroup)?.zone;
+    return zone ? { x: zone.x + zone.w / 2, y: zone.y + zone.h / 2 } : null;
   }
 
   /**

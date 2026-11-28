@@ -496,7 +496,7 @@ Keys that exist already (`title.*`, `pause.*`, `controls.*`, `action.*`, `key.*`
 | `notice.saved` | Kept. | Gardé. |
 | `end.continued` | The rest of the life is being made. Stay here as long as you like. | La suite de la vie est en préparation. Reste ici autant que tu veux. |
 
-`end.continued` stands at the last way out that leads nowhere yet: the creek mouth in release 0.1, the lagoon's pass from release 0.2 until the channel exists (T100).
+`end.continued` stands at the last way out that leads nowhere yet: the creek mouth in release 0.1, the lagoon's pass from release 0.2 until the channel exists (T100), the channel's bar until the shadow's story exists, and the shadow's edge toward the open sea until the open sea exists (T121).
 
 ## Counts
 

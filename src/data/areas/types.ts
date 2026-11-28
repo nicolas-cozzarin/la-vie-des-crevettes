@@ -240,6 +240,11 @@ export interface AreaDef {
    */
   journey?: { x: number; y: number }[];
   /**
+   * The named zone where the shoal gathers again once the story's threat
+   * here has scattered it, and waits to be found (doc 12, `s4.shoal`; T121).
+   */
+  regroup?: string;
+  /**
    * Small groups of strangers pass along the journey, from beyond its start
    * to beyond its end (doc 11, `shrimp.traveller`; T114). Needs a journey.
    */

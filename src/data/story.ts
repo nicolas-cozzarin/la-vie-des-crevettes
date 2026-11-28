@@ -1,7 +1,7 @@
 import type { NarrationLine } from '../core/narration/NarrationQueue';
 import type { StoryStep } from '../core/progress/Story';
 
-/** The story steps built so far: chapters 0 to 3 (doc 12, "Story steps"). */
+/** The story steps built so far: chapters 0 to 4 (doc 12, "Story steps"). */
 export const STORY_STEPS: readonly StoryStep[] = [
   { id: 's0.motes', chapter: 0, when: { kind: 'eaten', food: 'microalgae', count: 5 } },
   { id: 's0.brown', chapter: 0, when: { kind: 'zone', area: 'drift', zone: 'D' } },
@@ -28,6 +28,18 @@ export const STORY_STEPS: readonly StoryStep[] = [
     id: 's3.fish2',
     chapter: 3,
     when: { kind: 'threat', threat: 'fish', stage: 'release', area: 'channel', count: 2 },
+  },
+  {
+    id: 's4.net',
+    chapter: 4,
+    when: { kind: 'threat', threat: 'net', stage: 'release', area: 'shadow', count: 1 },
+  },
+  // Found again once the net has scattered it, not before (T121).
+  {
+    id: 's4.shoal',
+    chapter: 4,
+    when: { kind: 'shoalNear', area: 'shadow', with: 3 },
+    after: 's4.net',
   },
 ];
 
@@ -82,6 +94,11 @@ export const NARRATION_LINES: Readonly<Record<string, NarrationLine>> = {
   'narr.c3.narrows': {},
   'narr.c3.pool': {},
   'narr.c3.bar': {},
+  'narr.c4.sound': { must: true },
+  'narr.c4.hull': {},
+  'narr.c4.after': { must: true },
+  'narr.c4.alone': {},
+  'narr.c4.all': { must: true },
   'narr.fewer': {},
   'narr.mood.calm': { must: true },
   'narr.mood.hungry': { must: true },

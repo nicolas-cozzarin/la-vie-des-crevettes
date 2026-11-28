@@ -43,12 +43,21 @@ export interface StoryFrame {
   seaweedNear?: boolean;
   /** The named zones of the place the shrimp is in now. */
   zones?: ReadonlySet<string>;
+  /** The net's cue: its engine is heard and nothing yet seen (doc 13, `narr.c4.sound`). */
+  netCue?: boolean;
+  /** The hull's shadow is over the player (doc 13, `narr.c4.hull`). */
+  underHull?: boolean;
 }
 
 const PLAYER = 'player';
 
 /** The chapter each place tells. */
-const CHAPTER_OF: Partial<Record<AreaId, number>> = { mangrove: 1, lagoon: 2, channel: 3 };
+const CHAPTER_OF: Partial<Record<AreaId, number>> = {
+  mangrove: 1,
+  lagoon: 2,
+  channel: 3,
+  shadow: 4,
+};
 
 /**
  * Each chapter's lines for being in a zone of its place (doc 13). Said on
@@ -64,8 +73,8 @@ const ZONE_LINES: Readonly<Record<number, Readonly<Record<string, string>>>> = {
  * The story of a place and its narration (doc 12, "Story steps"; doc 13,
  * "Narration"): it hears the game, marks the steps done, and says each line
  * when its moment comes. Built for the mangrove, chapter 1, in step 8, the
- * lagoon, chapter 2, in release 0.2, and the channel, chapter 3, in release
- * 0.3. The lines of any chapter are said in each.
+ * lagoon, chapter 2, in release 0.2, and the channel and the shadow,
+ * chapters 3 and 4, in release 0.3. The lines of any chapter are said in each.
  */
 export class StoryTeller {
   readonly story: Story;
@@ -95,6 +104,10 @@ export class StoryTeller {
   private fewerDue = false;
   /** The pistol shrimp and goby were found: their line comes while the player watches them. */
   private doorDue = false;
+  /** Chapter 4: seconds since the net passed, or null before (doc 13, `narr.c4.alone`). */
+  private sinceNet: number | null = null;
+  /** Someone of the shoal has gone missing in this place: it is not "every one" (T121). */
+  private lostHere: boolean;
 
   constructor(
     private readonly bus: EventBus<GameEvents>,
@@ -114,7 +127,10 @@ export class StoryTeller {
       if (this.story.has('s1.greet') && !this.story.has('s1.molt')) this.sinceGreet = 0;
     } else if (this.chapter === 2) {
       if (this.story.has('s2.fish') && !this.story.has('s2.molt')) this.sinceFish = 0;
+    } else if (this.chapter === 4) {
+      if (this.story.has('s4.net') && !this.story.has('s4.shoal')) this.sinceNet = STORY.aloneAfter;
     }
+    this.lostHere = (life.stats[`missing.${area}`] ?? 0) > 0;
     const on = <K extends keyof GameEvents>(type: K, handler: (event: GameEvents[K]) => void) =>
       this.stops.push(bus.on(type, handler));
 
@@ -165,8 +181,9 @@ export class StoryTeller {
 
   /** Arriving in the place: its first line. */
   arrive(): void {
+    // The shadow has no first line: it begins with the open bed, and then the sound.
     const first = { 1: 'narr.c1.arrive', 2: 'narr.c2.arrive', 3: 'narr.c3.start' }[this.chapter];
-    this.narrator.say(first ?? 'narr.c1.arrive');
+    if (first) this.narrator.say(first);
     // A bond already made in the place before counts toward this chapter's.
     if (this.chapter === 2) {
       for (const value of Object.values(this.life.bonds)) this.hear({ kind: 'bond', value });
@@ -205,6 +222,7 @@ export class StoryTeller {
   /** Someone of the shoal has gone missing, unseen (D42). */
   lost(): void {
     if (!this.life.narrated.has('narr.fewer')) this.fewerDue = true;
+    this.lostHere = true;
   }
 
   /** Something new came into the journal. Some finds have a line (doc 13). */
@@ -258,6 +276,15 @@ export class StoryTeller {
     if (this.chapter >= 2 && frame.softNotAlone) this.narrator.say('narr.c2.notAlone');
     if (frame.herSoft) this.narrator.say('narr.c2.herMolt', { name: frame.herSoft });
     this.shoalNear = frame.shoalNear ?? 0;
+    this.hear({ kind: 'shoal', area: this.area, near: this.shoalNear });
+    // The net: a sound first, then the light going out above.
+    if (frame.netCue) this.narrator.say('narr.c4.sound');
+    if (frame.underHull) this.narrator.say('narr.c4.hull');
+    if (this.sinceNet !== null) {
+      this.sinceNet += dt;
+      const searching = !this.story.has('s4.shoal') && this.shoalNear === 0;
+      if (this.sinceNet >= STORY.aloneAfter && searching) this.narrator.say('narr.c4.alone');
+    }
     // The first time the shoal is together again after a loss, it is fewer.
     if (this.fewerDue && this.shoalNear >= STORY.regrouped && this.narrator.say('narr.fewer')) {
       this.fewerDue = false;
@@ -385,6 +412,13 @@ export class StoryTeller {
       this.sinceFish = 0;
     } else if (id === 's2.molt') {
       this.sinceMolt = 0;
+    } else if (id === 's4.net') {
+      this.narrator.say('narr.c4.after');
+      this.sinceNet = 0;
+    } else if (id === 's4.shoal') {
+      // "Every one" only if it is: after a loss, "Fewer than before" comes in its place (T121).
+      if (!this.lostHere) this.narrator.say('narr.c4.all');
+      this.sinceNet = null;
     }
   }
 }

@@ -125,6 +125,8 @@ export const shadow: AreaDef = {
     // Where the shoal is found again, after the net.
     { id: 'after', zone: { x: 0, y: 0, w: 1500, h: 3200 } },
   ],
+  // Once the net has passed, the shoal makes for it and waits there (T121).
+  regroup: 'after',
 
   // To the open sea, once the shoal is found again.
   exits: [{ to: 'openSea', zone: { x: 0, y: 0, w: 90, h: 3200 }, needsStep: 's4.shoal' }],

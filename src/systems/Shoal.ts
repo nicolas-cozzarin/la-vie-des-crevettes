@@ -191,6 +191,8 @@ export class Shoal {
   private readonly dodged = new Set<string>();
   /** Where the shoal makes for on its journey with the tide, or null where there is none (T113). */
   private goal: Point | null = null;
+  /** Where the shoal, scattered, gathers again without the player, or null (T121). */
+  private gathering: Point | null = null;
   /** Where the strangers passing through make for, beyond the shoal's (T114). */
   private travellersGoal: Point | null = null;
   /** Passing a pond's gate: Brise goes to the mesh, Nacre stops short (doc 18, "Level 3"; T118). */
@@ -356,15 +358,24 @@ export class Shoal {
     return this.options.bonds.stage(id);
   }
 
+  /**
+   * Scattered: the shoal makes for this point and waits there, whatever the
+   * player does, until it is found again. Null to go on with the player (T121).
+   */
+  regroupAt(point: Point | null): void {
+    this.gathering = point;
+  }
+
   /** One step of every other shrimp, in the game's one loop (doc 15, "One clock"). */
   step(dt: number, time: number, player: PlayerView): void {
     this.time = time;
     this.player = player;
     const route = this.options.area.journey;
     this.goal =
-      route && route.length > 1
+      this.gathering ??
+      (route && route.length > 1
         ? shoalGoal(route, player, JOURNEY.ahead * this.options.bodyLengthPx)
-        : null;
+        : null);
     // Strangers keep their own way, a little ahead of their own middle and on past the end.
     const middle = this.middleOf(this.members.filter((npc) => npc.traveller));
     this.travellersGoal =

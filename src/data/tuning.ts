@@ -802,6 +802,8 @@ export const STORY = {
   seaweedNear: 3,
   /** All three companions this close keep the shoal together (doc 12, `c3.together`). BL. */
   allThree: 6,
+  /** Chapter 4: seconds after the net has passed, the others can no longer be tasted (`narr.c4.alone`). */
+  aloneAfter: 6,
 };
 
 /** Saving at rest (doc 02, "Saving"). Seconds. */
